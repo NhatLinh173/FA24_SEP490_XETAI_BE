@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema({
   firstName: String,
   lastName: String,
   refreshToken: String,
+  isBlocked: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {

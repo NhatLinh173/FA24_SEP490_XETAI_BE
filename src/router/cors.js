@@ -14,9 +14,9 @@ const whitelist = [
 const corsOptions = (req, callback) => {
   var corsOptions;
   if (whitelist.indexOf(req.header("Origin")) !== -1) {
-    corsOptions = { origin: true, credentials: true }; // allow all origins
+    corsOptions = { origin: true, credentials: true };
   } else {
-    corsOptions = { origin: false }; // block all origins
+    corsOptions = { origin: false };
   }
   callback(null, corsOptions);
 };

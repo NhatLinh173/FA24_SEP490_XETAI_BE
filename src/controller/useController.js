@@ -1,4 +1,5 @@
 const authService = require("../service/userService");
+const passport = require("../service/authGoogle");
 const register = async (req, res) => {
   const { email, password } = req.body;
 
@@ -36,8 +37,61 @@ const refreshToken = async (req, res) => {
   }
 };
 
+const blockUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await userService.blockUser(id);
+    res.status(200).json({ message: "User has been blocked", user });
+  } catch (error) {
+    if (error.message === "User not found") {
+      res.status(404).json({ message: "User not found" });
+    } else {
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+};
+
+const googleAuth = passport.authenticate("google", {
+  scope: ["email", "profile"],
+});
+
+const googleAuthCallback = passport.authenticate("google", {
+  successRedirect: "http://localhost:3006/",
+  failureRedirect: "http://localhost:3006/error",
+});
+
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await userService.getAllUsers();
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getUserById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await userService.getUserById(id);
+    res.status(200).json(user);
+  } catch (error) {
+    if (error.message === "User not found") {
+      res.status(404).json({ message: "User not found" });
+    } else {
+      res.status(500).json({ message: error.message });
+    }
+  }
+};
+
 module.exports = {
+  getUserById,
+  getAllUsers,
   register,
   login,
   refreshToken,
+  googleAuth,
+  googleAuthCallback,
+  blockUser,
 };

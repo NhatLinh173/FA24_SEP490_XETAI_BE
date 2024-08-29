@@ -107,8 +107,83 @@ const refreshUserToken = async (refreshToken) => {
   }
 };
 
+const updateUser = async (id, updatedUser) => {
+  if (!id) {
+    throw new Error("User ID is required");
+  }
+
+  const user = await User.findByIdAndUpdate(id, updatedUser, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
+};
+
+const getAllUsers = async () => {
+  try {
+    const users = await User.find();
+    return users;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const getUserById = async (id) => {
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const deleteUser = async (id) => {
+  if (!id) {
+    throw new Error("User ID is required");
+  }
+
+  const user = await User.findByIdAndDelete(id);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
+};
+
+const blockUser = async (id) => {
+  if (!id) {
+    throw new Error("User ID is required");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    id,
+    { isBlocked: true },
+    { new: true }
+  );
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
+};
+
 module.exports = {
   registerUser,
   loginUser,
   refreshUserToken,
+  blockUser,
+  deleteUser,
+  updateUser,
+  getUserById,
+  getAllUsers,
 };
