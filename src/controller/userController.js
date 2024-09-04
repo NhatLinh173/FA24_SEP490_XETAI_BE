@@ -3,7 +3,7 @@ const passport = require("../service/authGoogle");
 const passportFacebook = require("../service/authFacebook");
 const jwt = require("jsonwebtoken");
 const register = async (req, res) => {
-  const { email, password, fullName, phone, role } = req.body;
+  const { email, password, fullName, phone, role, address } = req.body;
 
   if (!email || !password || !fullName || !phone || !role) {
     return res

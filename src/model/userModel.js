@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema({
   phone: String,
   fullName: String,
   refreshToken: String,
-  address: String,
+  address: { type: String, default: null },
   isBlocked: {
     type: Boolean,
     default: false,

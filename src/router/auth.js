@@ -10,7 +10,7 @@ const {
   googleAuthCallback,
   facebookAuth,
   facebookAuthCallback,
-} = require("../controller/useController");
+} = require("../controller/userController");
 
 const router = express.Router();
 // http://localhost:3005/auth/register

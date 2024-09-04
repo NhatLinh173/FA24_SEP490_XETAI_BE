@@ -36,8 +36,8 @@ const registerUser = async ({
     role,
     phone,
     fullName,
-    refreshToken: "",
     address,
+    refreshToken: "",
   });
 
   if (!user) {
