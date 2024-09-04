@@ -5,20 +5,20 @@ const bcrypt = require("bcrypt");
 dotenv.config();
 const accessTokenExpiration = process.env.JWT_ACCESS_EXPIRATION || "1h";
 const refreshTokenExpiration = process.env.JWT_REFRESH_EXPIRATION || "7d";
-const generateToken = (id, expiresIn) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+const generateToken = (id, expiresIn, role) => {
+  return jwt.sign({ id, role: role }, process.env.JWT_SECRET, {
     expiresIn: expiresIn,
   });
 };
 
-const registerUser = async (
+const registerUser = async ({
   email,
   password,
   role = "",
   phone = "",
-  firstName = "",
-  lastName = ""
-) => {
+  fullName = "",
+  address = "",
+}) => {
   if (!email || !password) {
     throw new Error("Email and password are required");
   }
@@ -35,9 +35,9 @@ const registerUser = async (
     password: hashedPassword,
     role,
     phone,
-    firstName,
-    lastName,
+    fullName,
     refreshToken: "",
+    address,
   });
 
   if (!user) {
@@ -58,6 +58,7 @@ const registerUser = async (
     email: user.email,
     accessToken,
     refreshToken,
+    role: user.role,
   };
 };
 const loginUser = async (email, password) => {
@@ -69,11 +70,13 @@ const loginUser = async (email, password) => {
 
   const accessToken = generateToken(
     user._id,
-    process.env.JWT_ACCESS_EXPIRATION
+    process.env.JWT_ACCESS_EXPIRATION,
+    user.role
   );
   const refreshToken = generateToken(
     user._id,
-    process.env.JWT_REFRESH_EXPIRATION
+    process.env.JWT_REFRESH_EXPIRATION,
+    user.role
   );
 
   user.refreshToken = refreshToken;
@@ -84,6 +87,7 @@ const loginUser = async (email, password) => {
     email: user.email,
     accessToken,
     refreshToken,
+    role: user.role,
   };
 };
 

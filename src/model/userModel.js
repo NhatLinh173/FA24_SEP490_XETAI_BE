@@ -9,13 +9,13 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: false,
   },
-  role: String,
+  role: { type: String },
   phone: String,
-  firstName: String,
-  lastName: String,
+  fullName: String,
   refreshToken: String,
+  address: String,
   isBlocked: {
     type: Boolean,
     default: false,
