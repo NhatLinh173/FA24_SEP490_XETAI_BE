@@ -25,16 +25,17 @@ class PostController {
         await Post.findOne({"_id": id})
             .then(
                 (updatePost) => {
-                    updatePost.title = bodyData.title; //tiêu đề
+                    updatePost.title = bodyData.title; //loại hàng
                     updatePost.detail = bodyData.detail; // mô tả chi tiết
                     updatePost.images = bodyData.images; //hình ảnh 
                     updatePost.load  = bodyData.load; //trọng tải
+                    updatePost.fullname = bodyData.fullname //fullname 
+                    updatePost.email = bodyData.email //email 
                     updatePost.phone = bodyData.phone //sdt 
-                    updatePost.startPoint  = bodyData.startPoint; //điểm xuất phát
-                    updatePost.destination = bodyData.destination; //đích đến
-                    updatePost.category = bodyData.category; //để danh mục nhưng chưa biết để xếp theo gì (chắc là xếp theo loại xe ??)
+                    updatePost.startPoint  = bodyData.startPoint; //điạ chỉ nhận hàng
+                    updatePost.destination = bodyData.destination; //đíạ chỉ giao hàng 
+                    updatePost.category = bodyData.category; //để danh mục là xếp theo loại xe 
                     updatePost.price  = bodyData.price; //giá tiền
-                    updatePost.packageType  = bodyData.packageType
                     updatePost.isLock = bodyData.isLock; //khóa
                     updatePost.isFinish = bodyData.isFinish;  //hoàn thành chưa (hoàn thành r thì t ẩn )
                     updatePost.save()
@@ -91,7 +92,7 @@ class PostController {
     }
 
 
-    async showPost(req, res, next) { //xuất hết tất cả bài post (theo thứ tự database, chưa đi kèm random  )
+    async showPost(req, res, next) { //xuất hết tất cả bài post (theo thứ tự do database, chưa đi kèm random  )
         console.log("Fetching  posts...");
     var page = req.query.page || 1;
     var limitPage = 8;
@@ -196,7 +197,7 @@ class PostController {
 
     
 
-    async addComment(req, res, next) { // BUG 
+    async addComment(req, res, next) { // chưa làm, để cho vui 
         const newComment = req.body;
         const id = req.params.idPost;
         await Post.findOne({"_id": id})
@@ -247,7 +248,7 @@ class PostController {
 
     }
 
-    async getRelated(req, res, next) { // lấy theo đề mục (ngẫu nhiên 5 cái) (để nghịch chứ chưa biết làm gì với nó)
+    async getRelated(req, res, next) { // lấy theo đề mục (ngẫu nhiên 5 cái) (kiểu để xuất bài đăng liên quan , chắc ko dùng tới, viết để sẵn )
         const cateId = req.params.idCategory;
     
         await Post.aggregate([

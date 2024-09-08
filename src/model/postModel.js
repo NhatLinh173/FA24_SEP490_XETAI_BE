@@ -23,11 +23,11 @@ const Comment = new Schema({
 
 
 const Post = new Schema({
-        title: {
+        title: { //loại hàng
             type: String,
             required: true
         },
-        detail: {
+        detail: { //mô tả chi tiết 
             type: String,
             required: true
         },
@@ -36,7 +36,7 @@ const Post = new Schema({
             required: true
         },
        
-        load: { //trọng tải
+        load: { //trọng lượng hàng
             type: String,
             required: true
         },
@@ -45,11 +45,11 @@ const Post = new Schema({
             ref: 'Category', 
             required: true 
         },
-        startPoint: { //điểm xuất phát
+        startPoint: { //điạ chỉ nhận hàng
             type: String,
             required: true
         },
-        destination: { //đích đến
+        destination: { //địa chỉ giao hàng
             type: String,
             required: true
         },
@@ -57,7 +57,11 @@ const Post = new Schema({
             type: String,
             required: true
         },
-        packageType: { //Loại hàng
+        fullname: { 
+            type: String,
+            required: true
+        },
+        email: { 
             type: String,
             required: true
         },

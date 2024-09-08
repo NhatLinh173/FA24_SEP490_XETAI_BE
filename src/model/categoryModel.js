@@ -12,7 +12,7 @@ const Category = new Schema({
         description: {
             type: String
         },
-        slug : { //slug là kiểu nó chuyển ký tự ví dụ : xe tải chở hàng thành xe-tai-cho-hang
+        slug : { //slug là kiểu nó chuyển cái tên thành xe-tai-100-tan, lúc truyền param url thân thiện với người dùng hơn
             type : String,
             slug: 'name',
             unique:true
