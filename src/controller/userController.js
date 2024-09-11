@@ -79,6 +79,14 @@ const blockUser = async (req, res) => {
   }
 };
 
+const facebookAuth = (req, res, next) => {
+  const role = req.query.state;
+
+  passport.authenticate("facebook", {
+    scope: ["email", "profile"],
+    state: role,
+  })(req, res, next);
+};
 const googleAuth = (req, res, next) => {
   const role = req.query.state;
   console.log("Role in googleAuth:", role);
@@ -127,6 +135,47 @@ const googleAuthCallback = (req, res, next) => {
   })(req, res, next);
 };
 
+const facebookAuthCallback = (req, res, next) => {
+  passportFacebook.authenticate("facebook", (err, user, info) => {
+    if (err) {
+      return res.redirect(
+        "http://localhost:3006/error?message=" + encodeURIComponent(err.message)
+      );
+    }
+    if (!user) {
+      return res.redirect(
+        "http://localhost:3006/error?message=Authentication Failed"
+      );
+    }
+    req.logIn(user, (err) => {
+      if (err) {
+        return res.redirect(
+          "http://localhost:3006/error?message=" +
+            encodeURIComponent(err.message)
+        );
+      }
+
+      const token = jwt.sign(
+        { id: user._id, role: user.role },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1h",
+        }
+      );
+
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+      });
+
+      const role = req.query.state;
+
+      res.redirect(`http://localhost:3006/?token=${token}`);
+    });
+  })(req, res, next);
+};
+
 const ensureAuthenticated = (req, res, next) => {
   if (req.isAuthenticated()) {
     return next();
@@ -158,41 +207,49 @@ const getUserById = async (req, res) => {
   }
 };
 
-const facebookAuth = passport.authenticate("facebook", {
-  scope: ["email"],
-});
+const updateUserController = async (req, res) => {
+  const { id } = req.params;
+  const { email, password, phone, fullName, address } = req.body;
 
-const facebookAuthCallback = (req, res, next) => {
-  passportFacebook.authenticate("facebook", (err, user, info) => {
-    if (err) {
-      return res.redirect(
-        "http://localhost:3006/error?message=" + encodeURIComponent(err.message)
-      );
-    }
-    if (!user) {
-      return res.redirect(
-        "http://localhost:3006/error?message=Authentication Failed"
-      );
-    }
-    req.logIn(user, (err) => {
-      if (err) {
-        return res.redirect(
-          "http://localhost:3006/error?message=" +
-            encodeURIComponent(err.message)
-        );
-      }
-
-      const token = jwt.sign(
-        { id: user._id, role: user.role },
-        process.env.JWT_SECRET,
-        {
-          expiresIn: "1h",
-        }
-      );
-
-      res.redirect(`http://localhost:3006/?token=${token}`);
+  try {
+    const updatedUser = await authService.updateUser(id, {
+      email,
+      password,
+      phone,
+      fullName,
+      address,
     });
-  })(req, res, next);
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "User has been updated", updatedUser });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error occurred" });
+  }
+};
+
+const changePasswordUser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { oldPassword, newPassword } = req.body;
+    const result = await authService.changePassword(
+      userId,
+      oldPassword,
+      newPassword
+    );
+
+    if (result.success) {
+      return res.status(200).json({ message: "User has been updated" });
+    } else {
+      return res.status(401).json({ message: result.message });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error occurred" });
+  }
 };
 
 module.exports = {
@@ -207,4 +264,6 @@ module.exports = {
   googleAuthCallback,
   blockUser,
   ensureAuthenticated,
+  updateUserController,
+  changePasswordUser,
 };

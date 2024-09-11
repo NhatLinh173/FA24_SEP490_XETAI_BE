@@ -9,11 +9,13 @@ passport.use(
       clientID: process.env.FACEBOOK_APP_ID,
       clientSecret: process.env.FACEBOOK_APP_SECRET,
       callbackURL: "http://localhost:3005/auth/facebook/callback",
-      profileFields: ["id", "emails", "name"], // Đảm bảo bạn yêu cầu các trường cần thiết
+      profileFields: ["id", "emails", "name"],
     },
     async (accessToken, refreshToken, profile, cb) => {
       try {
-        let user = await User.findOne({ facebookId: profile.id });
+        const roleUser = req.query.state;
+
+        let user = await User.findOne({ email: profile.emails[0].value });
 
         if (!user) {
           user = new User({
@@ -22,12 +24,22 @@ passport.use(
             email: profile.emails[0].value,
           });
 
+          user = await User.create({
+            facebookId: profile.id,
+            name: `${profile.name.givenName} ${profile.name.familyName}`,
+            email: profile.emails[0].value,
+            role: roleUser,
+          });
+
+          await user.save();
+        } else if (!user.facebookId) {
+          user.facebookId = profile.id;
+          user.role = roleUser;
           await user.save();
         }
-
-        return cb(null, user);
+        return done(null, user);
       } catch (error) {
-        return cb(error, null);
+        return done(error, null);
       }
     }
   )
@@ -42,3 +54,5 @@ passport.deserializeUser((id, done) => {
     done(err, user);
   });
 });
+
+module.exports = passport;

@@ -10,8 +10,10 @@ const {
   googleAuthCallback,
   facebookAuth,
   facebookAuthCallback,
+  updateUserController,
+  changePasswordUser,
 } = require("../controller/userController");
-
+const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
 // http://localhost:3005/auth/register
 router.post("/register", register);
@@ -33,5 +35,9 @@ router.get("/google/callback", googleAuthCallback);
 router.get("/facebook", facebookAuth);
 // http://localhost:3005/auth/facebook/callback
 router.get("/facebook/callback", facebookAuthCallback);
+// http://localhost:3005/auth/update-user
+router.put("/update-user/:id", updateUserController);
+// http://localhost:3005/auth/change-password
+router.put("/change-password", authMiddleware, changePasswordUser);
 
 module.exports = router;

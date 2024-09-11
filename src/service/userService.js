@@ -3,10 +3,9 @@ const User = require("../model/userModel");
 const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
 dotenv.config();
-const accessTokenExpiration = process.env.JWT_ACCESS_EXPIRATION || "1h";
-const refreshTokenExpiration = process.env.JWT_REFRESH_EXPIRATION || "7d";
+
 const generateToken = (id, expiresIn, role) => {
-  return jwt.sign({ id, role: role }, process.env.JWT_SECRET, {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
     expiresIn: expiresIn,
   });
 };
@@ -181,6 +180,31 @@ const blockUser = async (id) => {
   return user;
 };
 
+const changePassword = async (userId, oldPassword, newPassword) => {
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return { succcess: false, message: "User not found" };
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+
+    if (!isMatch) {
+      return { success: false, message: "Invalid old password" };
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    return { success: true, message: "Password updated successfully" };
+  } catch (error) {
+    console.error("Error during password change:", error);
+    return { success: false, message: "An error occurred" };
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -190,4 +214,5 @@ module.exports = {
   updateUser,
   getUserById,
   getAllUsers,
+  changePassword,
 };

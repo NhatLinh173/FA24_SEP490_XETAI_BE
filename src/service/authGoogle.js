@@ -12,6 +12,7 @@ passport.use(
     },
     async (request, accessToken, refreshToken, profile, done) => {
       try {
+        // console.log("User profile received from Google:", profile);
         const roleUser = request.query.state;
         console.log("Role received on server:", roleUser);
 
@@ -20,21 +21,20 @@ passport.use(
         if (!user) {
           console.log("Creating user with data:", {
             googleId: profile.id,
-            firstName: profile.name.givenName,
-            lastName: profile.name.familyName,
+            fullName: profile._json.name,
             email: profile.emails[0].value,
             role: roleUser,
           });
 
           user = await User.create({
             googleId: profile.id,
-            firstName: profile.name.givenName,
-            lastName: profile.name.familyName,
+            fullName: profile._json.name,
             email: profile.emails[0].value,
             role: roleUser,
           });
         } else if (!user.googleId) {
           user.googleId = profile.id;
+          user.fullName = profile._json.name;
           user.role = roleUser;
           await user.save();
         }
