@@ -9,13 +9,17 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: false,
   },
-  role: String,
+  role: { type: String },
   phone: String,
-  firstName: String,
-  lastName: String,
+  fullName: String,
   refreshToken: String,
+  address: { type: String, default: null },
+  isBlocked: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
