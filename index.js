@@ -2,7 +2,9 @@ const express = require("express");
 const connectDB = require("./src/config/database");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const routes = require("./src/router/index");
+
+const routes = require("./src/router/index")
+
 const app = express();
 const bodyParser = require("body-parser");
 const session = require("express-session");
