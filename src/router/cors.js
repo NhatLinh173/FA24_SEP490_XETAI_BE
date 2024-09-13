@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const app = express();
-
+require("dotenv").config();
 const whitelist = [
   "http://localhost:3000",
   "http://localhost:3005",
@@ -14,12 +15,21 @@ const whitelist = [
 const corsOptions = (req, callback) => {
   var corsOptions;
   if (whitelist.indexOf(req.header("Origin")) !== -1) {
-    corsOptions = { origin: true, credentials: true }; // allow all origins
+    corsOptions = { origin: true, credentials: true };
   } else {
-    corsOptions = { origin: false }; // block all origins
+    corsOptions = { origin: false };
   }
   callback(null, corsOptions);
 };
 
-exports.cors = cors();
-exports.corsWhiteList = cors(corsOptions);
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  maxAge: 1000 * 60 * 60 * 24 * 7,
+};
+
+module.exports = {
+  cors: cors(),
+  corsWhiteList: cors(corsOptions),
+  cookieOptions: cookieOptions,
+};
