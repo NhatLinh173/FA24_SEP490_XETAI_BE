@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+ ratings: [{
+    value: { type: Number, min: 1, max: 5 },
+    reviewerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } 
+}],
+  averageRating: { type: Number, default: 0 }
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
