@@ -7,31 +7,40 @@ class RatingController {
     async addRating(req, res, next) {
         const { userId, rating, reviewerId } = req.body;
 
-        // Kiểm tra xem rating có nằm trong khoảng 1-5 không
+        // Kiểm tra rating phải nằm trong khoảng hợp lệ (1-5)
         if (rating < 1 || rating > 5) {
             res.status(400);
             return res.json({ message: 'Rating must be between 1 and 5' });
         }
 
-        await User.findById(userId)
-            .then(user => {
-                if (!user) {
-                    res.status(404);
-                    return res.json({ message: 'User not found' });
-                }
+        try {
+            const user = await User.findById(userId);
 
-                // Thêm rating mới vào mảng ratings
-                user.ratings.push({ value: rating, reviewerId });
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
 
-                // Tính lại rating trung bình
-                const totalRating = user.ratings.reduce((acc, r) => acc + r.value, 0);
-                user.averageRating = totalRating / user.ratings.length;
+            // Kiểm tra nếu reviewer đã đánh giá trước đó
+            const existingRating = user.ratings.find(r => r.reviewerId.toString() === reviewerId);
 
-                // Lưu user với đánh giá mới
-                return user.save();
-            })
-            .then(savedUser => res.json({ message: 'Rating added successfully', user: savedUser }))
-            .catch(err => res.status(500).json({ message: 'Error adding rating', error: err }));
+            if (existingRating) {
+                // Nếu đã đánh giá trước đó, trả về thông báo lỗi
+                return res.status(400).json({ message: 'You have already rated this user. Use updateRating to change your rating.' });
+            }
+
+            // Nếu chưa có đánh giá từ reviewer, thêm đánh giá mới
+            user.ratings.push({ value: rating, reviewerId });
+
+            // Tính lại rating trung bình
+            const totalRating = user.ratings.reduce((acc, r) => acc + r.value, 0);
+            user.averageRating = totalRating / user.ratings.length;
+
+            // Lưu lại user với đánh giá mới
+            const savedUser = await user.save();
+            return res.json({ message: 'Rating added successfully', user: savedUser });
+        } catch (err) {
+            return res.status(500).json({ message: 'Error processing rating', error: err });
+        }
     }
 
     // Cập nhật đánh giá (rating) của một reviewer đã tồn tại
