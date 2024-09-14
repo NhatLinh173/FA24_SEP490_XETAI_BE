@@ -1,4 +1,5 @@
 const express = require("express");
+const upload = require("../utils/multer");
 const {
   register,
   login,
@@ -12,6 +13,7 @@ const {
   facebookAuthCallback,
   updateUserController,
   changePasswordUser,
+  getUserByRoleController,
 } = require("../controller/userController");
 const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -36,8 +38,10 @@ router.get("/facebook", facebookAuth);
 // http://localhost:3005/auth/facebook/callback
 router.get("/facebook/callback", facebookAuthCallback);
 // http://localhost:3005/auth/update-user
-router.put("/update-user/:id", updateUserController);
+router.put("/update-user/:id", upload.single("avatar"), updateUserController);
 // http://localhost:3005/auth/change-password
 router.put("/change-password", authMiddleware, changePasswordUser);
+// http://localhost:3005/auth/role/:role
+router.get("/role/:role", getUserByRoleController);
 
 module.exports = router;

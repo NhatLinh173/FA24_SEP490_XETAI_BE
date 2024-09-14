@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  avatar: {
+    type: String,
+    default: null,
+  },
+  
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {

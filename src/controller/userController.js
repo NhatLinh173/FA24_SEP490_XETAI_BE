@@ -2,6 +2,7 @@ const authService = require("../service/userService");
 const passport = require("../service/authGoogle");
 const passportFacebook = require("../service/authFacebook");
 const jwt = require("jsonwebtoken");
+const cloudinary = require("../config/cloudinaryConfig");
 const register = async (req, res) => {
   const { email, password, fullName, phone, role, address } = req.body;
 
@@ -81,15 +82,14 @@ const blockUser = async (req, res) => {
 
 const facebookAuth = (req, res, next) => {
   const role = req.query.state;
-
   passport.authenticate("facebook", {
     scope: ["email", "profile"],
     state: role,
   })(req, res, next);
 };
+
 const googleAuth = (req, res, next) => {
   const role = req.query.state;
-  console.log("Role in googleAuth:", role);
   passport.authenticate("google", {
     scope: ["email", "profile"],
     state: role,
@@ -209,15 +209,38 @@ const getUserById = async (req, res) => {
 
 const updateUserController = async (req, res) => {
   const { id } = req.params;
-  const { email, password, phone, fullName, address } = req.body;
+  const { email, password, phone, fullName, address, avatar } = req.body;
+  const avatarFile = req.file;
 
   try {
+    let avatarUrl = avatar;
+
+    if (avatarFile) {
+      try {
+        const uploadPromise = new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream({ folder: "avatars" }, (error, result) => {
+              if (error) {
+                return reject(new Error(error.message));
+              }
+              resolve(result.secure_url);
+            })
+            .end(avatarFile.buffer);
+        });
+
+        avatarUrl = await uploadPromise;
+      } catch (uploadError) {
+        console.error("Error uploading to Cloudinary:", uploadError);
+        return res.status(500).json({ message: "Failed to upload avatar" });
+      }
+    }
     const updatedUser = await authService.updateUser(id, {
       email,
       password,
       phone,
       fullName,
       address,
+      avatar: avatarUrl,
     });
 
     if (!updatedUser) {
@@ -226,7 +249,7 @@ const updateUserController = async (req, res) => {
 
     res.status(200).json({ message: "User has been updated", updatedUser });
   } catch (error) {
-    console.error(error);
+    console.error("Error updating user:", error);
     res.status(500).json({ message: "An error occurred" });
   }
 };
@@ -252,6 +275,18 @@ const changePasswordUser = async (req, res) => {
   }
 };
 
+const getUserByRoleController = async (req, res) => {
+  const { role } = req.params;
+
+  try {
+    const users = await authService.getUserByRole(role);
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error getting users by role:", error);
+    res.status(500).json({ message: "An error occurred" });
+  }
+};
+
 module.exports = {
   facebookAuth,
   facebookAuthCallback,
@@ -266,4 +301,5 @@ module.exports = {
   ensureAuthenticated,
   updateUserController,
   changePasswordUser,
+  getUserByRoleController,
 };
