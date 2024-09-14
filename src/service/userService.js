@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../model/userModel");
+const cloudinary = require("../config/cloudinaryConfig");
 const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
 dotenv.config();
@@ -101,7 +102,8 @@ const refreshUserToken = async (refreshToken) => {
 
     const accessToken = generateToken(
       user._id,
-      process.env.JWT_ACCESS_EXPIRATION
+      process.env.JWT_ACCESS_EXPIRATION,
+      user.role
     );
 
     return { accessToken };
@@ -115,16 +117,21 @@ const updateUser = async (id, updatedUser) => {
     throw new Error("User ID is required");
   }
 
-  const user = await User.findByIdAndUpdate(id, updatedUser, {
-    new: true,
-    runValidators: true,
-  });
+  try {
+    const user = await User.findByIdAndUpdate(id, updatedUser, {
+      new: true,
+      runValidators: true,
+    });
 
-  if (!user) {
-    throw new Error("User not found");
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return user;
+  } catch (error) {
+    console.error("Error updating user in DB:", error);
+    throw new Error(error.message);
   }
-
-  return user;
 };
 
 const getAllUsers = async () => {
@@ -205,6 +212,21 @@ const changePassword = async (userId, oldPassword, newPassword) => {
   }
 };
 
+const getUserByRole = async (role) => {
+  if (!role) {
+    throw new Error("Role is required");
+    return;
+  }
+
+  try {
+    const user = await User.find({ role });
+
+    return user;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -215,4 +237,5 @@ module.exports = {
   getUserById,
   getAllUsers,
   changePassword,
+  getUserByRole,
 };
