@@ -12,7 +12,6 @@ passport.use(
     },
     async (request, accessToken, refreshToken, profile, done) => {
       try {
-        // console.log("User profile received from Google:", profile);
         const roleUser = request.query.state;
         console.log("Role received on server:", roleUser);
 
