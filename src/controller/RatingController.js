@@ -5,7 +5,7 @@ const ObjectId = mongoose.Types.ObjectId;
 class RatingController {
 
     async addRating(req, res, next) {
-        const { userId, rating, reviewerId } = req.body;
+        const { userId, rating, reviewerId, comment } = req.body;
 
         // Kiểm tra rating phải nằm trong khoảng hợp lệ (1-5)
         if (rating < 1 || rating > 5) {
@@ -29,7 +29,11 @@ class RatingController {
             }
 
             // Nếu chưa có đánh giá từ reviewer, thêm đánh giá mới
-            user.ratings.push({ value: rating, reviewerId });
+            user.ratings.push({
+                value: rating,
+                reviewerId,
+                comment: comment || ''  // Nếu không có comment thì mặc định là chuỗi rỗng
+            });
 
             // Tính lại rating trung bình
             const totalRating = user.ratings.reduce((acc, r) => acc + r.value, 0);
@@ -45,39 +49,43 @@ class RatingController {
 
     // Cập nhật đánh giá (rating) của một reviewer đã tồn tại
     async updateRating(req, res, next) {
-        const { userId, newRating, reviewerId } = req.body;
+        const { userId, rating, reviewerId, comment } = req.body;
 
-        // Kiểm tra xem rating mới có nằm trong khoảng 1-5 không
-        if (newRating < 1 || newRating > 5) {
+        // Kiểm tra rating phải nằm trong khoảng hợp lệ (1-5)
+        if (rating < 1 || rating > 5) {
             res.status(400);
             return res.json({ message: 'Rating must be between 1 and 5' });
         }
 
-        await User.findById(userId)
-            .then(user => {
-                if (!user) {
-                    res.status(404);
-                    return res.json({ message: 'User not found' });
-                }
+        try {
+            const user = await User.findById(userId);
 
-                // Tìm và cập nhật đánh giá của reviewer
-                const ratingIndex = user.ratings.findIndex(r => r.reviewerId.toString() === reviewerId);
-                if (ratingIndex === -1) {
-                    res.status(404);
-                    return res.json({ message: 'Rating not found for this reviewer' });
-                }
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
 
-                // Cập nhật rating
-                user.ratings[ratingIndex].value = newRating;
+            // Kiểm tra nếu reviewer đã đánh giá trước đó
+            const existingRating = user.ratings.find(r => r.reviewerId.toString() === reviewerId);
 
-                // Tính lại rating trung bình
-                const totalRating = user.ratings.reduce((acc, r) => acc + r.value, 0);
-                user.averageRating = totalRating / user.ratings.length;
+            if (!existingRating) {
+                // Nếu chưa có đánh giá trước đó, trả về thông báo lỗi
+                return res.status(400).json({ message: 'Rating not found. Use addRating to create a new rating.' });
+            }
 
-                return user.save();
-            })
-            .then(updatedUser => res.json({ message: 'Rating updated successfully', user: updatedUser }))
-            .catch(err => res.status(500).json({ message: 'Error updating rating', error: err }));
+            // Cập nhật giá trị của rating và comment
+            existingRating.value = rating;
+            existingRating.comment = comment || existingRating.comment;  // Nếu không có comment mới, giữ nguyên comment cũ
+
+            // Tính lại rating trung bình
+            const totalRating = user.ratings.reduce((acc, r) => acc + r.value, 0);
+            user.averageRating = totalRating / user.ratings.length;
+
+            // Lưu lại user sau khi cập nhật
+            const updatedUser = await user.save();
+            return res.json({ message: 'Rating updated successfully', user: updatedUser });
+        } catch (err) {
+            return res.status(500).json({ message: 'Error updating rating', error: err });
+        }
     }
 }
 module.exports = new RatingController();
