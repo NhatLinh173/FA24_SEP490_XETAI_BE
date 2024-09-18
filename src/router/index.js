@@ -13,6 +13,7 @@ const router = (app) => {
   app.use("/payment", paymentRouter);
   app.use("/rating",ratingRouter);
   app.use("/favorites", favoritesRouter);
+  app.use("/driver", favoritesRouter);
 };
 
 module.exports = router;

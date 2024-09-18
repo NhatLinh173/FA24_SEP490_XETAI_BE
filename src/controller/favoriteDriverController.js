@@ -48,4 +48,30 @@ const getFavorite = async (req, res) => {
   }
 };
 
-module.exports = { addFavorite, removeFavorite, getFavorite };
+const getDriverDetailsController = async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    const driverDetails = await favoriteDriverService.getDriverDetails(userId);
+    res.status(200).json({
+      message: "Driver details retrieved successfully!!!",
+      driverDetails,
+    });
+  } catch (error) {
+    console.error(error);
+    if (
+      error.message === "User not found" ||
+      error.message === "Driver not found"
+    ) {
+      res.status(404).json({ message: error.message });
+    } else {
+      res.status(500).json({ message: "An error occurred" });
+    }
+  }
+};
+
+module.exports = {
+  addFavorite,
+  removeFavorite,
+  getFavorite,
+  getDriverDetailsController,
+};

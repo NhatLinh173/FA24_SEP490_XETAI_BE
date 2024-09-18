@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../model/userModel");
-const cloudinary = require("../config/cloudinaryConfig");
+const Driver = require("../model/driverModel");
 const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
 dotenv.config();
@@ -44,6 +44,13 @@ const registerUser = async ({
     throw new Error("Failed to register user");
   }
 
+  if (role === "business" || role === "personal") {
+    const driver = await Driver.create({
+      userId: user._id,
+      fullName: user.fullName,
+    });
+  }
+
   const accessTokenExpiration = "1h";
   const refreshTokenExpiration = "7d";
 
@@ -61,6 +68,7 @@ const registerUser = async ({
     role: user.role,
   };
 };
+
 const loginUser = async (email, password) => {
   const user = await User.findOne({ email });
 
@@ -82,13 +90,22 @@ const loginUser = async (email, password) => {
   user.refreshToken = refreshToken;
   await user.save();
 
-  return {
+  const response = {
     _id: user._id,
     email: user.email,
     accessToken,
     refreshToken,
     role: user.role,
   };
+
+  if (user.role === "personal" || user.role === "business") {
+    const driver = await Driver.findOne({ userId: user._id });
+    if (driver) {
+      response.driverId = driver._id;
+    }
+  }
+
+  return response;
 };
 
 const refreshUserToken = async (refreshToken) => {
