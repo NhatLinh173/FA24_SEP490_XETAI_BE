@@ -16,7 +16,10 @@ class PostController {
                 }
             )
             .catch(
-                (err) => res.json(err)
+                (err) => res.status(400).json({ // Trả về status 400 (Bad Request) nếu lỗi do validation
+                    message: 'Validation error',
+                    error: err.message
+                })
             )
     }
     async updatePost(req, res, next) { //sửa bài post
@@ -46,7 +49,10 @@ class PostController {
                         )
                         .catch(
                             (err) => {
-                                res.json(err);
+                                res.status(400).json({ // Trả về status 400 (Bad Request) nếu lỗi do validation
+                                    message: 'Validation error',
+                                    error: err.message
+                                })
                             }
                         )
                 }
