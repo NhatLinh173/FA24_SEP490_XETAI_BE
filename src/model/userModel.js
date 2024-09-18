@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
-  
+  businessName: { type: String, default: null },
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {

@@ -1,5 +1,6 @@
 const FavoriteDrivers = require("../model/favoriteDriver");
 const User = require("../model/userModel");
+const Driver = require("../model/driverModel");
 
 const addFavoriteDriver = async (userId, driverId) => {
   if (!userId || !driverId) {
@@ -8,10 +9,13 @@ const addFavoriteDriver = async (userId, driverId) => {
 
   try {
     const user = await User.findById(userId);
-    const driver = await User.findById(driverId);
+    if (!user) {
+      throw new Error("User not found");
+    }
 
-    if (!user || !driver) {
-      throw new Error("User or Driver not found");
+    const driver = await User.findById(driverId);
+    if (!driver) {
+      throw new Error("Driver not found");
     }
 
     const existingFavorites = await FavoriteDrivers.findOne({
@@ -52,15 +56,40 @@ const getFavoriteDrivers = async (userId) => {
   try {
     return await FavoriteDrivers.findOne({ userId }).populate(
       "driverId",
-      "fullName avatar"
+      "fullName avatar phone"
     );
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
+const getDriverDetails = async (userId) => {
+  const user = await User.findById(userId);
+  if (!userId) {
+    throw new Error("User not found");
+  }
+
+  const driver = await Driver.findOne({ userId: userId });
+  if (!driver) {
+    throw new Error("Driver not found");
+  }
+
+  return {
+    email: user.email,
+    phone: user.phone,
+    address: user.address,
+    avatar: user.avatar,
+    fullName: user.fullName,
+    tripsThisWeek: driver.tripsThisWeek,
+    tripsThisWeek: driver.tripsThisWeek,
+    rating: driver.rating,
+    vehicle: driver.vehicle,
+  };
+};
+
 module.exports = {
   addFavoriteDriver,
   removeFavoriteDriver,
   getFavoriteDrivers,
+  getDriverDetails,
 };

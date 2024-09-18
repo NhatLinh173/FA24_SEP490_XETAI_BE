@@ -11,6 +11,7 @@ const router = (app) => {
   app.use("/search", searchRouter);
   app.use("/payment", paymentRouter);
   app.use("/favorites", favoritesRouter);
+  app.use("/driver", favoritesRouter);
 };
 
 module.exports = router;

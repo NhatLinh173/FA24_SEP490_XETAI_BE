@@ -11,6 +11,7 @@ const register = async (req, res) => {
       .status(400)
       .json({ message: "You need fill full information when you register" });
   }
+
   try {
     const user = await authService.registerUser({
       email,
@@ -81,10 +82,9 @@ const blockUser = async (req, res) => {
 };
 
 const facebookAuth = (req, res, next) => {
-  const role = req.query.state;
   passport.authenticate("facebook", {
-    scope: ["email", "profile"],
-    state: role,
+    scope: ["email"],
+    state: req.query.state,
   })(req, res, next);
 };
 
@@ -128,39 +128,30 @@ const googleAuthCallback = (req, res, next) => {
 
       const role = req.query.state;
 
-      console.log("Role in callback:", role);
-
       res.redirect(`http://localhost:3006/?token=${token}`);
     });
   })(req, res, next);
 };
 
 const facebookAuthCallback = (req, res, next) => {
-  passportFacebook.authenticate("facebook", (err, user, info) => {
+  passport.authenticate("facebook", (err, user, info) => {
     if (err) {
-      return res.redirect(
-        "http://localhost:3006/error?message=" + encodeURIComponent(err.message)
-      );
+      return res.redirect(`/error?message=${encodeURIComponent(err.message)}`);
     }
     if (!user) {
-      return res.redirect(
-        "http://localhost:3006/error?message=Authentication Failed"
-      );
+      return res.redirect(`/error?message=Authentication Failed`);
     }
     req.logIn(user, (err) => {
       if (err) {
         return res.redirect(
-          "http://localhost:3006/error?message=" +
-            encodeURIComponent(err.message)
+          `/error?message=${encodeURIComponent(err.message)}`
         );
       }
 
       const token = jwt.sign(
         { id: user._id, role: user.role },
         process.env.JWT_SECRET,
-        {
-          expiresIn: "1h",
-        }
+        { expiresIn: "1h" }
       );
 
       res.cookie("token", token, {
@@ -168,8 +159,6 @@ const facebookAuthCallback = (req, res, next) => {
         secure: process.env.NODE_ENV === "production",
         maxAge: 1000 * 60 * 60 * 24 * 7,
       });
-
-      const role = req.query.state;
 
       res.redirect(`http://localhost:3006/?token=${token}`);
     });

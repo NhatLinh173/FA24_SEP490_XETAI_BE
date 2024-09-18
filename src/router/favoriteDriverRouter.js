@@ -8,5 +8,9 @@ router.post("/add", favoriteDriverController.addFavorite);
 router.post("/remove", favoriteDriverController.removeFavorite);
 // http://localhost:3005/favorites/:userId
 router.get("/:userId", favoriteDriverController.getFavorite);
-
+// http://localhost:3005/driver/:userId
+router.get(
+  "/details/:userId",
+  favoriteDriverController.getDriverDetailsController
+);
 module.exports = router;
