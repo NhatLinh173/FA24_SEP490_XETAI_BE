@@ -41,6 +41,8 @@ class PostController {
                     updatePost.price  = bodyData.price; //giá tiền
                     updatePost.isLock = bodyData.isLock; //khóa
                     updatePost.isFinish = bodyData.isFinish;  //hoàn thành chưa (hoàn thành r thì t ẩn )
+                    updatePost.status = bodyData.status //status
+                    updatePost.driver = bodyData.driver //driver
                     updatePost.save()
                         .then(
                             (updatePost) => {
