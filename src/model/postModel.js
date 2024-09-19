@@ -2,6 +2,8 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema;
 const User = require('./userModel')
 const Category = require('./categoryModel')
+const Driver = require('./driverModel')
+
 
 const Comment = new Schema({
         _id: {
@@ -73,6 +75,10 @@ const Post = new Schema({
             type: Schema.Types.ObjectId,
             ref: 'User'
         },
+        driver: {
+            type: Schema.Types.ObjectId,
+            ref: 'Driver'
+        },
         orderer: { //thông tin người đặt
             type: Schema.Types.ObjectId,
             ref: 'User'
@@ -85,6 +91,12 @@ const Post = new Schema({
             type: Boolean,
             default: false
         },
+        status: {
+            type: String,
+            enum: ['wait', 'approve', 'inprogress', 'finish', 'cancel'], // Giới hạn các giá trị có thể nhận
+            default: 'wait',  // Giá trị mặc định ban đầu
+          }
+
         
     },
     {
