@@ -31,12 +31,10 @@ const driverSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  rating: {
+  averageRating: {
     type: Number,
-    default: 0,
-    min: 0,
-    max: 5,
-  },
+    default: 0
+},
   tripsCompleted: {
     type: Number,
     default: 0,

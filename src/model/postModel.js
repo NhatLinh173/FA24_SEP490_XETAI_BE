@@ -73,6 +73,10 @@ const Post = new Schema({
             type: Schema.Types.ObjectId,
             ref: 'User'
         },
+        orderer: { //thông tin người đặt
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
         isLock: { //Khóa hoặc mở bài đăng (ẩn hoặc hiện)
             type: Boolean,
             default: false

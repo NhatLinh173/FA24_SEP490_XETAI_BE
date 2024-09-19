@@ -10,6 +10,6 @@ router.put("/",RatingController.updateRating);
 router.get('/my-ratings/:userId', RatingController.getMyRatings);
 
 // Lấy danh sách mình đã đánh giá người khác
-router.get('/ratings-given/:reviewerId', RatingController.getRatingsGivenByMe);
+router.get('/ratings-given/:reviewerId', RatingController.getRatingsGivenByUser);
 
 module.exports = router;
