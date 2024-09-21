@@ -8,13 +8,14 @@ function removeVietnameseTones(str) {
     return str;
 }
 
-const removeVietnameseTones2 = (str) => {
+function removeVietnameseTones2(str) {
     return str
-        .normalize('NFD') // Chuẩn hóa chuỗi
-        .replace(/[\u0300-\u036f]/g, '') // Loại bỏ các dấu
-        .replace(/đ/g, 'd') // Chuyển chữ "đ" thành "d"
-        .replace(/Đ/g, 'D');
-};
+        .normalize("NFD") // Chuyển ký tự tiếng Việt thành dạng tổ hợp
+        .replace(/[\u0300-\u036f]/g, "") // Loại bỏ các dấu kết hợp
+        .replace(/đ/g, 'd') // Thay thế ký tự đ thành d
+        .replace(/Đ/g, 'D')
+        .toLowerCase(); // Đảm bảo tất cả đều là chữ thường
+}
 
 class SearchController {
 
@@ -76,32 +77,33 @@ class SearchController {
    
     
     async searchByStartPointAndDestination(req, res, next) {
-        const { startPoint, destination } = req.query; // Lấy startPoint và destination từ query params
-        var page = req.query.page || 1;
-        var limitPage = 8;
+        const { startPoint, destination } = req.query;
+        const page = parseInt(req.query.page) || 1; // Số trang, mặc định là trang 1
+        const limitPage = 8; // Số lượng bài post mỗi trang
     
-        // Xây dựng điều kiện tìm kiếm động
-        let searchConditions = {};
+        // Tạo object chứa điều kiện tìm kiếm
+        const filters = {};
     
+        // Nếu có startPoint, thêm điều kiện tìm kiếm với biểu thức chính quy không dấu
         if (startPoint) {
-            const processedStartPoint = removeVietnameseTones2(startPoint); // Xử lý loại bỏ dấu
-            searchConditions.startPoint = { $regex: processedStartPoint, $options: 'i' }; // Tìm kiếm không phân biệt hoa thường
+            const normalizedStartPoint = removeVietnameseTones2(startPoint);
+            filters.startPoint = { $regex: new RegExp(normalizedStartPoint, 'i') };
         }
     
+        // Nếu có destination, thêm điều kiện tìm kiếm với biểu thức chính quy không dấu
         if (destination) {
-            const processedDestination = removeVietnameseTones2(destination); // Xử lý loại bỏ dấu
-            searchConditions.destination = { $regex: processedDestination, $options: 'i' }; // Tìm kiếm không phân biệt hoa thường
+            const normalizedDestination = removeVietnameseTones2(destination);
+            filters.destination = { $regex: new RegExp(normalizedDestination, 'i') };
         }
     
         try {
-            // Đếm tổng số bài viết dựa trên điều kiện tìm kiếm
-            const totalPosts = await Post.countDocuments(searchConditions);
+            // Đếm tổng số bài viết theo điều kiện
+            const totalPosts = await Post.countDocuments(filters);
             const maxPage = Math.ceil(totalPosts / limitPage);
     
-            // Tìm tất cả các post dựa trên điều kiện tìm kiếm, phân trang
-            const posts = await Post
-                .find(searchConditions)
-                .sort({ createdAt: -1 })
+            // Tìm kiếm bài viết dựa trên điều kiện với phân trang
+            const posts = await Post.find(filters)
+                .sort({ createdAt: -1 }) // Sắp xếp bài đăng mới nhất lên đầu
                 .skip((page - 1) * limitPage)
                 .limit(limitPage)
                 .populate({
@@ -109,18 +111,17 @@ class SearchController {
                     select: 'firstName lastName'
                 });
     
-            if (posts.length === 0) {
-                return res.status(404).json({ message: 'Không có bài viết nào phù hợp' });
-            }
-    
             res.json({
-                salePosts: posts,
+                message: 'Danh sách bài đăng tìm kiếm theo địa chỉ',
+                posts: posts,
+                currentPage: page,
+                totalPosts: totalPosts,
                 maxPage: maxPage
             });
         } catch (err) {
             res.status(500).json({
-                message: 'Lỗi khi tìm bài viết',
-                error: err
+                message: 'Lỗi khi tìm kiếm bài đăng',
+                error: err.message
             });
         }
     }
