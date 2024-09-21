@@ -43,6 +43,7 @@ class PostController {
                     updatePost.isFinish = bodyData.isFinish;  //hoàn thành chưa (hoàn thành r thì t ẩn )
                     updatePost.status = bodyData.status //status
                     updatePost.driver = bodyData.driver //driver
+                    updatePost.creator = bodyData.creator //creator, t thấy chỗ ni update ng tạo rg rg mà thui thêm vô ưa thì dùng k thì kệ
                     updatePost.save()
                         .then(
                             (updatePost) => {
@@ -281,6 +282,44 @@ class PostController {
                 });
             }
         );
+    }
+
+    async showPostByUserIdAndStatus(req, res, next) { 
+        const userId = req.params.idUser; 
+        const status = req.query.status; // lấy status từ query parameter  ví dụ: ?status=approve
+        var page = req.query.page || 1;
+        var limitPage = 8;
+    
+        try {
+            // Đếm tổng số bài viết dựa trên userId và status
+            var totalPosts = await Post.countDocuments({ creator: userId, status: status });
+            var maxPage = Math.ceil(totalPosts / limitPage);
+    
+            // Tìm tất cả các post dựa trên userId và status, phân trang
+            const posts = await Post
+                .find({ creator: userId, status: status })
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limitPage)
+                .limit(limitPage)
+                .populate({
+                    path: 'creator',
+                    select: 'firstName lastName'
+                });
+    
+            if (posts.length === 0) {
+                return res.status(404).json({ message: 'Không có bài viết nào' });
+            }
+    
+            res.json({
+                salePosts: posts,
+                maxPage: maxPage
+            });
+        } catch (err) {
+            res.status(500).json({
+                message: 'Lỗi khi tìm bài viết',
+                error: err
+            });
+        }
     }
 
     
