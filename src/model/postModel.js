@@ -47,11 +47,11 @@ const Post = new Schema({
             ref: 'Category', 
             required: true 
         },
-        startPoint: { //điạ chỉ nhận hàng
+        startPoint: { //điạ chỉ lấy hàng chi tiết
             type: String,
             required: true
         },
-        destination: { //địa chỉ giao hàng
+        destination: { //địa chỉ giao hàng chi tiết
             type: String,
             required: true
         },
@@ -95,7 +95,18 @@ const Post = new Schema({
             type: String,
             enum: ['wait', 'approve', 'inprogress', 'finish', 'cancel'], // Giới hạn các giá trị có thể nhận
             default: 'wait',  // Giá trị mặc định ban đầu
-          }
+        },
+        deliveryTime: { //thời gian giao hàng dự kiến
+            type: Date,
+        },
+        startPointCity: { //TP/tỉnh nơi lấy hàng
+            type: String,
+            required: true
+        },
+        destinationCity: { //TP/tỉnh nơi nhận hàng
+            type: String,
+            required: true
+        },
 
         
     },
