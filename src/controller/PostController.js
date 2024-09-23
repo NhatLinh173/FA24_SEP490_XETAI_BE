@@ -249,8 +249,9 @@ class PostController {
             )
             .catch(
                 (error) => {
-                    res.json({
-                        error: error
+                    res.status(400).json({ // Trả về status 400 (Bad Request) nếu lỗi do validation
+                        message: 'Validation error',
+                        error: err.message
                     })
                 }
             );
