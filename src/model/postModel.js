@@ -75,7 +75,7 @@ const Post = new Schema({
             type: Schema.Types.ObjectId,
             ref: 'User'
         },
-        driver: {
+        driver: { //TRƯỜNG NÀY SẮP BỎ ĐI RỒI =9
             type: Schema.Types.ObjectId,
             ref: 'Driver'
         },

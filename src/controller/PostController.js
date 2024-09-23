@@ -42,8 +42,11 @@ class PostController {
                     updatePost.isLock = bodyData.isLock; //khóa
                     updatePost.isFinish = bodyData.isFinish;  //hoàn thành chưa (hoàn thành r thì t ẩn )
                     updatePost.status = bodyData.status //status
-                    updatePost.driver = bodyData.driver //driver
+                    updatePost.driver = bodyData.driver //driver    TRƯỜNG NÀY SẮP BỎ ĐI RỒI =9 TRƯỜNG NAY SẮP BỎ ĐI RỒI =9 TRƯỜNG NAY SẮP BỎ ĐI RỒI =9
                     updatePost.creator = bodyData.creator //creator, t thấy chỗ ni update ng tạo rg rg mà thui thêm vô ưa thì dùng k thì kệ
+                    updatePost.deliveryTime = bodyData.deliveryTime //thời gian giao hàng dự kiến
+                    updatePost.startPointCity = bodyData.startPointCity  //thành phố OR tỉnh lấy hàng
+                    updatePost.startPointCity = bodyData.startPointCity  //thành phố OR giao hàng
                     updatePost.save()
                         .then(
                             (updatePost) => {
