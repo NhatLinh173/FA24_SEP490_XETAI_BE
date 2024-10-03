@@ -77,23 +77,23 @@ class SearchController {
    
     
     async searchByStartPointAndDestination(req, res, next) {
-        const { startPoint, destination } = req.query;
+        const { startPointCity, destinationCity } = req.query;
         const page = parseInt(req.query.page) || 1; // Số trang, mặc định là trang 1
         const limitPage = 8; // Số lượng bài post mỗi trang
     
         // Tạo object chứa điều kiện tìm kiếm
         const filters = {};
     
-        // Nếu có startPoint, thêm điều kiện tìm kiếm với biểu thức chính quy không dấu
-        if (startPoint) {
-            const normalizedStartPoint = removeVietnameseTones2(startPoint);
-            filters.startPoint = { $regex: new RegExp(normalizedStartPoint, 'i') };
+        // Nếu có startPointCity, thêm điều kiện tìm kiếm với biểu thức chính quy không dấu
+        if (startPointCity) {
+            const normalizedStartPoint = removeVietnameseTones2(startPointCity);
+            filters.startPointCity = { $regex: new RegExp(normalizedStartPoint, 'i') };
         }
     
-        // Nếu có destination, thêm điều kiện tìm kiếm với biểu thức chính quy không dấu
-        if (destination) {
-            const normalizedDestination = removeVietnameseTones2(destination);
-            filters.destination = { $regex: new RegExp(normalizedDestination, 'i') };
+        // Nếu có destinationCity, thêm điều kiện tìm kiếm với biểu thức chính quy không dấu
+        if (destinationCity) {
+            const normalizedDestination = removeVietnameseTones2(destinationCity);
+            filters.destinationCity = { $regex: new RegExp(normalizedDestination, 'i') };
         }
     
         try {
