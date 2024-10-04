@@ -105,7 +105,7 @@ const Post = new Schema(
     },
     status: {
       type: String,
-      enum: ["wait", "approve", "inprogress", "finish", "cancel"], // Giới hạn các giá trị có thể nhận
+      enum: ["wait", "approve", "inprogress", "finish", "cancel", "hide"], // Giới hạn các giá trị có thể nhận
       default: "wait", // Giá trị mặc định ban đầu
     },
     deliveryTime: {
