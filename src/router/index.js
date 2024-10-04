@@ -6,6 +6,7 @@ const paymentRouter = require("./payment");
 const ratingRouter = require("./rating");
 const favoritesRouter = require("./favoriteDriverRouter");
 const notificationsRouter = require("./notification");
+const dealPriceRouter = require("./dealPrice");
 const router = (app) => {
   app.use("/auth", userRouter);
   app.use("/posts", postsRouter);
@@ -16,6 +17,7 @@ const router = (app) => {
   app.use("/favorites", favoritesRouter);
   app.use("/driver", favoritesRouter);
   app.use("/notifications", notificationsRouter);
+  app.use("/dealPrice", dealPriceRouter);
 };
 
 module.exports = router;
