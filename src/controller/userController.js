@@ -276,7 +276,18 @@ const getUserByRoleController = async (req, res) => {
   }
 };
 
+const searchUsersController = async (req, res) => {
+  const { email } = req.query;
+  try {
+    const users = await authService.searchUser(email);
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "An error occurred" });
+  }
+};
+
 module.exports = {
+  searchUsersController,
   facebookAuth,
   facebookAuthCallback,
   getUserById,
