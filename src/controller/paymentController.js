@@ -18,8 +18,8 @@ const createPaymentLink = async (req, res) => {
     orderCode: Number(String(new Date().getTime()).slice(-6)),
     amount: totalPrice,
     description,
-    cancelUrl: "http://localhost:3006/error",
-    returnUrl: "http://localhost:3006/",
+    cancelUrl: "http://localhost:3006/payment/failed",
+    returnUrl: "http://localhost:3006/payment/success",
     orderCodeStatus,
   };
 

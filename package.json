@@ -11,13 +11,14 @@
   "description": "",
   "dependencies": {
     "@payos/node": "^1.0.8",
+    "@vonage/server-sdk": "^3.17.0",
     "bcrypt": "^5.1.1",
-    "body-parser": "^1.20.2",
+    "body-parser": "^1.20.3",
     "cloudinary": "^2.4.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "express": "^4.21.0",
     "express-session": "^1.18.0",
     "fa24_xetai": "file:",
     "firebase": "^10.13.0",
@@ -28,10 +29,13 @@
     "mongoose": "^8.5.3",
     "mongoose-slug-updater": "^3.3.0",
     "multer": "^1.4.5-lts.1",
+    "nexmo": "^2.9.1",
+    "nodemailer": "^6.9.15",
     "nodemon": "^3.1.4",
     "passport": "^0.7.0",
     "passport-facebook": "^3.0.0",
     "passport-google-oauth2": "^0.2.0",
+    "socket.io": "^4.8.0",
     "telesignsdk": "^3.0.0"
   }
 }
