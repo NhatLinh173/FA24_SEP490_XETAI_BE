@@ -10,6 +10,7 @@ const sms = require("./sms");
 const sendEmailRouter = require("./emailRouter");
 const conversationRouter = require("./conversationRouter");
 const dealPriceRouter = require("./dealPrice");
+const carRegistrationRouter = require("./carRegistration");
 
 const router = (app) => {
   app.use("/auth", userRouter);
@@ -25,7 +26,7 @@ const router = (app) => {
   app.use("/send", sendEmailRouter);
   app.use("/conversation", conversationRouter);
   app.use("/dealPrice", dealPriceRouter);
-
+  app.use("/car", carRegistrationRouter);
 };
 
 module.exports = router;

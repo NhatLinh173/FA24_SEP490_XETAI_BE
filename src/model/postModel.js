@@ -36,22 +36,22 @@ const Post = new Schema(
       type: String,
       required: true,
     },
-    images: {
-      type: [String],
-      required: true,
-    },
+    // images: {
+    //   type: [String],
+    //   required: true,
+    // },
 
     load: {
       //trọng lượng hàng
       type: String,
       required: true,
     },
-    category: {
-      //loại xe
-      type: Schema.Types.ObjectId,
-      ref: "Category",
-      required: true,
-    },
+    // category: {
+    //   //loại xe
+    //   type: Schema.Types.ObjectId,
+    //   ref: "Category",
+    //   required: true,
+    // },
     startPoint: {
       //điạ chỉ lấy hàng chi tiết
       type: String,
@@ -83,10 +83,10 @@ const Post = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    driver: {
-      //TRƯỜNG NÀY SẮP BỎ ĐI RỒI =9
+    dealId: {
       type: Schema.Types.ObjectId,
-      ref: "Driver",
+      ref: "Deal",
+      default: null,
     },
     orderer: {
       //Id của người đặt (của cái account dùng để đặt ấy )

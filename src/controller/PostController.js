@@ -143,6 +143,17 @@ class PostController {
       //         select: 'username fullname'
       //     }
       // })
+      .populate({
+        path: "dealId",
+        populate: {
+          path: "driverId",
+          model: "Driver",
+          populate: {
+            path: "userId",
+            model: "User",
+          },
+        },
+      })
       .then((salePost) => {
         res.json(salePost);
       })
