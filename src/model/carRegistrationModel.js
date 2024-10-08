@@ -11,7 +11,10 @@ const CarRegistration = new Schema(
     description: {
       type: String,
     },
-    image: {
+    imageCar: {
+      type: [String],
+    },
+    imageRegistration: {
       type: [String],
     },
     driverId: {
