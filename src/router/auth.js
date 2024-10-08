@@ -14,6 +14,7 @@ const {
   updateUserController,
   changePasswordUser,
   getUserByRoleController,
+  searchUsersController,
 } = require("../controller/userController");
 const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -43,5 +44,7 @@ router.put("/update-user/:id", upload.single("avatar"), updateUserController);
 router.put("/change-password", authMiddleware, changePasswordUser);
 // http://localhost:3005/auth/role/:role
 router.get("/role/:role", getUserByRoleController);
+// http://localhost:3005/auth/search
+router.get("/search", searchUsersController);
 
 module.exports = router;

@@ -244,7 +244,27 @@ const getUserByRole = async (role) => {
   }
 };
 
+const searchUser = async (email) => {
+  if (!email) {
+    throw new Error("Email is required");
+    return;
+  }
+
+  try {
+    const users = await User.find({
+      email: { $regex: new RegExp(email, "i") },
+    });
+    if (!users) {
+      throw new Error("User not found");
+    }
+    return users;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
+  searchUser,
   registerUser,
   loginUser,
   refreshUserToken,
