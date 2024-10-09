@@ -94,39 +94,26 @@ class PostController {
   }
 
   async showPost(req, res, next) {
-    //xuất hết tất cả bài post (theo thứ tự do database, chưa đi kèm random  )
-    console.log("Fetching  posts...");
-    var page = req.query.page || 1;
-    var limitPage = 8;
-    var totalPosts = await Post.countDocuments();
-    console.log("Total posts:", totalPosts);
-    var maxPage = Math.ceil(totalPosts / limitPage);
+    // Xuất hết tất cả bài post (theo thứ tự do database, chưa đi kèm random)
+    console.log("Fetching posts...");
     await Post.find({ isLock: false, isFinish: false })
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limitPage)
-      .limit(limitPage)
       .populate({
         path: "creator",
         select: "firstName lastName",
       })
-      // .populate({
-      //     path: 'comments',
-      //     populate: {
-      //         path: 'userComment',
-      //         model: 'User',
-      //         select: 'firstName lastName'
-      //     }
-      // })
       .then((salePosts) => {
-        res.json({
+        res.status(200).json({
           salePosts: salePosts,
-          maxPage: maxPage,
         });
       })
       .catch((err) => {
-        res.json(err);
+        res.status(500).json({
+          message: "Error fetching posts",
+          error: err
       });
-  }
+      });
+}
   async getOne(req, res, next) {
     //lấy 1 theo id của bài post
     const id = req.params.idPost;
