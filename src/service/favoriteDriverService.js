@@ -81,9 +81,11 @@ const getDriverDetails = async (userId) => {
     avatar: user.avatar,
     fullName: user.fullName,
     tripsThisWeek: driver.tripsThisWeek,
-    tripsThisWeek: driver.tripsThisWeek,
+    tripsThisMonth: driver.tripsThisMonth,
     rating: driver.rating,
-    vehicle: driver.vehicle,
+    vehicleType: driver.vehicleType,
+    vehicleName: driver.vehicleName,
+    tripsCompleted: driver.tripsCompleted,
   };
 };
 

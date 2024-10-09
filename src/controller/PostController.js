@@ -167,7 +167,11 @@ class PostController {
     const slugId = req.params.idslug;
     console.log(slugId);
     try {
-      const category = await Category.find({ _id: slugId, isLock: false, isFinish: false });
+      const category = await Category.find({
+        _id: slugId,
+        isLock: false,
+        isFinish: false,
+      });
 
       if (!category) {
         res.status(404).json({ error: "Category not found" });
@@ -267,7 +271,10 @@ class PostController {
 
     try {
       // Đếm tổng số bài viết dựa trên userId và status
-      var totalPosts = await Post.countDocuments({ creator: userId, status: status });
+      var totalPosts = await Post.countDocuments({
+        creator: userId,
+        status: status,
+      });
       var maxPage = Math.ceil(totalPosts / limitPage);
 
       // Tìm tất cả các post dựa trên userId và status, phân trang
