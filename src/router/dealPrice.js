@@ -22,7 +22,7 @@ router.get("/singleDeal", getDealById);
 router.patch("/price", updateDealPrice);
 
 // Route để cập nhật trạng thái Deal
-router.patch("/status", updateDealStatus);
+router.patch("/status/:postId", updateDealStatus);
 
 // Route để xoá Deal
 router.delete("/", deleteDeal);
