@@ -13,4 +13,5 @@ router.delete("/:idPost", postController.deletePost);
 router.put("/:idPost/comments", postController.addComment); //CHƯA LÀM
 router.get("/related/:idCategory", postController.getRelated); //lấy ngẫu nhiên 5 cái có chung category của bài post đang xem
 router.get("/:idUser/users/history", postController.showHistory);
+router.patch("/time/:idPost", postController.setTimes);
 module.exports = router;

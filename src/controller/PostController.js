@@ -9,9 +9,7 @@ const ObjectId = mongoose.Types.ObjectId;
 class PostController {
   async createPost(req, res, next) {
     const salePostDataBody = req.body;
-    console.log(salePostDataBody);
-    const  images  = req.files;
-    console.log(images);
+    const images = req.files;
 
     if (!salePostDataBody || !images) {
       return res.status(400).json({ message: "Invalid information" });
@@ -54,7 +52,7 @@ class PostController {
     try {
       const id = req.params.idPost;
       const bodyData = req.body;
-      const { images } = req.files;
+      const images = req.files;
   
       const updatePost = await Post.findOne({ _id: id });
       if (!updatePost) {
@@ -347,6 +345,25 @@ class PostController {
         message: "Error fetching posts",
         error: err
       });
+    }
+  }
+
+  async setTimes(req, res, next) {
+    const id = req.params.idPost;
+    const { startTime, endTime } = req.body;
+
+    try {
+      const post = await Post.findById(id);
+      if (!post) {
+        res.status(400).json({message: "Post not found"});
+      }
+      post.startTime = startTime;
+      post.endTime = endTime;
+
+      const updatePost = await post.save();
+      res.status(200).json({updatePost: updatePost});
+    } catch (err) {
+      res.status(500).json({message: err.message});
     }
   }
   
