@@ -2,39 +2,87 @@ const Post = require("../model/postModel");
 const Comment = require("../model/postModel");
 const Category = require("../model/categoryModel");
 const mongoose = require("mongoose");
+const cloudinary = require("../config/cloudinaryConfig");
+
 const ObjectId = mongoose.Types.ObjectId;
 //tạo post , thêm comment
 class PostController {
   async createPost(req, res, next) {
-    //đăng bài post
     const salePostDataBody = req.body;
-    const newPost = new Post(salePostDataBody);
-    await newPost
-      .save()
-      .then((savedPost) => {
-        res.json(savedPost);
-      })
-      .catch((err) =>
-        res.status(400).json({
-          // Trả về status 400 (Bad Request) nếu lỗi do validation
-          message: "Validation error",
-          error: err.message,
-        })
-      );
+    console.log(salePostDataBody);
+    const  images  = req.files;
+    console.log(images);
+
+    if (!salePostDataBody || !images) {
+      return res.status(400).json({ message: "Invalid information" });
+    }
+
+    try {
+      let imageUrls = [];
+      if (images && images.length > 0) {
+        const uploadImagePromises = images.map((file) => {
+          return new Promise((resolve, reject) => {
+            cloudinary.uploader
+              .upload_stream({ folder: "post_images" }, (error, result) => {
+                if (error) {
+                  reject(new Error("Error uploading image to Cloudinary: " + error.message));
+                } else {
+                  resolve(result.secure_url);
+                }
+              })
+              .end(file.buffer);
+          });
+        });
+        imageUrls = await Promise.all(uploadImagePromises);
+      }
+
+      const newPost = new Post({
+        ...salePostDataBody,
+        images: imageUrls,
+      });
+
+      const savedPost = await newPost.save();
+      res.json(savedPost);
+    } catch (err) {
+      res.status(400).json({
+        message: "Unable to create post",
+        error: err.message,
+      });
+    }
   }
   async updatePost(req, res, next) {
     try {
       const id = req.params.idPost;
       const bodyData = req.body;
-
+      const { images } = req.files;
+  
       const updatePost = await Post.findOne({ _id: id });
       if (!updatePost) {
         return res.status(404).json({ message: "Post not found" });
       }
-
+  
+      let imageUrls = updatePost.images; 
+      if (images && images.length > 0) {
+        const uploadImagePromises = images.map((file) => {
+          return new Promise((resolve, reject) => {
+            cloudinary.uploader
+              .upload_stream({ folder: "post_images" }, (error, result) => {
+                if (error) {
+                  reject(new Error("Error uploading image to Cloudinary: " + error.message));
+                } else {
+                  resolve(result.secure_url); 
+                }
+              })
+              .end(file.buffer);
+          });
+        });
+  
+        imageUrls = await Promise.all(uploadImagePromises);
+      }
+  
       updatePost.title = bodyData.title;
       updatePost.detail = bodyData.detail;
-      updatePost.images = bodyData.images;
+      updatePost.images = imageUrls; 
       updatePost.load = bodyData.load;
       updatePost.fullname = bodyData.fullname;
       updatePost.email = bodyData.email;
@@ -49,7 +97,7 @@ class PostController {
       updatePost.deliveryTime = bodyData.deliveryTime;
       updatePost.startPointCity = bodyData.startPointCity;
       updatePost.destinationCity = bodyData.destinationCity;
-
+  
       const savedPost = await updatePost.save();
       return res.json(savedPost);
     } catch (error) {
