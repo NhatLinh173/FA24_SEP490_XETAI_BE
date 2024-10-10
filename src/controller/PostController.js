@@ -122,14 +122,6 @@ class PostController {
         path: "creator",
         select: "firstName lastName",
       })
-      // .populate({
-      //     path: 'comments',
-      //     populate: {
-      //         path: 'userComment',
-      //         model: 'User',
-      //         select: 'username fullname'
-      //     }
-      // })
       .populate({
         path: "dealId",
         populate: {
@@ -282,6 +274,34 @@ class PostController {
       });
     }
   }
+
+  async showHistory(req, res, next) {
+    try {
+      console.log("Fetching posts...");
+      
+      // Lấy các bài post không bị khóa, chưa hoàn thành và có trạng thái "inprogress" hoặc "finish"
+      const salePosts = await Post.find({ 
+        isLock: false, 
+        isFinish: false, 
+        status: { $in: ["inprogress", "finish"] }  // Kiểm tra trạng thái
+      })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "creator",
+        select: "firstName lastName",
+      });
+  
+      res.status(200).json({
+        salePosts: salePosts,
+      });
+    } catch (err) {
+      res.status(500).json({
+        message: "Error fetching posts",
+        error: err
+      });
+    }
+  }
+  
 }
 
 module.exports = new PostController();
