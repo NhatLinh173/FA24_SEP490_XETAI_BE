@@ -43,7 +43,7 @@ const Post = new Schema(
 
     load: {
       //trọng lượng hàng
-      type: String,
+      type: Number,
       required: true,
     },
     // category: {
