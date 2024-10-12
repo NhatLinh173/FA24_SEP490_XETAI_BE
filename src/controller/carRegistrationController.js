@@ -2,10 +2,10 @@ const CarRegistration = require("../model/carRegistrationModel");
 const cloudinary = require("../config/cloudinaryConfig");
 
 const createCarRegistration = async (req, res) => {
-  const { nameCar, description, driverId } = req.body;
+  const { nameCar, description, driverId, licensePlate, registrationDate, load } = req.body;
   const { imageCar, imageRegistration } = req.files;
 
-  if (!nameCar || !description || !driverId || !imageCar || !imageRegistration) {
+  if (!nameCar || !description || !driverId || !imageCar || !imageRegistration || !licensePlate || !registrationDate || !load) {
     return res.status(400).json({ message: "Invalid information" });
   }
 
@@ -55,6 +55,9 @@ const createCarRegistration = async (req, res) => {
       imageCar: imageCarUrls,
       imageRegistration: imageRegistrationUrls,
       driverId,
+      licensePlate,
+      registrationDate,
+      load
     });
 
     await newCarRegistration.save();
@@ -103,7 +106,7 @@ const getCarRegistrationById = async (req, res) => {
 
 const updateCarRegistration = async (req, res) => {
   const { id } = req.params;
-  const { nameCar, description, status } = req.body;
+  const { nameCar, description, status, load, licensePlate, registrationDate } = req.body;
   const { imageCar, imageRegistration } = req.files;
 
   try {
@@ -159,6 +162,9 @@ const updateCarRegistration = async (req, res) => {
         imageCar: [...imageCarUrls, ...currentRegistration.imageCar],
         imageRegistration: [...imageRegistrationUrls, ...currentRegistration.imageRegistration],
         status,
+        load,
+        registrationDate,
+        licensePlate,
       },
       { new: true }
     ).populate({

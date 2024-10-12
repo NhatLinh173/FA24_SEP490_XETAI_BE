@@ -17,6 +17,15 @@ const CarRegistration = new Schema(
     imageRegistration: {
       type: [String],
     },
+    licensePlate: {
+      type: String, 
+    },
+    registrationDate: {
+      type: Date,
+    },
+    load: {
+      type: Number,
+    },
     driverId: {
       type: Schema.Types.ObjectId,
       ref: "Driver",
