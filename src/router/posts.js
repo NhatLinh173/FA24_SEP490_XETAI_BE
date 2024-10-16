@@ -3,10 +3,10 @@ const router = express.Router();
 const upload = require("../utils/multer");
 const postController = require("../controller/PostController");
 
-router.post("/", upload.array('images', 10), postController.createPost);
+router.post("/", upload.array("images", 10), postController.createPost);
 router.get("/", postController.showPost);
 router.get("/:idUser/users", postController.showPostByUserId);
-router.patch("/:idPost", upload.array('images', 10), postController.updatePost);
+router.patch("/:idPost", upload.array("newImages", 10), postController.updatePost);
 router.get("/:idPost", postController.getOne);
 router.get("/filter/:idslug", postController.getBaseOnCategory);
 router.delete("/:idPost", postController.deletePost);
