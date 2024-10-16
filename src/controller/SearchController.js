@@ -74,26 +74,28 @@ class SearchController {
         }
     }
 
-   
     
     async searchByStartPointAndDestination(req, res, next) {
-        const { startPointCity, destinationCity } = req.query;
+        const { startPointCity, destinationCity, load } = req.query;
         const page = parseInt(req.query.page) || 1; // Số trang, mặc định là trang 1
         const limitPage = 8; // Số lượng bài post mỗi trang
     
         // Tạo object chứa điều kiện tìm kiếm
         const filters = {};
     
-        // Nếu có startPointCity, thêm điều kiện tìm kiếm với biểu thức chính quy không dấu
         if (startPointCity) {
-            const normalizedStartPoint = removeVietnameseTones2(startPointCity);
-            filters.startPointCity = { $regex: new RegExp(normalizedStartPoint, 'i') };
+            filters.startPointCity = { $regex: new RegExp(startPointCity, 'i') };
         }
     
-        // Nếu có destinationCity, thêm điều kiện tìm kiếm với biểu thức chính quy không dấu
         if (destinationCity) {
-            const normalizedDestination = removeVietnameseTones2(destinationCity);
-            filters.destinationCity = { $regex: new RegExp(normalizedDestination, 'i') };
+            filters.destinationCity = { $regex: new RegExp(destinationCity, 'i') };
+        }
+
+        if (load) {
+          const loadValue = parseFloat(load);
+          const minLoad = loadValue * 0.5; 
+          const maxLoad = loadValue * 1.5;   
+          filters.load = { $gte: minLoad, $lte: maxLoad };
         }
     
         try {

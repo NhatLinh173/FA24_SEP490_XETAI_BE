@@ -36,14 +36,14 @@ const Post = new Schema(
       type: String,
       required: true,
     },
-    // images: {
-    //   type: [String],
-    //   required: true,
-    // },
+    images: {
+      type: [String],
+      required: true,
+    },
 
     load: {
       //trọng lượng hàng
-      type: String,
+      type: Number,
       required: true,
     },
     // category: {
@@ -133,6 +133,12 @@ const Post = new Schema(
     recipientName: {
       type: String,
       required: true,
+    },
+    startTime: {
+      type: Date,
+    },
+    endTime: {
+      type: Date,
     },
   },
   {

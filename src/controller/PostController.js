@@ -4,10 +4,13 @@ const Transaction = require("../model/transactionModel");
 const Comment = require("../model/postModel");
 const Category = require("../model/categoryModel");
 const mongoose = require("mongoose");
+const cloudinary = require("../config/cloudinaryConfig");
+
 const ObjectId = mongoose.Types.ObjectId;
 //tạo post , thêm comment
 class PostController {
   async createPost(req, res, next) {
+
     try {
       const salePostDataBody = req.body;
       const { creator } = salePostDataBody;
@@ -45,6 +48,44 @@ class PostController {
     } catch (err) {
       res.status(400).json({
         message: "Đã xảy ra lỗi trong quá trình đăng bài.",
+
+    const salePostDataBody = req.body;
+    const images = req.files;
+
+    if (!salePostDataBody || !images) {
+      return res.status(400).json({ message: "Invalid information" });
+    }
+
+    try {
+      let imageUrls = [];
+      if (images && images.length > 0) {
+        const uploadImagePromises = images.map((file) => {
+          return new Promise((resolve, reject) => {
+            cloudinary.uploader
+              .upload_stream({ folder: "post_images" }, (error, result) => {
+                if (error) {
+                  reject(new Error("Error uploading image to Cloudinary: " + error.message));
+                } else {
+                  resolve(result.secure_url);
+                }
+              })
+              .end(file.buffer);
+          });
+        });
+        imageUrls = await Promise.all(uploadImagePromises);
+      }
+
+      const newPost = new Post({
+        ...salePostDataBody,
+        images: imageUrls,
+      });
+
+      const savedPost = await newPost.save();
+      res.json(savedPost);
+    } catch (err) {
+      res.status(400).json({
+        message: "Unable to create post",
+
         error: err.message,
       });
     }
@@ -54,15 +95,35 @@ class PostController {
     try {
       const id = req.params.idPost;
       const bodyData = req.body;
-
+      const images = req.files;
+  
       const updatePost = await Post.findOne({ _id: id });
       if (!updatePost) {
         return res.status(404).json({ message: "Post not found" });
       }
-
+  
+      let imageUrls = updatePost.images; 
+      if (images && images.length > 0) {
+        const uploadImagePromises = images.map((file) => {
+          return new Promise((resolve, reject) => {
+            cloudinary.uploader
+              .upload_stream({ folder: "post_images" }, (error, result) => {
+                if (error) {
+                  reject(new Error("Error uploading image to Cloudinary: " + error.message));
+                } else {
+                  resolve(result.secure_url); 
+                }
+              })
+              .end(file.buffer);
+          });
+        });
+  
+        imageUrls = await Promise.all(uploadImagePromises);
+      }
+  
       updatePost.title = bodyData.title;
       updatePost.detail = bodyData.detail;
-      updatePost.images = bodyData.images;
+      updatePost.images = imageUrls; 
       updatePost.load = bodyData.load;
       updatePost.fullname = bodyData.fullname;
       updatePost.email = bodyData.email;
@@ -77,7 +138,7 @@ class PostController {
       updatePost.deliveryTime = bodyData.deliveryTime;
       updatePost.startPointCity = bodyData.startPointCity;
       updatePost.destinationCity = bodyData.destinationCity;
-
+  
       const savedPost = await updatePost.save();
       return res.json(savedPost);
     } catch (error) {
@@ -122,34 +183,33 @@ class PostController {
   }
 
   async showPost(req, res, next) {
+
     var page = req.query.page || 1;
     var limitPage = 9;
     var totalPosts = await Post.countDocuments();
     var maxPage = Math.ceil(totalPosts / limitPage);
+
+    // Xuất hết tất cả bài post (theo thứ tự do database, chưa đi kèm random)
+    console.log("Fetching posts...");
+
     await Post.find({ isLock: false, isFinish: false })
       .sort({ createdAt: -1 })
       .populate({
         path: "creator",
         select: "firstName lastName",
       })
-      // .populate({
-      //     path: 'comments',
-      //     populate: {
-      //         path: 'userComment',
-      //         model: 'User',
-      //         select: 'firstName lastName'
-      //     }
-      // })
       .then((salePosts) => {
-        res.json({
+        res.status(200).json({
           salePosts: salePosts,
-          maxPage: maxPage,
         });
       })
       .catch((err) => {
-        res.json(err);
+        res.status(500).json({
+          message: "Error fetching posts",
+          error: err
       });
-  }
+      });
+}
   async getOne(req, res, next) {
     //lấy 1 theo id của bài post
     const id = req.params.idPost;
@@ -158,14 +218,6 @@ class PostController {
         path: "creator",
         select: "firstName lastName",
       })
-      // .populate({
-      //     path: 'comments',
-      //     populate: {
-      //         path: 'userComment',
-      //         model: 'User',
-      //         select: 'username fullname'
-      //     }
-      // })
       .populate({
         path: "dealId",
         populate: {
@@ -325,6 +377,53 @@ class PostController {
       });
     }
   }
+
+  async showHistory(req, res, next) {
+    try {
+      console.log("Fetching posts...");
+      
+      // Lấy các bài post không bị khóa, chưa hoàn thành và có trạng thái "inprogress" hoặc "finish"
+      const salePosts = await Post.find({ 
+        isLock: false, 
+        isFinish: false, 
+        status: { $in: ["inprogress", "finish"] }  // Kiểm tra trạng thái
+      })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "creator",
+        select: "firstName lastName",
+      });
+  
+      res.status(200).json({
+        salePosts: salePosts,
+      });
+    } catch (err) {
+      res.status(500).json({
+        message: "Error fetching posts",
+        error: err
+      });
+    }
+  }
+
+  async setTimes(req, res, next) {
+    const id = req.params.idPost;
+    const { startTime, endTime } = req.body;
+
+    try {
+      const post = await Post.findById(id);
+      if (!post) {
+        res.status(400).json({message: "Post not found"});
+      }
+      post.startTime = startTime;
+      post.endTime = endTime;
+
+      const updatePost = await post.save();
+      res.status(200).json({updatePost: updatePost});
+    } catch (err) {
+      res.status(500).json({message: err.message});
+    }
+  }
+  
 }
 
 module.exports = new PostController();
