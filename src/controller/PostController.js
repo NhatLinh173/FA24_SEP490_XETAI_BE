@@ -95,35 +95,38 @@ class PostController {
     try {
       const id = req.params.idPost;
       const bodyData = req.body;
-      const images = req.files;
-  
+      const newImages = req.files;
+      const oldImages = bodyData.oldImages || [];
+
       const updatePost = await Post.findOne({ _id: id });
       if (!updatePost) {
         return res.status(404).json({ message: "Post not found" });
       }
-  
-      let imageUrls = updatePost.images; 
-      if (images && images.length > 0) {
-        const uploadImagePromises = images.map((file) => {
+
+      let imageUrls = Array.isArray(oldImages) ? [...oldImages] : [oldImages];
+
+      if (newImages && newImages.length > 0) {
+        const uploadImagePromises = newImages.map((file) => {
           return new Promise((resolve, reject) => {
             cloudinary.uploader
               .upload_stream({ folder: "post_images" }, (error, result) => {
                 if (error) {
                   reject(new Error("Error uploading image to Cloudinary: " + error.message));
                 } else {
-                  resolve(result.secure_url); 
+                  resolve(result.secure_url);
                 }
               })
               .end(file.buffer);
           });
         });
-  
-        imageUrls = await Promise.all(uploadImagePromises);
+
+        const newImageUrls = await Promise.all(uploadImagePromises);
+        imageUrls = [...imageUrls, ...newImageUrls];
       }
-  
+
       updatePost.title = bodyData.title;
       updatePost.detail = bodyData.detail;
-      updatePost.images = imageUrls; 
+      updatePost.images = imageUrls;
       updatePost.load = bodyData.load;
       updatePost.fullname = bodyData.fullname;
       updatePost.email = bodyData.email;
@@ -133,12 +136,10 @@ class PostController {
       updatePost.category = bodyData.category;
       updatePost.price = bodyData.price;
       updatePost.status = bodyData.status;
-      updatePost.driver = bodyData.driver;
-      updatePost.creator = bodyData.creator;
       updatePost.deliveryTime = bodyData.deliveryTime;
       updatePost.startPointCity = bodyData.startPointCity;
       updatePost.destinationCity = bodyData.destinationCity;
-  
+
       const savedPost = await updatePost.save();
       return res.json(savedPost);
     } catch (error) {
@@ -206,10 +207,10 @@ class PostController {
       .catch((err) => {
         res.status(500).json({
           message: "Error fetching posts",
-          error: err
+          error: err,
+        });
       });
-      });
-}
+  }
   async getOne(req, res, next) {
     //lấy 1 theo id của bài post
     const id = req.params.idPost;
@@ -381,26 +382,26 @@ class PostController {
   async showHistory(req, res, next) {
     try {
       console.log("Fetching posts...");
-      
+
       // Lấy các bài post không bị khóa, chưa hoàn thành và có trạng thái "inprogress" hoặc "finish"
-      const salePosts = await Post.find({ 
-        isLock: false, 
-        isFinish: false, 
-        status: { $in: ["inprogress", "finish"] }  // Kiểm tra trạng thái
+      const salePosts = await Post.find({
+        isLock: false,
+        isFinish: false,
+        status: { $in: ["inprogress", "finish"] }, // Kiểm tra trạng thái
       })
-      .sort({ createdAt: -1 })
-      .populate({
-        path: "creator",
-        select: "firstName lastName",
-      });
-  
+        .sort({ createdAt: -1 })
+        .populate({
+          path: "creator",
+          select: "firstName lastName",
+        });
+
       res.status(200).json({
         salePosts: salePosts,
       });
     } catch (err) {
       res.status(500).json({
         message: "Error fetching posts",
-        error: err
+        error: err,
       });
     }
   }
@@ -412,18 +413,17 @@ class PostController {
     try {
       const post = await Post.findById(id);
       if (!post) {
-        res.status(400).json({message: "Post not found"});
+        res.status(400).json({ message: "Post not found" });
       }
       post.startTime = startTime;
       post.endTime = endTime;
 
       const updatePost = await post.save();
-      res.status(200).json({updatePost: updatePost});
+      res.status(200).json({ updatePost: updatePost });
     } catch (err) {
-      res.status(500).json({message: err.message});
+      res.status(500).json({ message: err.message });
     }
   }
-  
 }
 
 module.exports = new PostController();
