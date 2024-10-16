@@ -1,8 +1,15 @@
 const paymentService = require("../service/paymentService");
 const User = require("../model/userModel");
+const Transaction = require("../model/transactionModel");
 const createPaymentLink = async (req, res) => {
-  const { description, returnUrl, cancelUrl, totalPrice, orderCodeStatus } =
-    req.body;
+  const {
+    description,
+    returnUrl,
+    cancelUrl,
+    totalPrice,
+    orderCodeStatus,
+    userId,
+  } = req.body;
 
   if (
     !totalPrice ||
@@ -32,6 +39,16 @@ const createPaymentLink = async (req, res) => {
       description,
       orderCodeStatus,
     });
+
+    const newTransaction = new Transaction({
+      userId: userId,
+      amount: totalPrice,
+      type: "DEPOSIT",
+      status: "PAID",
+    });
+
+    await newTransaction.save();
+    console.log("Transaction saved:", newTransaction);
     return res.json({
       error: 0,
       message: "Success",

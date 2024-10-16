@@ -1,8 +1,11 @@
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const app = express();
 require("dotenv").config();
+
+const app = express();
+
+// Danh sách whitelist cho CORS
 const whitelist = [
   "http://localhost:3000",
   "http://localhost:3005",
@@ -13,23 +16,22 @@ const whitelist = [
 ];
 
 const corsOptions = (req, callback) => {
-  var corsOptions;
-  if (whitelist.indexOf(req.header("Origin")) !== -1) {
-    corsOptions = { origin: true, credentials: true };
-  } else {
-    corsOptions = { origin: false };
-  }
+  const corsOptions = {
+    origin: whitelist.indexOf(req.header("Origin")) !== -1,
+    credentials: true,
+  };
   callback(null, corsOptions);
 };
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  maxAge: 1000 * 60 * 60 * 24 * 7,
+  secure: false, 
+  maxAge: 1000 * 60 * 60 * 24 * 7, 
 };
 
+// Xuất các middleware
 module.exports = {
-  cors: cors(),
-  corsWhiteList: cors(corsOptions),
+  cors: cors(), // Nếu cần sử dụng CORS mà không kiểm tra whitelist
+  corsWhiteList: cors(corsOptions), // CORS với whitelist
   cookieOptions: cookieOptions,
 };

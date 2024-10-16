@@ -1,4 +1,6 @@
 const Post = require("../model/postModel");
+const User = require("../model/userModel");
+const Transaction = require("../model/transactionModel");
 const Comment = require("../model/postModel");
 const Category = require("../model/categoryModel");
 const mongoose = require("mongoose");
@@ -8,6 +10,45 @@ const ObjectId = mongoose.Types.ObjectId;
 //tạo post , thêm comment
 class PostController {
   async createPost(req, res, next) {
+
+    try {
+      const salePostDataBody = req.body;
+      const { creator } = salePostDataBody;
+      const postFee = 2000;
+
+      const user = await User.findById(creator);
+      if (!user) {
+        return res.status(404).json({
+          message: "Người dùng không tồn tại.",
+        });
+      }
+
+      if (user.balance < postFee) {
+        return res.status(400).json({
+          message: "Số dư không đủ để đăng bài. Vui lòng nạp thêm tiền.",
+        });
+      }
+
+      user.balance -= postFee;
+      await user.save();
+
+      const newPost = new Post(salePostDataBody);
+      const savedPost = await newPost.save();
+
+      const newTransaction = new Transaction({
+        userId: creator,
+        postId: savedPost._id,
+        amount: postFee,
+        type: "POST_PAYMENT",
+        status: "PAID",
+      });
+      await newTransaction.save();
+
+      res.status(201).json({ message: "Đăng bài thành công", post: savedPost });
+    } catch (err) {
+      res.status(400).json({
+        message: "Đã xảy ra lỗi trong quá trình đăng bài.",
+
     const salePostDataBody = req.body;
     const images = req.files;
 
@@ -44,10 +85,12 @@ class PostController {
     } catch (err) {
       res.status(400).json({
         message: "Unable to create post",
+
         error: err.message,
       });
     }
   }
+
   async updatePost(req, res, next) {
     try {
       const id = req.params.idPost;
@@ -140,8 +183,15 @@ class PostController {
   }
 
   async showPost(req, res, next) {
+
+    var page = req.query.page || 1;
+    var limitPage = 9;
+    var totalPosts = await Post.countDocuments();
+    var maxPage = Math.ceil(totalPosts / limitPage);
+
     // Xuất hết tất cả bài post (theo thứ tự do database, chưa đi kèm random)
     console.log("Fetching posts...");
+
     await Post.find({ isLock: false, isFinish: false })
       .sort({ createdAt: -1 })
       .populate({
