@@ -97,6 +97,13 @@ class PostController {
       updatePost.startPointCity = bodyData.startPointCity;
       updatePost.destinationCity = bodyData.destinationCity;
 
+      const currentTime = new Date();
+      if (bodyData.status === "inprogress") {
+        updatePost.startTime = currentTime;
+      } else if (bodyData.status === "finish") {
+        updatePost.endTime = currentTime;
+      }
+
       const savedPost = await updatePost.save();
       return res.json(savedPost);
     } catch (error) {
