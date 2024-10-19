@@ -17,7 +17,6 @@ module.exports = (io) => {
         try {
           let conversation;
 
-          // Kiểm tra cuộc trò chuyện
           if (
             !conversationId ||
             !mongoose.Types.ObjectId.isValid(conversationId)
@@ -91,11 +90,10 @@ module.exports = (io) => {
           throw new Error("Conversation not found");
         }
 
-        // Trả về tin nhắn cho client
         socket.emit("loadMessages", conversation.messages);
       } catch (error) {
         console.error("Error fetching messages:", error);
-        socket.emit("loadMessages", []); // Trả về mảng rỗng nếu có lỗi
+        socket.emit("loadMessages", []);
       }
     });
 

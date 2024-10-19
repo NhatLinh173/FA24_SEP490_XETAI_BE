@@ -1,5 +1,7 @@
 const Deal = require("../model/dealPriceModel");
 const Post = require("../model/postModel");
+const User = require("../model/userModel");
+const Driver = require("../model/driverModel");
 const mongoose = require("mongoose");
 
 const createDeal = async (req, res) => {
@@ -24,7 +26,11 @@ const updateDealPrice = async (req, res) => {
   const { dealPrice, dealId } = req.body;
 
   try {
-    const updatedDeal = await Deal.findByIdAndUpdate(dealId, { dealPrice }, { new: true });
+    const updatedDeal = await Deal.findByIdAndUpdate(
+      dealId,
+      { dealPrice },
+      { new: true }
+    );
 
     if (!updatedDeal) {
       return res.status(404).json({ message: "Deal not found" });
@@ -97,8 +103,16 @@ const updateDealStatus = async (req, res) => {
   const { dealId, status } = req.body;
 
   try {
-    const updatedDeal = await Deal.findByIdAndUpdate(dealId, { status }, { new: true });
-    const updatePost = await Post.findByIdAndUpdate(postId, { dealId, status }, { new: true });
+    const updatedDeal = await Deal.findByIdAndUpdate(
+      dealId,
+      { status },
+      { new: true }
+    );
+    const updatePost = await Post.findByIdAndUpdate(
+      postId,
+      { dealId, status },
+      { new: true }
+    );
 
     if (!updatedDeal) {
       return res.status(404).json({ message: "Deal not found" });
