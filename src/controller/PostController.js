@@ -7,24 +7,26 @@ const mongoose = require("mongoose");
 const cloudinary = require("../config/cloudinaryConfig");
 
 const ObjectId = mongoose.Types.ObjectId;
-//tạo post , thêm comment
-class PostController {
-  async createPost(req, res, next) {
 
+class PostController {
+  async createPost(req, res) {
     try {
       const salePostDataBody = req.body;
+      const images = req.files;
       const { creator } = salePostDataBody;
       const postFee = 2000;
 
+      if (!salePostDataBody || !images) {
+        return res.status(400).json({ message: "Thông tin không hợp lệ." });
+      }
+
       const user = await User.findById(creator);
       if (!user) {
-        return res.status(404).json({
-          message: "Người dùng không tồn tại.",
-        });
+        return res.status(404).json({ message: "Người dùng không tồn tại." });
       }
 
       if (user.balance < postFee) {
-        return res.status(400).json({
+        return res.status(402).json({
           message: "Số dư không đủ để đăng bài. Vui lòng nạp thêm tiền.",
         });
       }
@@ -32,31 +34,6 @@ class PostController {
       user.balance -= postFee;
       await user.save();
 
-      const newPost = new Post(salePostDataBody);
-      const savedPost = await newPost.save();
-
-      const newTransaction = new Transaction({
-        userId: creator,
-        postId: savedPost._id,
-        amount: postFee,
-        type: "POST_PAYMENT",
-        status: "PAID",
-      });
-      await newTransaction.save();
-
-      res.status(201).json({ message: "Đăng bài thành công", post: savedPost });
-    } catch (err) {
-      res.status(400).json({
-        message: "Đã xảy ra lỗi trong quá trình đăng bài.",
-
-    const salePostDataBody = req.body;
-    const images = req.files;
-
-    if (!salePostDataBody || !images) {
-      return res.status(400).json({ message: "Invalid information" });
-    }
-
-    try {
       let imageUrls = [];
       if (images && images.length > 0) {
         const uploadImagePromises = images.map((file) => {
@@ -64,7 +41,11 @@ class PostController {
             cloudinary.uploader
               .upload_stream({ folder: "post_images" }, (error, result) => {
                 if (error) {
-                  reject(new Error("Error uploading image to Cloudinary: " + error.message));
+                  reject(
+                    new Error(
+                      "Lỗi khi tải ảnh lên Cloudinary: " + error.message
+                    )
+                  );
                 } else {
                   resolve(result.secure_url);
                 }
@@ -81,11 +62,20 @@ class PostController {
       });
 
       const savedPost = await newPost.save();
-      res.json(savedPost);
+
+      const newTransaction = new Transaction({
+        userId: creator,
+        postId: savedPost._id,
+        amount: postFee,
+        type: "POST_PAYMENT",
+        status: "PAID",
+      });
+      await newTransaction.save();
+
+      res.status(201).json({ message: "Đăng bài thành công", post: savedPost });
     } catch (err) {
       res.status(400).json({
-        message: "Unable to create post",
-
+        message: "Đã xảy ra lỗi trong quá trình đăng bài.",
         error: err.message,
       });
     }
@@ -96,34 +86,38 @@ class PostController {
       const id = req.params.idPost;
       const bodyData = req.body;
       const images = req.files;
-  
+
       const updatePost = await Post.findOne({ _id: id });
       if (!updatePost) {
         return res.status(404).json({ message: "Post not found" });
       }
-  
-      let imageUrls = updatePost.images; 
+
+      let imageUrls = updatePost.images;
       if (images && images.length > 0) {
         const uploadImagePromises = images.map((file) => {
           return new Promise((resolve, reject) => {
             cloudinary.uploader
               .upload_stream({ folder: "post_images" }, (error, result) => {
                 if (error) {
-                  reject(new Error("Error uploading image to Cloudinary: " + error.message));
+                  reject(
+                    new Error(
+                      "Error uploading image to Cloudinary: " + error.message
+                    )
+                  );
                 } else {
-                  resolve(result.secure_url); 
+                  resolve(result.secure_url);
                 }
               })
               .end(file.buffer);
           });
         });
-  
+
         imageUrls = await Promise.all(uploadImagePromises);
       }
-  
+
       updatePost.title = bodyData.title;
       updatePost.detail = bodyData.detail;
-      updatePost.images = imageUrls; 
+      updatePost.images = imageUrls;
       updatePost.load = bodyData.load;
       updatePost.fullname = bodyData.fullname;
       updatePost.email = bodyData.email;
@@ -138,7 +132,7 @@ class PostController {
       updatePost.deliveryTime = bodyData.deliveryTime;
       updatePost.startPointCity = bodyData.startPointCity;
       updatePost.destinationCity = bodyData.destinationCity;
-  
+
       const savedPost = await updatePost.save();
       return res.json(savedPost);
     } catch (error) {
@@ -156,7 +150,6 @@ class PostController {
   }
 
   async showPostByUserId(req, res, next) {
-    //hiện post theo user (truyền id user vào và hiển thị tất cả bài viết của user đó)
     const userId = req.params.idUser;
     var page = req.query.page || 1;
     var limitPage = 8;
@@ -183,14 +176,10 @@ class PostController {
   }
 
   async showPost(req, res, next) {
-
     var page = req.query.page || 1;
     var limitPage = 9;
     var totalPosts = await Post.countDocuments();
     var maxPage = Math.ceil(totalPosts / limitPage);
-
-    // Xuất hết tất cả bài post (theo thứ tự do database, chưa đi kèm random)
-    console.log("Fetching posts...");
 
     await Post.find({ isLock: false, isFinish: false })
       .sort({ createdAt: -1 })
@@ -206,12 +195,12 @@ class PostController {
       .catch((err) => {
         res.status(500).json({
           message: "Error fetching posts",
-          error: err
+          error: err,
+        });
       });
-      });
-}
+  }
+
   async getOne(req, res, next) {
-    //lấy 1 theo id của bài post
     const id = req.params.idPost;
     await Post.findOne({ _id: id })
       .populate({
@@ -233,12 +222,11 @@ class PostController {
         res.json(salePost);
       })
       .catch((err) => {
-        err;
+        res.status(500).json({ message: err.message });
       });
   }
 
   async getBaseOnCategory(req, res, next) {
-    //lấy hết theo danh mục
     const slugId = req.params.idslug;
     console.log(slugId);
     try {
@@ -275,7 +263,6 @@ class PostController {
   }
 
   async addComment(req, res, next) {
-    // chưa làm, để cho vui
     const newComment = req.body;
     const id = req.params.idPost;
     await Post.findOne({ _id: id })
@@ -299,7 +286,6 @@ class PostController {
   }
 
   async deletePost(req, res, next) {
-    //xóa 1 bài post bằng id
     const id = req.params.idPost;
     await Post.deleteOne({ _id: id })
       .then((salePost) => {
@@ -307,15 +293,13 @@ class PostController {
       })
       .catch((error) => {
         res.status(400).json({
-          // Trả về status 400 (Bad Request) nếu lỗi do validation
           message: "Validation error",
-          error: err.message,
+          error: error.message,
         });
       });
   }
 
   async getRelated(req, res, next) {
-    // lấy theo đề mục (ngẫu nhiên 5 cái) (kiểu để xuất bài đăng liên quan , chắc ko dùng tới, viết để sẵn )
     const cateId = req.params.idCategory;
 
     await Post.aggregate([
@@ -326,7 +310,7 @@ class PostController {
           isFinish: false,
         },
       },
-      { $sample: { size: 5 } }, // Lấy ngẫu nhiên 5 bản ghi
+      { $sample: { size: 5 } },
     ])
       .then((salePosts) => {
         res.json(salePosts);
@@ -340,19 +324,17 @@ class PostController {
 
   async showPostByUserIdAndStatus(req, res, next) {
     const userId = req.params.idUser;
-    const status = req.query.status; // lấy status từ query parameter  ví dụ: ?status=approve
+    const status = req.query.status;
     var page = req.query.page || 1;
     var limitPage = 8;
 
     try {
-      // Đếm tổng số bài viết dựa trên userId và status
       var totalPosts = await Post.countDocuments({
         creator: userId,
         status: status,
       });
       var maxPage = Math.ceil(totalPosts / limitPage);
 
-      // Tìm tất cả các post dựa trên userId và status, phân trang
       const posts = await Post.find({ creator: userId, status: status })
         .sort({ createdAt: -1 })
         .skip((page - 1) * limitPage)
@@ -380,27 +362,24 @@ class PostController {
 
   async showHistory(req, res, next) {
     try {
-      console.log("Fetching posts...");
-      
-      // Lấy các bài post không bị khóa, chưa hoàn thành và có trạng thái "inprogress" hoặc "finish"
-      const salePosts = await Post.find({ 
-        isLock: false, 
-        isFinish: false, 
-        status: { $in: ["inprogress", "finish"] }  // Kiểm tra trạng thái
+      const salePosts = await Post.find({
+        isLock: false,
+        isFinish: false,
+        status: { $in: ["inprogress", "finish"] },
       })
-      .sort({ createdAt: -1 })
-      .populate({
-        path: "creator",
-        select: "firstName lastName",
-      });
-  
+        .sort({ createdAt: -1 })
+        .populate({
+          path: "creator",
+          select: "firstName lastName",
+        });
+
       res.status(200).json({
         salePosts: salePosts,
       });
     } catch (err) {
       res.status(500).json({
         message: "Error fetching posts",
-        error: err
+        error: err,
       });
     }
   }
@@ -412,18 +391,41 @@ class PostController {
     try {
       const post = await Post.findById(id);
       if (!post) {
-        res.status(400).json({message: "Post not found"});
+        return res.status(400).json({ message: "Post not found" });
       }
       post.startTime = startTime;
       post.endTime = endTime;
 
       const updatePost = await post.save();
-      res.status(200).json({updatePost: updatePost});
+      res.status(200).json({ updatePost: updatePost });
     } catch (err) {
-      res.status(500).json({message: err.message});
+      res.status(500).json({ message: err.message });
     }
   }
-  
+
+  async updateDealId(req, res) {
+    const { postId } = req.params;
+    const { status } = req.body;
+
+    try {
+      // Tìm và cập nhật status của bài post dựa vào postId
+      const updatedPost = await Post.findByIdAndUpdate(
+        postId,
+        { status: status }, // Cập nhật trường status
+        { new: true } // Trả về document đã cập nhật
+      );
+
+      if (!updatedPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      res
+        .status(200)
+        .json({ message: "Status updated successfully", post: updatedPost });
+    } catch (error) {
+      res.status(500).json({ message: "Error updating status", error });
+    }
+  }
 }
 
 module.exports = new PostController();

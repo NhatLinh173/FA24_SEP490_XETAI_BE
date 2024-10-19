@@ -7,6 +7,14 @@ const bcrypt = require("bcrypt");
 dotenv.config();
 
 const generateToken = (id, expiresIn, role) => {
+  if (!id) {
+    throw new Error("User ID is required to generate a token");
+  }
+
+  if (typeof expiresIn !== "string" && typeof expiresIn !== "number") {
+    throw new Error("expiresIn must be a string or number");
+  }
+
   return jwt.sign({ id, role }, process.env.JWT_SECRET, {
     expiresIn: expiresIn,
   });
@@ -309,4 +317,5 @@ module.exports = {
   changePassword,
   getUserByRole,
   updateBalance,
+  generateToken,
 };

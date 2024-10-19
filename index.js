@@ -14,6 +14,7 @@ const cookieParser = require("cookie-parser");
 const { corsWhiteList, cookieOptions } = require("./src/router/cors");
 dotenv.config();
 const PORT = process.env.PORT || 3005;
+app.use(corsWhiteList);
 app.use(cookieParser());
 app.use(
   session({
@@ -31,15 +32,17 @@ app.use(passport.session());
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(corsWhiteList);
+
 routes(app);
 
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-    origin: "http://localhost:3006",
+    origin: "http://localhost:3000",
     methods: ["GET", "POST", "PUT"],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    preflightContinue: true,
   },
 });
 

@@ -122,6 +122,11 @@ const googleAuthCallback = (req, res, next) => {
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
         expiresIn: "1h",
       });
+      const refreshToken = await authService.generateToken(
+        user._id,
+        process.env.JWT_REFRESH_EXPIRATION || "7d",
+        user.role
+      );
 
       const refreshTokenExpiration = ms(process.env.JWT_REFRESH_EXPIRATION);
       if (isNaN(refreshTokenExpiration)) {
@@ -148,17 +153,20 @@ const facebookAuthCallback = (req, res, next) => {
     if (!user) {
       return res.redirect(`/error?message=Authentication Failed`);
     }
-    req.logIn(user, (err) => {
+    req.logIn(user, async (err) => {
       if (err) {
         return res.redirect(
           `/error?message=${encodeURIComponent(err.message)}`
         );
       }
 
-      const token = jwt.sign(
-        { id: user._id, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" }
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
+      const refreshToken = await authService.generateToken(
+        user._id,
+        process.env.JWT_REFRESH_EXPIRATION || "7d",
+        user.role
       );
 
       const refreshTokenExpiration = ms(process.env.JWT_REFRESH_EXPIRATION);
