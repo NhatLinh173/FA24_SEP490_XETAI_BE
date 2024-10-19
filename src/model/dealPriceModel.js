@@ -25,6 +25,10 @@ const Deal = new Schema(
       enum: ["wait", "approve", "cancel"],
       default: "wait",
     },
+    estimatedTime: {
+      type: Date,
+      required: true,
+    },
   },
   {
     timestamps: true,
