@@ -1,11 +1,20 @@
 const jwt = require("jsonwebtoken");
 const User = require("../model/userModel");
 const Driver = require("../model/driverModel");
+const Transaction = require("../model/transactionModel");
 const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
 dotenv.config();
 
 const generateToken = (id, expiresIn, role) => {
+  if (!id) {
+    throw new Error("User ID is required to generate a token");
+  }
+
+  if (typeof expiresIn !== "string" && typeof expiresIn !== "number") {
+    throw new Error("expiresIn must be a string or number");
+  }
+
   return jwt.sign({ id, role }, process.env.JWT_SECRET, {
     expiresIn: expiresIn,
   });
@@ -94,7 +103,6 @@ const loginUser = async (email, password) => {
     _id: user._id,
     email: user.email,
     accessToken,
-    refreshToken,
     role: user.role,
   };
 
@@ -105,10 +113,13 @@ const loginUser = async (email, password) => {
     }
   }
 
-  return response;
+  return { user: response, refreshToken };
 };
 
 const refreshUserToken = async (refreshToken) => {
+  if (!refreshToken) {
+    throw new Error("Refresh token is required");
+  }
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
@@ -263,7 +274,37 @@ const searchUser = async (email) => {
   }
 };
 
+const updateBalance = async (userId, amount) => {
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const newBalance = (user.balance || 0) + amount;
+
+    user.balance = newBalance;
+    await user.save();
+
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getTransactionsById = async (userId) => {
+  try {
+    const transaction = await Transaction.find({
+      userId,
+    }).sort({ createdAt: -1 });
+    return transaction;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
+  getTransactionsById,
   searchUser,
   registerUser,
   loginUser,
@@ -275,4 +316,6 @@ module.exports = {
   getAllUsers,
   changePassword,
   getUserByRole,
+  updateBalance,
+  generateToken,
 };

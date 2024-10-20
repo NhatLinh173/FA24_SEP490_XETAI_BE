@@ -9,17 +9,7 @@ const driverSchema = new mongoose.Schema({
   businessName: {
     type: String,
   },
-  vehicleType: [
-    {
-      name: String,
-      licensePlate: String,
-    },
-  ],
   driverImage: {
-    type: String,
-    default: null,
-  },
-  linceseImage: {
     type: String,
     default: null,
   },
@@ -33,8 +23,8 @@ const driverSchema = new mongoose.Schema({
   },
   averageRating: {
     type: Number,
-    default: 0
-},
+    default: 0,
+  },
   tripsCompleted: {
     type: Number,
     default: 0,

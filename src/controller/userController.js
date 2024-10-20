@@ -1,8 +1,13 @@
 const authService = require("../service/userService");
 const passport = require("../service/authGoogle");
 const passportFacebook = require("../service/authFacebook");
+
 const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
+const ms = require("ms");
 const cloudinary = require("../config/cloudinaryConfig");
+dotenv.config();
+
 const register = async (req, res) => {
   const { email, password, fullName, phone, role, address } = req.body;
 
@@ -32,35 +37,33 @@ const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await authService.loginUser(email, password);
-
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.SECRET_KEY
-    );
-
-    res.cookie("token", token, {
+    const { user, refreshToken } = await authService.loginUser(email, password);
+    console.log("Login successful, refreshToken:", refreshToken);
+    const refreshTokenExpiration = ms(process.env.JWT_REFRESH_EXPIRATION);
+    if (isNaN(refreshTokenExpiration)) {
+      throw new Error("Invalid JWT_REFRESH_EXPIRATION value");
+    }
+    res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      maxAge: 1000 * 60 * 60 * 24 * 7,
+      secure: false,
+      sameSite: "Strict",
+      maxAge: refreshTokenExpiration * 1000,
     });
-
     res.json(user);
   } catch (error) {
     res.status(401).json({ message: error.message });
   }
 };
 
-const refreshToken = async (req, res) => {
-  const { refreshToken } = req.body;
-
+const refreshTokenRequest = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) {
-    return res.status(401).json({ message: "Refresh token is required" });
+    return res.status(401).json({ message: "No refresh token available" });
   }
 
   try {
     const newAccessToken = await authService.refreshUserToken(refreshToken);
-    res.json(newAccessToken);
+    res.json({ accessToken: newAccessToken.accessToken });
   } catch (error) {
     res.status(401).json({ message: error.message });
   }
@@ -119,13 +122,22 @@ const googleAuthCallback = (req, res, next) => {
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
         expiresIn: "1h",
       });
+      const refreshToken = await authService.generateToken(
+        user._id,
+        process.env.JWT_REFRESH_EXPIRATION || "7d",
+        user.role
+      );
 
-      res.cookie("token", token, {
+      const refreshTokenExpiration = ms(process.env.JWT_REFRESH_EXPIRATION);
+      if (isNaN(refreshTokenExpiration)) {
+        throw new Error("Invalid JWT_REFRESH_EXPIRATION value");
+      }
+      res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 1000 * 60 * 60 * 24 * 7,
+        secure: false,
+        sameSite: "Strict",
+        maxAge: refreshTokenExpiration * 1000,
       });
-
       const role = req.query.state;
 
       res.redirect(`http://localhost:3006/?token=${token}`);
@@ -141,23 +153,31 @@ const facebookAuthCallback = (req, res, next) => {
     if (!user) {
       return res.redirect(`/error?message=Authentication Failed`);
     }
-    req.logIn(user, (err) => {
+    req.logIn(user, async (err) => {
       if (err) {
         return res.redirect(
           `/error?message=${encodeURIComponent(err.message)}`
         );
       }
 
-      const token = jwt.sign(
-        { id: user._id, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" }
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
+      const refreshToken = await authService.generateToken(
+        user._id,
+        process.env.JWT_REFRESH_EXPIRATION || "7d",
+        user.role
       );
 
-      res.cookie("token", token, {
+      const refreshTokenExpiration = ms(process.env.JWT_REFRESH_EXPIRATION);
+      if (isNaN(refreshTokenExpiration)) {
+        throw new Error("Invalid JWT_REFRESH_EXPIRATION value");
+      }
+      res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 1000 * 60 * 60 * 24 * 7,
+        secure: false,
+        sameSite: "Strict",
+        maxAge: refreshTokenExpiration * 1000,
       });
 
       res.redirect(`http://localhost:3006/?token=${token}`);
@@ -286,7 +306,41 @@ const searchUsersController = async (req, res) => {
   }
 };
 
+const updateBalanceController = async (req, res) => {
+  const { userId, amount } = req.body;
+
+  const parsedAmount = parseFloat(amount);
+  if (!userId || isNaN(parsedAmount)) {
+    return res
+      .status(400)
+      .json({ message: "Missing or invalid required fields" });
+  }
+
+  try {
+    const updatedUser = await authService.updateBalance(userId, parsedAmount);
+
+    return res
+      .status(200)
+      .json({ message: "Updated balance successfully", user: updatedUser });
+  } catch (error) {
+    console.error("Error updating balance:", error);
+    return res.status(500).json({ message: "Error updating balance" });
+  }
+};
+
+const getTransactions = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const transactions = await authService.getTransactionsById(userId);
+    res.status(200).json({ transactions });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
+  getTransactions,
+  updateBalanceController,
   searchUsersController,
   facebookAuth,
   facebookAuthCallback,
@@ -294,7 +348,7 @@ module.exports = {
   getAllUsers,
   register,
   login,
-  refreshToken,
+  refreshTokenRequest,
   googleAuth,
   googleAuthCallback,
   blockUser,

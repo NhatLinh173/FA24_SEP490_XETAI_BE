@@ -10,14 +10,21 @@ const app = express();
 const bodyParser = require("body-parser");
 const session = require("express-session");
 const passport = require("./src/service/authGoogle");
-
+const cookieParser = require("cookie-parser");
+const { corsWhiteList, cookieOptions } = require("./src/router/cors");
 dotenv.config();
 const PORT = process.env.PORT || 3005;
+app.use(corsWhiteList);
+app.use(cookieParser());
 app.use(
   session({
     secret: process.env.SECRET_KEY,
     resave: false,
     saveUninitialized: true,
+    cookie: {
+      httpOnly: true,
+      secure: false,
+    },
   })
 );
 app.use(passport.initialize());
@@ -25,13 +32,17 @@ app.use(passport.session());
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+
 routes(app);
+
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-    origin: "http://localhost:3006",
-    method: ["GET", "POST"],
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    preflightContinue: true,
   },
 });
 

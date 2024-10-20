@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
-
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -22,16 +21,15 @@ const userSchema = new mongoose.Schema({
     default: false,
   },
   averageRating: {
-      type: Number,
-      default: 0
+    type: Number,
+    default: 0,
   },
   avatar: {
     type: String,
     default: null,
   },
-
   businessName: { type: String, default: null },
-
+  balance: { type: Number, default: 0 },
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {

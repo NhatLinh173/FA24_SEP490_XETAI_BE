@@ -3,7 +3,7 @@ const upload = require("../utils/multer");
 const {
   register,
   login,
-  refreshToken,
+  refreshTokenRequest,
   getAllUsers,
   getUserById,
   blockUser,
@@ -15,6 +15,8 @@ const {
   changePasswordUser,
   getUserByRoleController,
   searchUsersController,
+  updateBalanceController,
+  getTransactions,
 } = require("../controller/userController");
 const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -23,7 +25,7 @@ router.post("/register", register);
 // http://localhost:3005/auth/login
 router.post("/login", login);
 // http://localhost:3005/auth/refresh-token
-router.post("/refresh-token", refreshToken);
+router.post("/refresh-token", refreshTokenRequest);
 // http://localhost:3005/auth/users
 router.get("/users", getAllUsers);
 // http://localhost:3005/auth/user/:id
@@ -46,5 +48,9 @@ router.put("/change-password", authMiddleware, changePasswordUser);
 router.get("/role/:role", getUserByRoleController);
 // http://localhost:3005/auth/search
 router.get("/search", searchUsersController);
+// http://localhost:3005/auth/balance
+router.put("/balance", updateBalanceController);
+// http://localhost:3005/auth/transaction/:id
+router.get("/transaction/:userId", getTransactions);
 
 module.exports = router;
