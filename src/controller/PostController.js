@@ -1,4 +1,5 @@
 const Post = require("../model/postModel");
+const Deal = require("../model/dealPriceModel");
 const Comment = require("../model/postModel");
 const Category = require("../model/categoryModel");
 const mongoose = require("mongoose");
@@ -145,6 +146,37 @@ class PostController {
       .catch((err) => {
         res.json(err);
       });
+  }
+
+  async showPostByDriverId(req, res, next) {
+    try {
+      const { driverId } = req.params;
+      const deals = await Deal.find({ driverId }).select("postId");
+      const postIds = deals.map((deal) => deal.postId);
+      const posts = await Post.find({ _id: { $in: postIds } })
+        .populate("creator", "_id email phone fullName avatar")
+        .populate("dealId");
+      if (posts.length === 0) {
+        return res.status(404).json({
+          message: "No posts found for this driver",
+          status: 404,
+          data: [],
+        });
+      }
+
+      return res.status(200).json({
+        message: "Posts retrieved successfully",
+        status: 200,
+        data: posts,
+      });
+    } catch (error) {
+      console.error("Error fetching posts by driver:", error);
+      return res.status(500).json({
+        message: "Internal Server Error",
+        status: 500,
+        error: error.message,
+      });
+    }
   }
 
   async showPost(req, res, next) {
