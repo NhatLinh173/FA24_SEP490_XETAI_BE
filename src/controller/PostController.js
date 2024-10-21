@@ -1,4 +1,5 @@
 const Post = require("../model/postModel");
+const Deal = require("../model/dealPriceModel");
 const User = require("../model/userModel");
 const Transaction = require("../model/transactionModel");
 const Comment = require("../model/postModel");
@@ -42,11 +43,7 @@ class PostController {
             cloudinary.uploader
               .upload_stream({ folder: "post_images" }, (error, result) => {
                 if (error) {
-                  reject(
-                    new Error(
-                      "Lỗi khi tải ảnh lên Cloudinary: " + error.message
-                    )
-                  );
+                  reject(new Error("Lỗi khi tải ảnh lên Cloudinary: " + error.message));
                 } else {
                   resolve(result.secure_url);
                 }
@@ -86,25 +83,23 @@ class PostController {
     try {
       const id = req.params.idPost;
       const bodyData = req.body;
-      const images = req.files;
+      const newImages = req.files;
+      const oldImages = bodyData.oldImages || [];
 
       const updatePost = await Post.findOne({ _id: id });
       if (!updatePost) {
         return res.status(404).json({ message: "Post not found" });
       }
 
-      let imageUrls = updatePost.images;
-      if (images && images.length > 0) {
-        const uploadImagePromises = images.map((file) => {
+      let imageUrls = Array.isArray(oldImages) ? [...oldImages] : [oldImages];
+
+      if (newImages && newImages.length > 0) {
+        const uploadImagePromises = newImages.map((file) => {
           return new Promise((resolve, reject) => {
             cloudinary.uploader
               .upload_stream({ folder: "post_images" }, (error, result) => {
                 if (error) {
-                  reject(
-                    new Error(
-                      "Error uploading image to Cloudinary: " + error.message
-                    )
-                  );
+                  reject(new Error("Error uploading image to Cloudinary: " + error.message));
                 } else {
                   resolve(result.secure_url);
                 }
@@ -113,7 +108,8 @@ class PostController {
           });
         });
 
-        imageUrls = await Promise.all(uploadImagePromises);
+        const newImageUrls = await Promise.all(uploadImagePromises);
+        imageUrls = [...imageUrls, ...newImageUrls];
       }
 
       updatePost.title = bodyData.title;
@@ -128,11 +124,16 @@ class PostController {
       updatePost.category = bodyData.category;
       updatePost.price = bodyData.price;
       updatePost.status = bodyData.status;
-      updatePost.driver = bodyData.driver;
-      updatePost.creator = bodyData.creator;
       updatePost.deliveryTime = bodyData.deliveryTime;
       updatePost.startPointCity = bodyData.startPointCity;
       updatePost.destinationCity = bodyData.destinationCity;
+
+      const currentTime = new Date();
+      if (bodyData.status === "inprogress") {
+        updatePost.startTime = currentTime;
+      } else if (bodyData.status === "finish") {
+        updatePost.endTime = currentTime;
+      }
 
       const savedPost = await updatePost.save();
       return res.json(savedPost);
@@ -174,6 +175,37 @@ class PostController {
       .catch((err) => {
         res.json(err);
       });
+  }
+
+  async showPostByDriverId(req, res, next) {
+    try {
+      const { driverId } = req.params;
+      const deals = await Deal.find({ driverId }).select("postId");
+      const postIds = deals.map((deal) => deal.postId);
+      const posts = await Post.find({ _id: { $in: postIds } })
+        .populate("creator", "_id email phone fullName avatar")
+        .populate("dealId");
+      if (posts.length === 0) {
+        return res.status(404).json({
+          message: "No posts found for this driver",
+          status: 404,
+          data: [],
+        });
+      }
+
+      return res.status(200).json({
+        message: "Posts retrieved successfully",
+        status: 200,
+        data: posts,
+      });
+    } catch (error) {
+      console.error("Error fetching posts by driver:", error);
+      return res.status(500).json({
+        message: "Internal Server Error",
+        status: 500,
+        error: error.message,
+      });
+    }
   }
 
   async showPost(req, res, next) {
@@ -453,9 +485,7 @@ class PostController {
         return res.status(404).json({ message: "Post not found" });
       }
 
-      res
-        .status(200)
-        .json({ message: "Status updated successfully", post: updatedPost });
+      res.status(200).json({ message: "Status updated successfully", post: updatedPost });
     } catch (error) {
       console.error("Error saving new deal:", error);
       res.status(500).json({ message: "Error updating status", error });

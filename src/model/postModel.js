@@ -40,18 +40,11 @@ const Post = new Schema(
       type: [String],
       required: true,
     },
-
     load: {
       //trọng lượng hàng
       type: Number,
       required: true,
     },
-    // category: {
-    //   //loại xe
-    //   type: Schema.Types.ObjectId,
-    //   ref: "Category",
-    //   required: true,
-    // },
     startPoint: {
       //điạ chỉ lấy hàng chi tiết
       type: String,
@@ -89,10 +82,12 @@ const Post = new Schema(
       default: null,
     },
 
+
     orderer: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+
     isLock: {
       //Khóa hoặc mở bài đăng (ẩn hoặc hiện)
       type: Boolean,
