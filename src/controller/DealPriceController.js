@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 
 const createDeal = async (req, res) => {
   const { postId, driverId, dealPrice, estimatedTime } = req.body;
+
   try {
     const newDeal = new Deal({
       postId,

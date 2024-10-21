@@ -88,8 +88,8 @@ const Post = new Schema(
       ref: "Deal",
       default: null,
     },
+
     orderer: {
-      //Id của người đặt (của cái account dùng để đặt ấy )
       type: Schema.Types.ObjectId,
       ref: "User",
     },

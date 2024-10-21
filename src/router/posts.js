@@ -11,8 +11,9 @@ router.get("/:idPost", postController.getOne);
 router.get("/filter/:idslug", postController.getBaseOnCategory);
 router.delete("/:idPost", postController.deletePost);
 router.put("/:idPost/comments", postController.addComment); //CHƯA LÀM
-router.get("/related/:idCategory", postController.getRelated); 
+router.get("/related/:idCategory", postController.getRelated);
 router.get("/:idUser/users/history", postController.showHistory);
 router.patch("/time/:idPost", postController.setTimes);
 router.patch("/:postId/deal", postController.updateDealId);
+
 module.exports = router;
