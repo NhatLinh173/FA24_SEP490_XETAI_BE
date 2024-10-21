@@ -6,6 +6,7 @@ const Comment = require("../model/postModel");
 const Category = require("../model/categoryModel");
 const mongoose = require("mongoose");
 const cloudinary = require("../config/cloudinaryConfig");
+const dealPriceModel = require("../model/dealPriceModel");
 
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -208,54 +209,67 @@ class PostController {
   }
 
   async showPost(req, res, next) {
-    var page = req.query.page || 1;
+    var page = parseInt(req.query.page) || 1;
     var limitPage = 9;
-    var totalPosts = await Post.countDocuments();
-    var maxPage = Math.ceil(totalPosts / limitPage);
 
-    await Post.find({ isLock: false, isFinish: false })
-      .sort({ createdAt: -1 })
-      .populate({
-        path: "creator",
-        select: "firstName lastName",
-      })
-      .then((salePosts) => {
-        res.status(200).json({
-          salePosts: salePosts,
-        });
-      })
-      .catch((err) => {
-        res.status(500).json({
-          message: "Error fetching posts",
-          error: err,
-        });
+    try {
+      // Đếm tổng số đơn hàng
+      var totalPosts = await Post.countDocuments();
+      var maxPage = Math.ceil(totalPosts / limitPage);
+
+      // Lấy danh sách đơn hàng với phân trang
+      var salePosts = await Post.find() // Lấy tất cả đơn hàng
+        .sort({ createdAt: -1 }) // Sắp xếp theo ngày tạo
+        .populate({
+          path: "creator",
+          select: "firstName lastName",
+        })
+        .skip((page - 1) * limitPage) // Bỏ qua các đơn hàng đã được hiển thị
+        .limit(limitPage); // Giới hạn số đơn hàng trên mỗi trang
+
+      res.status(200).json({
+        salePosts: salePosts,
+        totalPosts: totalPosts,
+        maxPage: maxPage, // Trả về tổng số trang
+        currentPage: page, // Trả về trang hiện tại
       });
+    } catch (err) {
+      res.status(500).json({
+        message: "Error fetching posts",
+        error: err,
+      });
+    }
   }
 
   async getOne(req, res, next) {
     const id = req.params.idPost;
-    await Post.findOne({ _id: id })
-      .populate({
-        path: "creator",
-        select: "firstName lastName",
-      })
-      .populate({
-        path: "dealId",
-        populate: {
-          path: "driverId",
-          model: "Driver",
+
+    try {
+      const salePost = await Post.findOne({ _id: id })
+        .populate({
+          path: "dealId",
           populate: {
-            path: "userId",
-            model: "User",
+            path: "driverId",
+            model: "Driver",
+            populate: {
+              path: "userId",
+              model: "User",
+              select: "firstName lastName email",
+            },
           },
-        },
-      })
-      .then((salePost) => {
-        res.json(salePost);
-      })
-      .catch((err) => {
-        res.status(500).json({ message: err.message });
-      });
+        })
+        .populate({
+          path: "creator",
+          select: "firstName lastName",
+        });
+
+      if (!salePost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      res.json(salePost);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
   }
 
   async getBaseOnCategory(req, res, next) {
@@ -437,14 +451,34 @@ class PostController {
 
   async updateDealId(req, res) {
     const { postId } = req.params;
-    const { status } = req.body;
+    const { status, driverId, deliveryTime, dealPrice } = req.body;
+
+    if (!postId || !status || !deliveryTime || !dealPrice) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
     try {
-      // Tìm và cập nhật status của bài post dựa vào postId
+      const currentDate = new Date();
+      const inputDate = new Date(deliveryTime);
+
+      if (inputDate <= currentDate) {
+        return res.status(400).json({ message: "Invalid delivery time" });
+      }
+
+      const newDeal = new dealPriceModel({
+        postId: postId,
+        status: status,
+        driverId: driverId,
+        dealPrice: dealPrice,
+        estimatedTime: deliveryTime,
+      });
+
+      await newDeal.save();
+
       const updatedPost = await Post.findByIdAndUpdate(
         postId,
-        { status: status }, // Cập nhật trường status
-        { new: true } // Trả về document đã cập nhật
+        { status: status, dealId: newDeal._id, deliverTime: deliveryTime },
+        { new: true }
       );
 
       if (!updatedPost) {
@@ -453,6 +487,7 @@ class PostController {
 
       res.status(200).json({ message: "Status updated successfully", post: updatedPost });
     } catch (error) {
+      console.error("Error saving new deal:", error);
       res.status(500).json({ message: "Error updating status", error });
     }
   }
