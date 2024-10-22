@@ -91,6 +91,9 @@ class PostController {
       }
 
       let imageUrls = Array.isArray(oldImages) ? [...oldImages] : [oldImages];
+      if (typeof oldImages === "string") {
+        imageUrls = oldImages.split(",").map((url) => url.trim());
+      }
 
       if (newImages && newImages.length > 0) {
         const uploadImagePromises = newImages.map((file) => {
@@ -179,6 +182,12 @@ class PostController {
   async showPostByDriverId(req, res, next) {
     try {
       const { driverId } = req.params;
+      if (driverId === "undefined") {
+        return res.status(400).json({
+          message: "Driver undefined",
+          status: 400,
+        });
+      }
       const deals = await Deal.find({ driverId }).select("postId");
       const postIds = deals.map((deal) => deal.postId);
       const posts = await Post.find({ _id: { $in: postIds } })
@@ -235,10 +244,7 @@ class PostController {
   async getOne(req, res, next) {
     const id = req.params.idPost;
     await Post.findOne({ _id: id })
-      .populate({
-        path: "creator",
-        select: "firstName lastName",
-      })
+      .populate("creator", "_id email phone fullName avatar")
       .populate({
         path: "dealId",
         populate: {
