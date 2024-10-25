@@ -29,6 +29,13 @@ const driverSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  balance: { type: Number, default: 0 },
+  earningsHistory: [
+    {
+      date: { type: Date, required: true },
+      amount: { type: Number, required: true },
+    },
+  ],
 });
 
 const Driver = mongoose.model("Driver", driverSchema);
