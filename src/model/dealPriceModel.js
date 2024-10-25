@@ -17,8 +17,6 @@ const Deal = new Schema(
     },
     dealPrice: {
       type: String,
-      unique: true,
-      required: true,
     },
     status: {
       type: String,
@@ -34,5 +32,7 @@ const Deal = new Schema(
     timestamps: true,
   }
 );
+
+Deal.index({ dealPrice: 1 }, { unique: false });
 
 module.exports = mongoose.model("Deal", Deal);

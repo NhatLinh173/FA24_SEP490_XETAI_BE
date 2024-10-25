@@ -5,7 +5,6 @@ const categoriesRouter = require("./categories");
 const paymentRouter = require("./payment");
 const ratingRouter = require("./rating");
 const favoritesRouter = require("./favoriteDriverRouter");
-const notificationsRouter = require("./notification");
 const sendEmailRouter = require("./emailRouter");
 const conversationRouter = require("./conversationRouter");
 const dealPriceRouter = require("./dealPrice");
@@ -20,7 +19,6 @@ const router = (app) => {
   app.use("/rating", ratingRouter);
   app.use("/favorites", favoritesRouter);
   app.use("/driver", favoritesRouter);
-  app.use("/notifications", notificationsRouter);
   app.use("/send", sendEmailRouter);
   app.use("/conversation", conversationRouter);
   app.use("/dealPrice", dealPriceRouter);
