@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 
 const createDeal = async (req, res) => {
   const { postId, driverId, dealPrice, estimatedTime } = req.body;
+
   try {
     const newDeal = new Deal({
       postId,
@@ -26,11 +27,7 @@ const updateDealPrice = async (req, res) => {
   const { dealPrice, dealId } = req.body;
 
   try {
-    const updatedDeal = await Deal.findByIdAndUpdate(
-      dealId,
-      { dealPrice },
-      { new: true }
-    );
+    const updatedDeal = await Deal.findByIdAndUpdate(dealId, { dealPrice }, { new: true });
 
     if (!updatedDeal) {
       return res.status(404).json({ message: "Deal not found" });
@@ -103,20 +100,25 @@ const updateDealStatus = async (req, res) => {
   const { dealId, status } = req.body;
 
   try {
-    const updatedDeal = await Deal.findByIdAndUpdate(
-      dealId,
-      { status },
-      { new: true }
-    );
-    const updatePost = await Post.findByIdAndUpdate(
-      postId,
-      { dealId, status },
-      { new: true }
-    );
+    const updatedDeal = await Deal.findByIdAndUpdate(dealId, { status }, { new: true });
 
     if (!updatedDeal) {
       return res.status(404).json({ message: "Deal not found" });
     }
+
+    const updatePostData = {
+      dealId,
+      status,
+    };
+
+    if (status === "approve") {
+      updatePostData.price = updatedDeal.dealPrice;
+    }
+
+    const updatePost = await Post.findByIdAndUpdate(postId, updatePostData, {
+      new: true,
+    });
+
     if (!updatePost) {
       return res.status(404).json({ message: "Post not found" });
     }
@@ -130,6 +132,59 @@ const updateDealStatus = async (req, res) => {
   }
 };
 
+const getDealsByDriverId = async (req, res) => {
+  const { driverId } = req.params;
+
+  try {
+    const deals = await Deal.find({
+      driverId,
+    })
+      .populate("postId")
+      .populate({
+        path: "driverId",
+        populate: {
+          path: "userId",
+          model: "User",
+        },
+      });
+
+    if (!deals || deals.length === 0) {
+      return res.status(404).json({ message: "No deals found for this driver" });
+    }
+
+    res.status(200).json(deals);
+  } catch (error) {
+    res.status(400).json({ message: "Unable to fetch deals", error });
+  }
+};
+
+const getDealsByPostIdAndStatusWait = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    const deals = await Deal.find({
+      postId,
+      status: "wait",
+    })
+      .populate("postId")
+      .populate({
+        path: "driverId",
+        populate: {
+          path: "userId",
+          model: "User",
+        },
+      });
+
+    if (!deals || deals.length === 0) {
+      return res.status(404).json({ message: "No waiting deals found for this post" });
+    }
+
+    res.status(200).json(deals);
+  } catch (error) {
+    res.status(400).json({ message: "Unable to fetch waiting deals", error });
+  }
+};
+
 module.exports = {
   createDeal,
   getAllDeals,
@@ -137,4 +192,6 @@ module.exports = {
   updateDealPrice,
   updateDealStatus,
   deleteDeal,
+  getDealsByDriverId,
+  getDealsByPostIdAndStatusWait,
 };

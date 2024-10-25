@@ -243,25 +243,32 @@ class PostController {
 
   async getOne(req, res, next) {
     const id = req.params.idPost;
-    await Post.findOne({ _id: id })
-      .populate("creator", "_id email phone fullName avatar")
-      .populate({
-        path: "dealId",
-        populate: {
-          path: "driverId",
-          model: "Driver",
+    try {
+      const salePost = await Post.findOne({ _id: id })
+        .populate({
+          path: "dealId",
           populate: {
-            path: "userId",
-            model: "User",
+            path: "driverId",
+            model: "Driver",
+            populate: {
+              path: "userId",
+              model: "User",
+              select: "firstName lastName email",
+            },
           },
-        },
-      })
-      .then((salePost) => {
-        res.json(salePost);
-      })
-      .catch((err) => {
-        res.status(500).json({ message: err.message });
-      });
+        })
+        .populate({
+          path: "creator",
+          select: "email phone fullName",
+        });
+
+      if (!salePost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      res.json(salePost);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
   }
 
   async getBaseOnCategory(req, res, next) {
