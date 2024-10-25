@@ -7,6 +7,8 @@ const {
   updateDealPrice,
   deleteDeal,
   updateDealStatus,
+  getDealsByDriverId,
+  getDealsByPostIdAndStatusWait,
 } = require("../controller/DealPriceController");
 
 // Route để tạo Deal mới
@@ -26,5 +28,11 @@ router.patch("/status/:postId", updateDealStatus);
 
 // Route để xoá Deal
 router.delete("/", deleteDeal);
+
+// Route để lấy trạng thái wait và cancel của Deal
+router.get("/driver/:driverId", getDealsByDriverId);
+
+// Route để lấy trạng thái wait của Deal theo Post
+router.get("/:postId", getDealsByPostIdAndStatusWait);
 
 module.exports = router;

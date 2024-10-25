@@ -268,7 +268,11 @@ class PostController {
         })
         .populate({
           path: "creator",
+<<<<<<< HEAD
+          select: "email phone fullName",
+=======
           select: "firstName lastName",
+>>>>>>> e383bcd39483cadaa72b424a109ac5445443db91
         });
 
       if (!salePost) {
