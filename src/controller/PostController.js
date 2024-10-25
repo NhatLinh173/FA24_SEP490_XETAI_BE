@@ -43,7 +43,11 @@ class PostController {
             cloudinary.uploader
               .upload_stream({ folder: "post_images" }, (error, result) => {
                 if (error) {
-                  reject(new Error("Lỗi khi tải ảnh lên Cloudinary: " + error.message));
+                  reject(
+                    new Error(
+                      "Lỗi khi tải ảnh lên Cloudinary: " + error.message
+                    )
+                  );
                 } else {
                   resolve(result.secure_url);
                 }
@@ -102,7 +106,11 @@ class PostController {
             cloudinary.uploader
               .upload_stream({ folder: "post_images" }, (error, result) => {
                 if (error) {
-                  reject(new Error("Error uploading image to Cloudinary: " + error.message));
+                  reject(
+                    new Error(
+                      "Error uploading image to Cloudinary: " + error.message
+                    )
+                  );
                 } else {
                   resolve(result.secure_url);
                 }
@@ -474,7 +482,7 @@ class PostController {
       const inputDate = new Date(deliveryTime);
 
       if (inputDate <= currentDate) {
-        return res.status(400).json({ message: "Invalid delivery time" });
+        return res.status(402).json({ message: "Invalid delivery time" });
       }
 
       const newDeal = new dealPriceModel({
@@ -497,7 +505,9 @@ class PostController {
         return res.status(404).json({ message: "Post not found" });
       }
 
-      res.status(200).json({ message: "Status updated successfully", post: updatedPost });
+      res
+        .status(200)
+        .json({ message: "Status updated successfully", post: updatedPost });
     } catch (error) {
       console.error("Error saving new deal:", error);
       res.status(500).json({ message: "Error updating status", error });
