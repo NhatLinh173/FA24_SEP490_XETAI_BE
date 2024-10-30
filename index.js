@@ -45,6 +45,15 @@ const io = socketIO(server, {
     preflightContinue: true,
   },
 });
+// const io = socketIO(server, {
+//   cors: {
+//     origin: "https://fa-24-sep-490-xetai-fe.vercel.app",
+//     methods: ["GET", "POST", "PUT"],
+//     credentials: true,
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//     preflightContinue: true,
+//   },
+// });
 
 socketHandle(io);
 

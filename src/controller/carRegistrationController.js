@@ -2,10 +2,26 @@ const CarRegistration = require("../model/carRegistrationModel");
 const cloudinary = require("../config/cloudinaryConfig");
 
 const createCarRegistration = async (req, res) => {
-  const { nameCar, description, driverId, licensePlate, registrationDate, load } = req.body;
+  const {
+    nameCar,
+    description,
+    driverId,
+    licensePlate,
+    registrationDate,
+    load,
+  } = req.body;
   const { imageCar, imageRegistration } = req.files;
 
-  if (!nameCar || !description || !driverId || !imageCar || !imageRegistration || !licensePlate || !registrationDate || !load) {
+  if (
+    !nameCar ||
+    !description ||
+    !driverId ||
+    !imageCar ||
+    !imageRegistration ||
+    !licensePlate ||
+    !registrationDate ||
+    !load
+  ) {
     return res.status(400).json({ message: "Invalid information" });
   }
 
@@ -19,7 +35,11 @@ const createCarRegistration = async (req, res) => {
           cloudinary.uploader
             .upload_stream({ folder: "car_images" }, (error, result) => {
               if (error) {
-                reject(new Error("Error uploading image to Cloudinary: " + error.message));
+                reject(
+                  new Error(
+                    "Error uploading image to Cloudinary: " + error.message
+                  )
+                );
               } else {
                 resolve(result.secure_url);
               }
@@ -35,13 +55,20 @@ const createCarRegistration = async (req, res) => {
       const uploadRegistrationPromises = imageRegistration.map((file) => {
         return new Promise((resolve, reject) => {
           cloudinary.uploader
-            .upload_stream({ folder: "car_registration_images" }, (error, result) => {
-              if (error) {
-                reject(new Error("Error uploading image to Cloudinary: " + error.message));
-              } else {
-                resolve(result.secure_url);
+            .upload_stream(
+              { folder: "car_registration_images" },
+              (error, result) => {
+                if (error) {
+                  reject(
+                    new Error(
+                      "Error uploading image to Cloudinary: " + error.message
+                    )
+                  );
+                } else {
+                  resolve(result.secure_url);
+                }
               }
-            })
+            )
             .end(file.buffer);
         });
       });
@@ -57,13 +84,15 @@ const createCarRegistration = async (req, res) => {
       driverId,
       licensePlate,
       registrationDate,
-      load
+      load,
     });
 
     await newCarRegistration.save();
     res.status(200).json(newCarRegistration);
   } catch (error) {
-    res.status(400).json({ message: "Unable to create car registration", error });
+    res
+      .status(400)
+      .json({ message: "Unable to create car registration", error });
   }
 };
 
@@ -78,7 +107,9 @@ const getAllCarRegistrations = async (req, res) => {
     });
     res.status(200).json(carRegistrations);
   } catch (error) {
-    res.status(400).json({ message: "Unable to fetch car registrations", error });
+    res
+      .status(400)
+      .json({ message: "Unable to fetch car registrations", error });
   }
 };
 
@@ -100,13 +131,16 @@ const getCarRegistrationById = async (req, res) => {
 
     res.status(200).json(carRegistration);
   } catch (error) {
-    res.status(400).json({ message: "Unable to fetch car registration", error });
+    res
+      .status(400)
+      .json({ message: "Unable to fetch car registration", error });
   }
 };
 
 const updateCarRegistration = async (req, res) => {
   const { id } = req.params;
-  const { nameCar, description, status, load, licensePlate, registrationDate } = req.body;
+  const { nameCar, description, status, load, licensePlate, registrationDate } =
+    req.body;
   const { imageCar, imageRegistration } = req.files;
 
   try {
@@ -124,7 +158,11 @@ const updateCarRegistration = async (req, res) => {
           cloudinary.uploader
             .upload_stream({ folder: "car_images" }, (error, result) => {
               if (error) {
-                reject(new Error("Error uploading image to Cloudinary: " + error.message));
+                reject(
+                  new Error(
+                    "Error uploading image to Cloudinary: " + error.message
+                  )
+                );
               } else {
                 resolve(result.secure_url);
               }
@@ -140,13 +178,20 @@ const updateCarRegistration = async (req, res) => {
       const uploadRegistrationPromises = imageRegistration.map((file) => {
         return new Promise((resolve, reject) => {
           cloudinary.uploader
-            .upload_stream({ folder: "car_registration_images" }, (error, result) => {
-              if (error) {
-                reject(new Error("Error uploading image to Cloudinary: " + error.message));
-              } else {
-                resolve(result.secure_url);
+            .upload_stream(
+              { folder: "car_registration_images" },
+              (error, result) => {
+                if (error) {
+                  reject(
+                    new Error(
+                      "Error uploading image to Cloudinary: " + error.message
+                    )
+                  );
+                } else {
+                  resolve(result.secure_url);
+                }
               }
-            })
+            )
             .end(file.buffer);
         });
       });
@@ -160,7 +205,10 @@ const updateCarRegistration = async (req, res) => {
         nameCar,
         description,
         imageCar: [...imageCarUrls, ...currentRegistration.imageCar],
-        imageRegistration: [...imageRegistrationUrls, ...currentRegistration.imageRegistration],
+        imageRegistration: [
+          ...imageRegistrationUrls,
+          ...currentRegistration.imageRegistration,
+        ],
         status,
         load,
         registrationDate,
@@ -177,7 +225,9 @@ const updateCarRegistration = async (req, res) => {
 
     res.status(200).json(updatedCarRegistration);
   } catch (error) {
-    res.status(400).json({ message: "Unable to update car registration", error });
+    res
+      .status(400)
+      .json({ message: "Unable to update car registration", error });
   }
 };
 
@@ -196,7 +246,9 @@ const deleteCarRegistration = async (req, res) => {
 
     res.status(200).json({ message: "Car registration deleted successfully" });
   } catch (error) {
-    res.status(400).json({ message: "Unable to delete car registration", error });
+    res
+      .status(400)
+      .json({ message: "Unable to delete car registration", error });
   }
 };
 
@@ -208,7 +260,11 @@ const updateCarRegistrationStatus = async (req, res) => {
   }
 
   try {
-    const updatedCarRegistration = await CarRegistration.findByIdAndUpdate(id, { status }, { new: true });
+    const updatedCarRegistration = await CarRegistration.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
 
     if (!updatedCarRegistration) {
       return res.status(404).json({ message: "Car registration not found" });
@@ -216,7 +272,9 @@ const updateCarRegistrationStatus = async (req, res) => {
 
     res.status(200).json(updatedCarRegistration);
   } catch (error) {
-    res.status(400).json({ message: "Unable to update car registration status", error });
+    res
+      .status(400)
+      .json({ message: "Unable to update car registration status", error });
   }
 };
 
@@ -236,7 +294,9 @@ const getCarRegistrationsByDriverId = async (req, res) => {
     });
 
     if (registrations.length === 0) {
-      return res.status(404).json({ message: "No registrations found for this driver" });
+      return res
+        .status(404)
+        .json({ message: "No registrations found for this driver" });
     }
 
     res.status(200).json(registrations);
@@ -266,7 +326,9 @@ const getCarRegistrationsByDriverIdAndStatus = async (req, res) => {
     });
 
     if (registrations.length === 0) {
-      return res.status(404).json({ message: "No approved registrations found for this driver" });
+      return res
+        .status(404)
+        .json({ message: "No approved registrations found for this driver" });
     }
 
     res.status(200).json(registrations);
