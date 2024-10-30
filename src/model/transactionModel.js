@@ -6,7 +6,7 @@ const transactionSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   type: {
     type: String,
-    enum: ["POST_PAYMENT", "DEPOSIT"],
+    enum: ["POST_PAYMENT", "DEPOSIT", "CANCEL_ORDER"],
     required: true,
   },
   status: {

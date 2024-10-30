@@ -4,11 +4,8 @@ const User = require("../model/userModel");
 
 module.exports = (io) => {
   io.on("connection", (socket) => {
-    console.log("A user connected", socket.id);
-
     socket.on("joinRoom", (userId) => {
       socket.join(userId);
-      console.log(`${userId} joined room`);
     });
 
     socket.on(
@@ -70,10 +67,6 @@ module.exports = (io) => {
 
     socket.on("getMessages", async ({ conversationId }) => {
       try {
-        console.log(
-          "Received getMessages event for conversation:",
-          conversationId
-        ); // Thêm log để kiểm tra
         if (
           !conversationId ||
           !mongoose.Types.ObjectId.isValid(conversationId)
@@ -97,8 +90,6 @@ module.exports = (io) => {
       }
     });
 
-    socket.on("disconnect", () => {
-      console.log("Client disconnected", socket.id);
-    });
+    socket.on("disconnect", () => {});
   });
 };

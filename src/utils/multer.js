@@ -1,5 +1,5 @@
 const multer = require("multer");
-const multerMemoryStorage = multer.memoryStorage(); // Sử dụng bộ nhớ
+const multerMemoryStorage = multer.memoryStorage();
 
 const upload = multer({ storage: multerMemoryStorage });
 

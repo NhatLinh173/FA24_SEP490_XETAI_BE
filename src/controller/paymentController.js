@@ -32,13 +32,6 @@ const createPaymentLink = async (req, res) => {
 
   try {
     const paymentLinkRes = await paymentService.createPaymentLink(body);
-    console.log({
-      amount: body.amount,
-      returnUrl,
-      cancelUrl,
-      description,
-      orderCodeStatus,
-    });
 
     const newTransaction = new Transaction({
       userId: userId,
