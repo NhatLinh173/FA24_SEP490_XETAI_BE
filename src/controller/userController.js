@@ -38,7 +38,7 @@ const login = async (req, res) => {
 
   try {
     const { user, refreshToken } = await authService.loginUser(email, password);
-    console.log("Login successful, refreshToken:", refreshToken);
+
     const refreshTokenExpiration = ms(process.env.JWT_REFRESH_EXPIRATION);
     if (isNaN(refreshTokenExpiration)) {
       throw new Error("Invalid JWT_REFRESH_EXPIRATION value");
@@ -251,11 +251,10 @@ const updateUserController = async (req, res) => {
       address,
       avatar: avatarUrl,
     });
-
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }
-
+    // const
     res.status(200).json({ message: "User has been updated", updatedUser });
   } catch (error) {
     console.error("Error updating user:", error);
