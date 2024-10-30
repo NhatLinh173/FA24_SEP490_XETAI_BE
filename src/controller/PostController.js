@@ -258,11 +258,11 @@ class PostController {
 
     try {
       // Đếm tổng số đơn hàng
-      var totalPosts = await Post.countDocuments();
+      var totalPosts = await Post.countDocuments({ status: "wait" });
       var maxPage = Math.ceil(totalPosts / limitPage);
 
       // Lấy danh sách đơn hàng với phân trang
-      var salePosts = await Post.find() // Lấy tất cả đơn hàng
+      var salePosts = await Post.find({ status: "wait" }) // Lấy tất cả đơn hàng
         .sort({ createdAt: -1 }) // Sắp xếp theo ngày tạo
         .populate({
           path: "creator",
