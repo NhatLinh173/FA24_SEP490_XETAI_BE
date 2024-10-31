@@ -197,14 +197,30 @@ const deleteUser = async (id) => {
   return user;
 };
 
-const blockUser = async (id) => {
+const blockUser = async (id, duration) => {
   if (!id) {
     throw new Error("User ID is required");
   }
+  let blockedUntil = null;
+  const now = new Date();
 
+  switch (duration) {
+    case "1day":
+      blockedUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+      break;
+    case "3days":
+      blockedUntil = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+      break;
+    case "forever":
+      blockedUntil = null;
+      break;
+    default:
+      throw new Error("Invalid duration");
+  }
   const user = await User.findByIdAndUpdate(
     id,
-    { isBlocked: true },
+    { isBlocked: true, blockedUntil },
     { new: true }
   );
 
@@ -213,6 +229,17 @@ const blockUser = async (id) => {
   }
 
   return user;
+};
+
+const unlockUser = async (id) => {
+  if (!id) {
+    throw new Error("User ID is required");
+  }
+  const user = await User.findByIdAndUpdate(
+    id,
+    { isBlocked: false, blockedUntil: null },
+    { new: true }
+  );
 };
 
 const changePassword = async (userId, oldPassword, newPassword) => {
@@ -240,16 +267,12 @@ const changePassword = async (userId, oldPassword, newPassword) => {
   }
 };
 
-const getUserByRole = async (role) => {
-  if (!role) {
-    throw new Error("Role is required");
-    return;
-  }
-
+const getUserByRoleDriver = async (excludedRoles) => {
   try {
-    const user = await User.find({ role });
-
-    return user;
+    const users = await Driver.find({
+      role: { $nin: excludedRoles },
+    }).populate("userId", "fullName email phone address avatar isBlocked");
+    return users;
   } catch (error) {
     throw new Error(error.message);
   }
@@ -315,7 +338,8 @@ module.exports = {
   getUserById,
   getAllUsers,
   changePassword,
-  getUserByRole,
+  getUserByRoleDriver,
   updateBalance,
   generateToken,
+  unlockUser,
 };
