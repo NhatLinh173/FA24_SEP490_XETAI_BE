@@ -131,7 +131,6 @@ const getStatisticsForLastYear = async (driver) => {
   return driver.statistics.lastYear;
 };
 
-
 const updateDriverStatistics = async (driverId, earnings, trips) => {
   const driver = await Driver.findById(driverId);
   const timestamp = new Date();
@@ -214,7 +213,7 @@ const updateDriverStatistics = async (driverId, earnings, trips) => {
   await driver.save();
 };
 
-// Xuất các hàm để sử dụng ở nơi khác
+
 module.exports = {
   getDriverById,
   getDriverStatistics,

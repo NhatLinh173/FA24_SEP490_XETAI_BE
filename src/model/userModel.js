@@ -20,10 +20,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  averageRating: {
-    type: Number,
-    default: 0,
-  },
+  blockedUntil: { type: Date, default: null },
   avatar: {
     type: String,
     default: null,
