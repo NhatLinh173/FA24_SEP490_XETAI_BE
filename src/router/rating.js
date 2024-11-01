@@ -12,4 +12,7 @@ router.get('/my-ratings/:userId', RatingController.getMyRatings);
 // Lấy danh sách mình đã đánh giá người khác
 router.get('/ratings-given/:reviewerId', RatingController.getRatingsGivenByUser);
 
+// lấy ra rating mình đánh giá chính xác tài xế đó
+router.get('/rating-driver', RatingController.getRatingByReviewerForUser);
+
 module.exports = router;
