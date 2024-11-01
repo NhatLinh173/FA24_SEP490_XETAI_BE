@@ -43,11 +43,7 @@ class PostController {
             cloudinary.uploader
               .upload_stream({ folder: "post_images" }, (error, result) => {
                 if (error) {
-                  reject(
-                    new Error(
-                      "Lỗi khi tải ảnh lên Cloudinary: " + error.message
-                    )
-                  );
+                  reject(new Error("Lỗi khi tải ảnh lên Cloudinary: " + error.message));
                 } else {
                   resolve(result.secure_url);
                 }
@@ -106,11 +102,7 @@ class PostController {
             cloudinary.uploader
               .upload_stream({ folder: "post_images" }, (error, result) => {
                 if (error) {
-                  reject(
-                    new Error(
-                      "Error uploading image to Cloudinary: " + error.message
-                    )
-                  );
+                  reject(new Error("Error uploading image to Cloudinary: " + error.message));
                 } else {
                   resolve(result.secure_url);
                 }
@@ -153,9 +145,7 @@ class PostController {
           const cancellationFee = price * 0.1;
           if (user) {
             if (user.balance < cancellationFee) {
-              return res
-                .status(402)
-                .json({ message: "Không đủ số dư để hủy đơn hàng" });
+              return res.status(402).json({ message: "Không đủ số dư để hủy đơn hàng" });
             } else {
               user.balance -= cancellationFee;
               const newTransaction = new Transaction({
@@ -202,7 +192,16 @@ class PostController {
       .limit(limitPage)
       .populate({
         path: "creator",
-        select: "firstName lastName",
+        select: "_id email phone fullName avatar",
+      })
+      .populate({
+        path: "dealId",
+        populate: {
+          path: "driverId",
+          populate: {
+            path: "userId",
+          },
+        },
       })
       .then((salePosts) => {
         res.json({
@@ -293,17 +292,15 @@ class PostController {
           path: "dealId",
           populate: {
             path: "driverId",
-            model: "Driver",
             populate: {
               path: "userId",
-              model: "User",
-              select: "fullName email avatar phone",
+              select: "email phone fullName avatar",
             },
           },
         })
         .populate({
           path: "creator",
-          select: "fullName phone email avatar",
+          select: "email phone fullName avatar",
         });
 
       if (!salePost) {
@@ -528,9 +525,7 @@ class PostController {
         return res.status(404).json({ message: "Post not found" });
       }
 
-      res
-        .status(200)
-        .json({ message: "Status updated successfully", post: updatedPost });
+      res.status(200).json({ message: "Status updated successfully", post: updatedPost });
     } catch (error) {
       console.error("Error saving new deal:", error);
       res.status(500).json({ message: "Error updating status", error });
