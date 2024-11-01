@@ -167,7 +167,16 @@ class PostController {
       .limit(limitPage)
       .populate({
         path: "creator",
-        select: "firstName lastName",
+        select: "_id email phone fullName avatar",
+      })
+      .populate({
+        path: "dealId",
+        populate: {
+          path: "driverId",
+          populate: {
+            path: "userId",
+          },
+        },
       })
       .then((salePosts) => {
         res.json({
@@ -258,17 +267,15 @@ class PostController {
           path: "dealId",
           populate: {
             path: "driverId",
-            model: "Driver",
             populate: {
               path: "userId",
-              model: "User",
-              select: "firstName lastName email",
+              select: "email phone fullName avatar",
             },
           },
         })
         .populate({
           path: "creator",
-          select: "email phone fullName",
+          select: "email phone fullName avatar",
         });
 
       if (!salePost) {
