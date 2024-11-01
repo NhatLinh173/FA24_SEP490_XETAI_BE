@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../model/userModel");
 const Driver = require("../model/driverModel");
+const Post = require("../model/postModel");
 const Transaction = require("../model/transactionModel");
 const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
@@ -329,7 +330,17 @@ const getTransactionsById = async (userId) => {
 const getAllCustomers = async () => {
   try {
     const customers = await User.find({ role: "customer" });
-    return customers;
+
+    const customersWithPostCount = await Promise.all(customers.map(async (customer) => {
+      const postCount = await Post.countDocuments({ creator: customer._id, status: "finish" });
+
+      return {
+        ...customer.toObject(), 
+        postCount 
+      };
+    }));
+
+    return customersWithPostCount; 
   } catch (error) {
     throw new Error(error.message);
   }
