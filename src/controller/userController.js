@@ -347,6 +347,15 @@ const getTransactions = async (req, res) => {
   }
 };
 
+const getAllCustomers = async (req, res) => {
+  try {
+    const customers = await authService.getAllCustomers();
+    res.status(200).json(customers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getTransactions,
   updateBalanceController,
@@ -366,4 +375,5 @@ module.exports = {
   changePasswordUser,
   getUserByRoleDriverController,
   unlockUser,
+  getAllCustomers,
 };

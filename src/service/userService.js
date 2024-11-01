@@ -326,6 +326,15 @@ const getTransactionsById = async (userId) => {
   }
 };
 
+const getAllCustomers = async () => {
+  try {
+    const customers = await User.find({ role: "customer" });
+    return customers;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
   getTransactionsById,
   searchUser,
@@ -342,4 +351,5 @@ module.exports = {
   updateBalance,
   generateToken,
   unlockUser,
+  getAllCustomers,
 };
