@@ -55,6 +55,34 @@ const emailTemplates = {
       <p style="color: #555; font-size: 16px;">Vui lòng chuẩn bị để nhận hàng.</p>
     </div>
   `,
+
+  driverOrderCancelled: (driverName, orderId) => `
+    <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; text-align: center;">
+      <h1 style="color: #333; font-size: 24px;">Thông báo hủy đơn hàng</h1>
+      <p style="color: #555; font-size: 16px;">Xin chào tài xế${driverName},</p>
+      <p style="color: #555; font-size: 16px;">
+        Bạn đã hủy đơn hàng với mã <strong>${orderId}</strong>.Bạn đã bị trừ phí hủy đơn hàng (10% trên giá trị vận chuyển).
+      </p>
+      <p>Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email: 
+        <a href="mailto:RFTMS@gmail.com" style="color: #28a745; text-decoration: underline;">RFTMS@gmail.com</a>
+      </p>
+      <p style="color: #555; font-size: 16px;">Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
+    </div>
+  `,
+
+  userOrderCancelled: (userName, orderId) => `
+    <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; text-align: center;">
+      <h1 style="color: #333; font-size: 24px;">Thông báo hủy đơn hàng</h1>
+      <p style="color: #555; font-size: 16px;">Xin chào ${userName},</p>
+      <p style="color: #555; font-size: 16px;">
+        Đơn hàng của bạn với mã <strong>${orderId}</strong> đã được hủy thành công. Bạn đã bị trừ phí hủy đơn hàng (10% trên giá trị vận chuyển).
+      </p>
+      <p>Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email: 
+        <a href="mailto:RFTMS@gmail.com" style="color: #28a745; text-decoration: underline;">RFTMS@gmail.com</a>
+      </p>
+      <p style="color: #555; font-size: 16px;">Nếu bạn không thực hiện thay đổi này, vui lòng liên hệ với chúng tôi ngay.</p>
+    </div>
+  `,
 };
 
 module.exports = emailTemplates;

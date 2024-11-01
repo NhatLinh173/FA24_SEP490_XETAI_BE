@@ -13,10 +13,11 @@ const {
   facebookAuthCallback,
   updateUserController,
   changePasswordUser,
-  getUserByRoleController,
+  getUserByRoleDriverController,
   searchUsersController,
   updateBalanceController,
   getTransactions,
+  unlockUser,
 } = require("../controller/userController");
 const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -32,6 +33,8 @@ router.get("/users", getAllUsers);
 router.get("/user/:id", getUserById);
 // http://localhost:3005/auth/user/:id/block
 router.put("/user/:id/block", blockUser);
+// http://localhost:3005/auth/user/:id/unlock
+router.put("/user/:id/unlock", unlockUser);
 // http://localhost:3005/auth/google
 router.get("/google", googleAuth);
 // http://localhost:3005/auth/google/callback
@@ -45,7 +48,7 @@ router.put("/update-user/:id", upload.single("avatar"), updateUserController);
 // http://localhost:3005/auth/change-password
 router.put("/change-password", authMiddleware, changePasswordUser);
 // http://localhost:3005/auth/role/:role
-router.get("/role/:role", getUserByRoleController);
+router.get("/role/driver", getUserByRoleDriverController);
 // http://localhost:3005/auth/search
 router.get("/search", searchUsersController);
 // http://localhost:3005/auth/balance
