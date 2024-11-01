@@ -3,13 +3,12 @@ const reportService = require("../service/reportService");
 const createReport = async (req, res) => {
   const { reporterId, postId, description } = req.body;
   try {
-    const report = await reportService.createReport(
-      reporterId,
-      postId,
-      description
-    );
+    const report = await reportService.createReport(reporterId, postId, description);
     res.status(201).json({ message: "Report created successfully", report });
   } catch (error) {
+    if (error.message === "Report already exists for this post by this reporter.") {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: "Error creating report", error });
   }
 };
