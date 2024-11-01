@@ -11,6 +11,7 @@ const dealPriceRouter = require("./dealPrice");
 const carRegistrationRouter = require("./carRegistration");
 const driverRouter = require("./driver");
 const reportRouter = require("./report");
+const blogRouter = require("./blog");
 
 const router = (app) => {
   app.use("/auth", userRouter);
@@ -27,6 +28,7 @@ const router = (app) => {
   app.use("/car", carRegistrationRouter);
   app.use("/driver", driverRouter);
   app.use("/report", reportRouter);
+  app.use("/blog", blogRouter);
 };
 
 module.exports = router;
