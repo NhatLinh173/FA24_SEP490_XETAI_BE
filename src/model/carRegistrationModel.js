@@ -8,9 +8,6 @@ const CarRegistration = new Schema(
       type: String,
       required: true,
     },
-    description: {
-      type: String,
-    },
     imageCar: {
       type: [String],
     },
@@ -21,6 +18,9 @@ const CarRegistration = new Schema(
       type: String, 
     },
     registrationDate: {
+      type: Date,
+    },
+    expirationDate: {
       type: Date,
     },
     load: {
