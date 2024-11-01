@@ -90,7 +90,7 @@ class PostController {
       if (!updatePost) {
         return res.status(404).json({ message: "Post not found" });
       }
-
+      const currentStatus = updatePost.status;
       let imageUrls = Array.isArray(oldImages) ? [...oldImages] : [oldImages];
       if (typeof oldImages === "string") {
         imageUrls = oldImages.split(",").map((url) => url.trim());
@@ -130,6 +130,7 @@ class PostController {
       updatePost.deliveryTime = bodyData.deliveryTime;
       updatePost.startPointCity = bodyData.startPointCity;
       updatePost.destinationCity = bodyData.destinationCity;
+
       const currentTime = new Date();
       if (bodyData.status === "inprogress") {
         updatePost.startTime = currentTime;
@@ -137,9 +138,10 @@ class PostController {
         updatePost.endTime = currentTime;
       } else if (bodyData.status === "cancel") {
         const user = await User.findById({ _id: bodyData.creator });
-
-        const price = parseFloat(bodyData.price.replace(/,/g, "").replace(/\./g, ""));
-        if (updatePost.status === "approve") {
+        const price = parseFloat(
+          bodyData.price.replace(/,/g, "").replace(/\./g, "")
+        );
+        if (currentStatus === "approve") {
           const cancellationFee = price * 0.1;
           if (user) {
             if (user.balance < cancellationFee) {

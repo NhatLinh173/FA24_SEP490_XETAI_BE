@@ -38,7 +38,7 @@ const login = async (req, res) => {
 
   try {
     const { user, refreshToken } = await authService.loginUser(email, password);
-    console.log("Login successful, refreshToken:", refreshToken);
+
     const refreshTokenExpiration = ms(process.env.JWT_REFRESH_EXPIRATION);
     if (isNaN(refreshTokenExpiration)) {
       throw new Error("Invalid JWT_REFRESH_EXPIRATION value");
@@ -71,9 +71,10 @@ const refreshTokenRequest = async (req, res) => {
 
 const blockUser = async (req, res) => {
   const { id } = req.params;
+  const { duration } = req.body;
 
   try {
-    const user = await userService.blockUser(id);
+    const user = await authService.blockUser(id, duration);
     res.status(200).json({ message: "User has been blocked", user });
   } catch (error) {
     if (error.message === "User not found") {
@@ -81,6 +82,16 @@ const blockUser = async (req, res) => {
     } else {
       res.status(500).json({ message: "Server error" });
     }
+  }
+};
+
+const unlockUser = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await authService.unlockUser(id);
+    return res.status(200).json({ message: "User has been unlocked", user });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -251,11 +262,10 @@ const updateUserController = async (req, res) => {
       address,
       avatar: avatarUrl,
     });
-
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }
-
+    // const
     res.status(200).json({ message: "User has been updated", updatedUser });
   } catch (error) {
     console.error("Error updating user:", error);
@@ -284,11 +294,10 @@ const changePasswordUser = async (req, res) => {
   }
 };
 
-const getUserByRoleController = async (req, res) => {
-  const { role } = req.params;
-
+const getUserByRoleDriverController = async (req, res) => {
   try {
-    const users = await authService.getUserByRole(role);
+    const excludedRoles = ["customer", "admin", "staff"];
+    const users = await authService.getUserByRoleDriver(excludedRoles);
     res.status(200).json(users);
   } catch (error) {
     console.error("Error getting users by role:", error);
@@ -355,5 +364,6 @@ module.exports = {
   ensureAuthenticated,
   updateUserController,
   changePasswordUser,
-  getUserByRoleController,
+  getUserByRoleDriverController,
+  unlockUser,
 };
