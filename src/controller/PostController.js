@@ -130,12 +130,35 @@ class PostController {
       updatePost.deliveryTime = bodyData.deliveryTime;
       updatePost.startPointCity = bodyData.startPointCity;
       updatePost.destinationCity = bodyData.destinationCity;
-
       const currentTime = new Date();
       if (bodyData.status === "inprogress") {
         updatePost.startTime = currentTime;
       } else if (bodyData.status === "finish") {
         updatePost.endTime = currentTime;
+      } else if (bodyData.status === "cancel") {
+        const user = await User.findById({ _id: bodyData.creator });
+
+        const price = parseFloat(bodyData.price.replace(/,/g, "").replace(/\./g, ""));
+        if (updatePost.status === "approve") {
+          const cancellationFee = price * 0.1;
+          if (user) {
+            if (user.balance < cancellationFee) {
+              return res.status(402).json({ message: "Không đủ số dư để hủy đơn hàng" });
+            } else {
+              user.balance -= cancellationFee;
+              const newTransaction = new Transaction({
+                userId: bodyData.creator,
+                postId: updatePost._id,
+                amount: cancellationFee,
+                type: "CANCEL_ORDER",
+                status: "PAID",
+              });
+
+              await newTransaction.save();
+              await user.save();
+            }
+          }
+        }
       }
 
       const savedPost = await updatePost.save();
@@ -477,7 +500,7 @@ class PostController {
       const inputDate = new Date(deliveryTime);
 
       if (inputDate <= currentDate) {
-        return res.status(400).json({ message: "Invalid delivery time" });
+        return res.status(402).json({ message: "Invalid delivery time" });
       }
 
       const newDeal = new dealPriceModel({

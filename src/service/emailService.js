@@ -1,6 +1,8 @@
 const nodemailer = require("nodemailer");
 require("dotenv").config();
-const sendEmail = async (to, subject, text) => {
+const emailTemplates = require("../utils/emailTemplate");
+
+const sendEmail = async (to, subject, templateName, ...templateArgs) => {
   try {
     let transport = nodemailer.createTransport({
       service: "gmail",
@@ -10,11 +12,13 @@ const sendEmail = async (to, subject, text) => {
       },
     });
 
+    const htmlContent = emailTemplates[templateName](...templateArgs);
+
     let mailOptions = {
       from: process.env.EMAIL_USER,
       to: to,
       subject: subject,
-      text: text,
+      html: htmlContent,
     };
 
     await transport.sendMail(mailOptions);
@@ -25,4 +29,4 @@ const sendEmail = async (to, subject, text) => {
   }
 };
 
-module.exports = sendEmail;
+module.exports = { sendEmail };
