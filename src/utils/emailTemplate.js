@@ -83,6 +83,14 @@ const emailTemplates = {
       <p style="color: #555; font-size: 16px;">Nếu bạn không thực hiện thay đổi này, vui lòng liên hệ với chúng tôi ngay.</p>
     </div>
   `,
+  otpVerification: (otpCode) => `
+  <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; text-align: center;">
+    <h1 style="color: #333; font-size: 24px;">Mã xác thực OTP</h1>
+    <p style="color: #555; font-size: 16px;">
+      Mã OTP của bạn là: <strong>${otpCode}</strong>. Mã này có hiệu lực trong 5 phút.
+    </p>
+  </div>
+`,
 };
 
 module.exports = emailTemplates;

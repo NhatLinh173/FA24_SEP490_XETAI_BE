@@ -347,6 +347,17 @@ const getTransactions = async (req, res) => {
   }
 };
 
+const resetPasswordController = async (req, res) => {
+  const { email, newPassword } = req.body;
+  try {
+    const user = await authService.resetPassword(email, newPassword);
+    res.status(200).json({ message: "Password updated successfully", user });
+  } catch (error) {
+    console.error("Error forgotting password:", error);
+    res.status(500).json({ message: "An error occurred" });
+  }
+};
+
 const getAllCustomers = async (req, res) => {
   try {
     const customers = await authService.getAllCustomers();
@@ -375,5 +386,7 @@ module.exports = {
   changePasswordUser,
   getUserByRoleDriverController,
   unlockUser,
+  resetPasswordController,
   getAllCustomers,
+
 };

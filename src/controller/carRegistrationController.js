@@ -1,5 +1,6 @@
 const CarRegistration = require("../model/carRegistrationModel");
 const cloudinary = require("../config/cloudinaryConfig");
+const Tesseract = require("tesseract.js");
 
 const createCarRegistration = async (req, res) => {
   const { nameCar, driverId, licensePlate, registrationDate, load, expirationDate } = req.body;
@@ -13,30 +14,8 @@ const createCarRegistration = async (req, res) => {
     let imageCarUrls = [];
     let imageRegistrationUrls = [];
 
-    if (imageCar && imageCar.length > 0) {
-      const uploadCarPromises = imageCar.map((file) => {
-        return new Promise((resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream({ folder: "car_images" }, (error, result) => {
-              if (error) {
-                reject(
-                  new Error(
-                    "Error uploading image to Cloudinary: " + error.message
-                  )
-                );
-              } else {
-                resolve(result.secure_url);
-              }
-            })
-            .end(file.buffer);
-        });
-      });
-
-      imageCarUrls = await Promise.all(uploadCarPromises);
-    }
-
-    if (imageRegistration && imageRegistration.length > 0) {
-      const uploadRegistrationPromises = imageRegistration.map((file) => {
+    const registrationImageUrls = await Promise.all(
+      imageRegistration.map((file) => {
         return new Promise((resolve, reject) => {
           cloudinary.uploader
             .upload_stream(
@@ -55,10 +34,25 @@ const createCarRegistration = async (req, res) => {
             )
             .end(file.buffer);
         });
-      });
+      })
+    );
 
-      imageRegistrationUrls = await Promise.all(uploadRegistrationPromises);
-    }
+    imageRegistrationUrls = registrationImageUrls;
+
+    const ocrPromises = imageRegistrationUrls.map(async (url) => {
+      const {
+        data: { text },
+      } = await Tesseract.recognize(url, "eng");
+      return text;
+    });
+
+    const extractedTexts = await Promise.all(ocrPromises);
+
+    const isRegistrationDateCorrect = extractedTexts.some((text) =>
+      text.includes(registrationDate)
+    );
+
+    const status = isRegistrationDateCorrect ? "approve" : "wait";
 
     const newCarRegistration = new CarRegistration({
       nameCar,
@@ -68,7 +62,9 @@ const createCarRegistration = async (req, res) => {
       licensePlate,
       registrationDate,
       load,
+      status,
       expirationDate,
+
     });
 
     await newCarRegistration.save();
@@ -300,7 +296,7 @@ const getCarRegistrationsByDriverIdAndStatus = async (req, res) => {
   try {
     const registrations = await CarRegistration.find({
       driverId,
-      status: "approved",
+      status: "approve",
     }).populate({
       path: "driverId",
       populate: {
