@@ -33,6 +33,12 @@ const driverSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  carRegistrations: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CarRegistration",
+    },
+  ],
   statistics: {
     today: [
       {

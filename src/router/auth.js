@@ -18,6 +18,7 @@ const {
   updateBalanceController,
   getTransactions,
   unlockUser,
+  resetPasswordController,
 } = require("../controller/userController");
 const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -55,5 +56,7 @@ router.get("/search", searchUsersController);
 router.put("/balance", updateBalanceController);
 // http://localhost:3005/auth/transaction/:id
 router.get("/transaction/:userId", getTransactions);
+// http://localhost:3005/auth/forgotPassword
+router.post("/resetPassword", resetPasswordController);
 
 module.exports = router;

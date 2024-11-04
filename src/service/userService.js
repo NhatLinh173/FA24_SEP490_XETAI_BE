@@ -4,8 +4,28 @@ const Driver = require("../model/driverModel");
 const Transaction = require("../model/transactionModel");
 const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
+const cron = require("node-cron");
 dotenv.config();
 
+cron.schedule("* * * * *", async () => {
+  try {
+    const now = new Date();
+    const users = await User.find({
+      isBlocked: true,
+      blockedUntil: { $ne: null },
+    });
+
+    for (const user of users) {
+      if (now > user.blockedUntil) {
+        user.isBlocked = false;
+        user.blockedUntil = null;
+        await user.save();
+      }
+    }
+  } catch (error) {
+    console.error("Error updating blocked users:", error);
+  }
+});
 const generateToken = (id, expiresIn, role) => {
   if (!id) {
     throw new Error("User ID is required to generate a token");
@@ -207,7 +227,6 @@ const blockUser = async (id, duration) => {
   switch (duration) {
     case "1day":
       blockedUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-
       break;
     case "3days":
       blockedUntil = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
@@ -326,6 +345,24 @@ const getTransactionsById = async (userId) => {
   }
 };
 
+const resetPassword = async (email, newPassword) => {
+  try {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const user = await User.findOneAndUpdate(
+      { email: email },
+      { password: hashedPassword },
+      { new: true }
+    );
+    if (!user) {
+      throw new Error("Người dùng không tồn tại!");
+    }
+
+    return user;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
   getTransactionsById,
   searchUser,
@@ -342,4 +379,5 @@ module.exports = {
   updateBalance,
   generateToken,
   unlockUser,
+  resetPassword,
 };
