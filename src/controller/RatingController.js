@@ -131,6 +131,21 @@ class RatingController {
             return res.status(500).json({ message: 'Lỗi khi lấy đánh giá đã thực hiện', error: err });
         }
     }
+
+    async getRatingByReviewerForUser(req, res) {
+      const { reviewerId, userId } = req.query; 
+      try {
+          const rating = await Rating.findOne({ reviewerId, userId }).populate('userId').populate('reviewerId');
+  
+          if (!rating) {
+              return res.status(404).json({ message: 'Không tìm thấy đánh giá của người dùng này cho tài xế này' });
+          }
+  
+          return res.json({ message: 'Lấy đánh giá thành công', rating });
+      } catch (err) {
+          return res.status(500).json({ message: 'Lỗi khi lấy đánh giá', error: err });
+      }
+  }
 }
 
 module.exports = new RatingController();

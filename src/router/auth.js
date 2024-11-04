@@ -19,6 +19,7 @@ const {
   getTransactions,
   unlockUser,
   resetPasswordController,
+  getAllCustomers,
 } = require("../controller/userController");
 const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -58,5 +59,8 @@ router.put("/balance", updateBalanceController);
 router.get("/transaction/:userId", getTransactions);
 // http://localhost:3005/auth/forgotPassword
 router.post("/resetPassword", resetPasswordController);
+// http://localhost:3005/auth/users/customer
+router.get("/users/customer", getAllCustomers);
+
 
 module.exports = router;

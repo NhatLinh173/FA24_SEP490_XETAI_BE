@@ -3,26 +3,10 @@ const cloudinary = require("../config/cloudinaryConfig");
 const Tesseract = require("tesseract.js");
 
 const createCarRegistration = async (req, res) => {
-  const {
-    nameCar,
-    description,
-    driverId,
-    licensePlate,
-    registrationDate,
-    load,
-  } = req.body;
+  const { nameCar, driverId, licensePlate, registrationDate, load, expirationDate } = req.body;
   const { imageCar, imageRegistration } = req.files;
 
-  if (
-    !nameCar ||
-    !description ||
-    !driverId ||
-    !imageCar ||
-    !imageRegistration ||
-    !licensePlate ||
-    !registrationDate ||
-    !load
-  ) {
+  if (!nameCar || !driverId || !imageCar || !imageRegistration || !licensePlate || !registrationDate || !load || !expirationDate) {
     return res.status(400).json({ message: "Invalid information" });
   }
 
@@ -72,7 +56,6 @@ const createCarRegistration = async (req, res) => {
 
     const newCarRegistration = new CarRegistration({
       nameCar,
-      description,
       imageCar: imageCarUrls,
       imageRegistration: imageRegistrationUrls,
       driverId,
@@ -80,6 +63,8 @@ const createCarRegistration = async (req, res) => {
       registrationDate,
       load,
       status,
+      expirationDate,
+
     });
 
     await newCarRegistration.save();
