@@ -15,7 +15,7 @@ const CarRegistration = new Schema(
       type: [String],
     },
     licensePlate: {
-      type: String, 
+      type: String,
     },
     registrationDate: {
       type: Date,

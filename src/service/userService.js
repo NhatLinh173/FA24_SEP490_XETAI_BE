@@ -346,7 +346,6 @@ const getTransactionsById = async (userId) => {
   }
 };
 
-
 const resetPassword = async (email, newPassword) => {
   try {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -369,23 +368,37 @@ const getAllCustomers = async () => {
   try {
     const customers = await User.find({ role: "customer" });
 
-    const customersWithPostCount = await Promise.all(customers.map(async (customer) => {
-      const postCount = await Post.countDocuments({ creator: customer._id, status: "finish" });
+    const customersWithPostCount = await Promise.all(
+      customers.map(async (customer) => {
+        const postCount = await Post.countDocuments({
+          creator: customer._id,
+          status: "finish",
+        });
 
-      return {
-        ...customer.toObject(), 
-        postCount 
-      };
-    }));
+        return {
+          ...customer.toObject(),
+          postCount,
+        };
+      })
+    );
 
-    return customersWithPostCount; 
+    return customersWithPostCount;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
 
+const getAllStaff = async () => {
+  try {
+    const staff = await User.find({ role: "staff" });
+    return staff;
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
 module.exports = {
+  getAllStaff,
   getTransactionsById,
   searchUser,
   registerUser,
@@ -403,5 +416,4 @@ module.exports = {
   unlockUser,
   resetPassword,
   getAllCustomers,
-
 };
