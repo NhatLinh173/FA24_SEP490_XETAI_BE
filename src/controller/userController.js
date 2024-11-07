@@ -367,7 +367,17 @@ const getAllCustomers = async (req, res) => {
   }
 };
 
+const getAllStaffController = async (req, res) => {
+  try {
+    const staff = await authService.getAllStaff();
+    res.status(200).json(staff);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
+  getAllStaffController,
   getTransactions,
   updateBalanceController,
   searchUsersController,
@@ -388,5 +398,4 @@ module.exports = {
   unlockUser,
   resetPasswordController,
   getAllCustomers,
-
 };
