@@ -1,4 +1,4 @@
-const Blog = require('../model/blogModel.js');
+const Blog = require("../model/blogModel.js");
 
 const createBlog = async (blogData) => {
   const newBlog = new Blog(blogData);
@@ -6,11 +6,11 @@ const createBlog = async (blogData) => {
 };
 
 const getAllBlogs = async () => {
-  return await Blog.find().populate('creatorId', 'name');
+  return await Blog.find().populate("creatorId", "fullName");
 };
 
 const getBlogById = async (blogId) => {
-  return await Blog.findById(blogId).populate('creatorId', 'name');
+  return await Blog.findById(blogId).populate("creatorId", "fullName");
 };
 
 const updateBlog = async (blogId, blogData) => {

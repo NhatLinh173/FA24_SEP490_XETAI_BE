@@ -21,6 +21,7 @@ const {
   resetPasswordController,
   getAllCustomers,
   getAllStaffController,
+  addStaffController,
 } = require("../controller/userController");
 const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -64,5 +65,7 @@ router.post("/resetPassword", resetPasswordController);
 router.get("/users/customer", getAllCustomers);
 // http://localhost:3005/auth/users/staff
 router.get("/users/staff", getAllStaffController);
+// http://localhost:3005/auth/users/addStaff
+router.post("/users/addStaff", addStaffController);
 
 module.exports = router;

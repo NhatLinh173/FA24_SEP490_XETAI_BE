@@ -102,8 +102,8 @@ const registerUser = async ({
 const loginUser = async (email, password) => {
   const user = await User.findOne({ email });
 
-  if (!user || !(await user.matchPassword(password))) {
-    throw new Error("Invalid email or password");
+  if (!user || user.isBlocked || !(await user.matchPassword(password))) {
+    throw new Error("Invalid email, password or your account is blocked");
   }
 
   const accessToken = generateToken(
@@ -397,7 +397,32 @@ const getAllStaff = async () => {
   }
 };
 
+const addStaff = async (fullName, email, phone, address) => {
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new Error("Email này đã được đăng ký");
+    }
+
+    const hashedPassword = await bcrypt.hash("staff123", 10);
+
+    const newStaff = new User({
+      fullName,
+      email,
+      phone,
+      address,
+      role: "staff",
+      password: hashedPassword,
+    });
+
+    await newStaff.save();
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
+  addStaff,
   getAllStaff,
   getTransactionsById,
   searchUser,
