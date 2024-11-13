@@ -4,22 +4,22 @@ const cloudinary = require("../config/cloudinaryConfig");
 // Tạo driver post mới
 const createDriverPost = async (req, res) => {
   const { creatorId, startCity, startAddress, destinationCity, destinationAddress, description } = req.body;
-  const images  = req.files;
+  const images = req.files;
 
   const missingFields = [];
-if (!creatorId) missingFields.push("creatorId");
-if (!startCity) missingFields.push("startCity");
-if (!startAddress) missingFields.push("startAddress");
-if (!destinationCity) missingFields.push("destinationCity");
-if (!destinationAddress) missingFields.push("destinationAddress");
-if (!description) missingFields.push("description");
-if (!images) missingFields.push("images");
+  if (!creatorId) missingFields.push("creatorId");
+  if (!startCity) missingFields.push("startCity");
+  if (!startAddress) missingFields.push("startAddress");
+  if (!destinationCity) missingFields.push("destinationCity");
+  if (!destinationAddress) missingFields.push("destinationAddress");
+  if (!description) missingFields.push("description");
+  if (!images) missingFields.push("images");
 
-if (missingFields.length > 0) {
-  return res.status(400).json({
-    message: `Missing fields: ${missingFields.join(", ")}`
-  });
-}
+  if (missingFields.length > 0) {
+    return res.status(400).json({
+      message: `Missing fields: ${missingFields.join(", ")}`
+    });
+  }
 
   try {
     // Upload hình ảnh lên Cloudinary
@@ -50,8 +50,14 @@ if (missingFields.length > 0) {
       images: imageUrls,
     });
 
-    await newDriverPost.save();
-    res.status(200).json(newDriverPost);
+    // Lưu bài đăng mới và populate creatorId để trả về đầy đủ thông tin
+    const savedDriverPost = await newDriverPost.save();
+    const populatedDriverPost = await DriverPost.findById(savedDriverPost._id).populate({
+      path: "creatorId",
+      populate: { path: "userId" }
+    });
+
+    res.status(200).json(populatedDriverPost);
   } catch (error) {
     res.status(400).json({ message: "Unable to create driver post", error });
   }
@@ -60,7 +66,10 @@ if (missingFields.length > 0) {
 // Lấy tất cả driver posts
 const getAllDriverPosts = async (req, res) => {
   try {
-    const driverPosts = await DriverPost.find().populate("creatorId");
+    const driverPosts = await DriverPost.find().populate({
+      path: "creatorId",
+      populate: { path: "userId" }
+    });
     res.status(200).json(driverPosts);
   } catch (error) {
     res.status(400).json({ message: "Unable to fetch driver posts", error });
@@ -72,7 +81,10 @@ const getDriverPostById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const driverPost = await DriverPost.findById(id).populate("creatorId");
+    const driverPost = await DriverPost.findById(id).populate({
+      path: "creatorId",
+      populate: { path: "userId" }
+    });
 
     if (!driverPost) {
       return res.status(404).json({ message: "Driver post not found" });
@@ -127,7 +139,10 @@ const updateDriverPost = async (req, res) => {
         images: imageUrls,
       },
       { new: true }
-    ).populate("creatorId");
+    ).populate({
+      path: "creatorId",
+      populate: { path: "userId" }
+    });
 
     res.status(200).json(updatedDriverPost);
   } catch (error) {
@@ -155,10 +170,32 @@ const deleteDriverPost = async (req, res) => {
   }
 };
 
+// Lấy driver posts theo creatorId
+const getDriverPostsByCreatorId = async (req, res) => {
+  const { creatorId } = req.params;
+
+  try {
+    // Tìm tất cả bài đăng dựa trên creatorId và populate để có đầy đủ thông tin
+    const driverPosts = await DriverPost.find({ creatorId }).populate({
+      path: "creatorId",
+      populate: { path: "userId" }
+    });
+
+    if (driverPosts.length === 0) {
+      return res.status(404).json({ message: "No driver posts found for this creatorId" });
+    }
+
+    res.status(200).json(driverPosts);
+  } catch (error) {
+    res.status(400).json({ message: "Unable to fetch driver posts by creatorId", error });
+  }
+};
+
 module.exports = {
   createDriverPost,
   getAllDriverPosts,
   getDriverPostById,
   updateDriverPost,
   deleteDriverPost,
+  getDriverPostsByCreatorId,
 };

@@ -7,6 +7,7 @@ const {
   getDriverPostById,
   updateDriverPost,
   deleteDriverPost,
+  getDriverPostsByCreatorId,
 } = require("../controller/driverPostController.js");
 
 // Route tạo driver post mới
@@ -31,5 +32,8 @@ router.put(
 
 // Route xóa driver post theo ID
 router.delete("/:id", deleteDriverPost);
+
+// Route lấy driver posts theo creatorId
+router.get("/creator/:creatorId", getDriverPostsByCreatorId);
 
 module.exports = router;
