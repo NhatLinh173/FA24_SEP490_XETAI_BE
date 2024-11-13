@@ -7,7 +7,7 @@ const {
   getDriverPostById,
   updateDriverPost,
   deleteDriverPost,
-} = require("../controller/driverPostController");
+} = require("../controller/driverPostController.js");
 
 // Route tạo driver post mới
 router.post(

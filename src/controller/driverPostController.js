@@ -4,11 +4,22 @@ const cloudinary = require("../config/cloudinaryConfig");
 // Tạo driver post mới
 const createDriverPost = async (req, res) => {
   const { creatorId, startCity, startAddress, destinationCity, destinationAddress, description } = req.body;
-  const { images } = req.files;
+  const images  = req.files;
 
-  if (!creatorId || !startCity || !startAddress || !destinationCity || !destinationAddress || !description || !images) {
-    return res.status(400).json({ message: "Invalid information" });
-  }
+  const missingFields = [];
+if (!creatorId) missingFields.push("creatorId");
+if (!startCity) missingFields.push("startCity");
+if (!startAddress) missingFields.push("startAddress");
+if (!destinationCity) missingFields.push("destinationCity");
+if (!destinationAddress) missingFields.push("destinationAddress");
+if (!description) missingFields.push("description");
+if (!images) missingFields.push("images");
+
+if (missingFields.length > 0) {
+  return res.status(400).json({
+    message: `Missing fields: ${missingFields.join(", ")}`
+  });
+}
 
   try {
     // Upload hình ảnh lên Cloudinary
