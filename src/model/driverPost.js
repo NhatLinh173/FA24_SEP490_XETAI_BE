@@ -12,18 +12,18 @@ const driverPost = new Schema(
       type: String,
       required: true,
     },
-    startAddress: {
-        type: String,
-        required: true,
-    },
+    // startAddress: {
+    //     type: String,
+    //     required: true,
+    // },
     destinationCity: {
       type: String,
       required: true,
     },
-    destinationAddress: {
-        type: String,
-        required: true,
-      },
+    // destinationAddress: {
+    //     type: String,
+    //     required: true,
+    //   },
     description: {
       type: String,
       required: true,

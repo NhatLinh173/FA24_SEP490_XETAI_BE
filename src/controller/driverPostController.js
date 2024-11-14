@@ -3,15 +3,13 @@ const cloudinary = require("../config/cloudinaryConfig");
 
 // Tạo driver post mới
 const createDriverPost = async (req, res) => {
-  const { creatorId, startCity, startAddress, destinationCity, destinationAddress, description } = req.body;
+  const { creatorId, startCity, destinationCity, description } = req.body;
   const images = req.files;
 
   const missingFields = [];
   if (!creatorId) missingFields.push("creatorId");
   if (!startCity) missingFields.push("startCity");
-  if (!startAddress) missingFields.push("startAddress");
   if (!destinationCity) missingFields.push("destinationCity");
-  if (!destinationAddress) missingFields.push("destinationAddress");
   if (!description) missingFields.push("description");
   if (!images) missingFields.push("images");
 
@@ -43,9 +41,7 @@ const createDriverPost = async (req, res) => {
     const newDriverPost = new DriverPost({
       creatorId,
       startCity,
-      startAddress,
       destinationCity,
-      destinationAddress,
       description,
       images: imageUrls,
     });
@@ -99,7 +95,7 @@ const getDriverPostById = async (req, res) => {
 // Cập nhật driver post
 const updateDriverPost = async (req, res) => {
   const { id } = req.params;
-  const { startCity, startAddress, destinationCity, destinationAddress, description } = req.body;
+  const { startCity, destinationCity, description } = req.body;
   const { images } = req.files;
 
   try {
@@ -132,9 +128,7 @@ const updateDriverPost = async (req, res) => {
       id,
       {
         startCity,
-        startAddress,
         destinationCity,
-        destinationAddress,
         description,
         images: imageUrls,
       },
