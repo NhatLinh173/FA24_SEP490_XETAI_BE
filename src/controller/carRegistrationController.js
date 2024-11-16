@@ -248,10 +248,12 @@ const deleteCarRegistration = async (req, res) => {
 };
 
 const updateCarRegistrationStatus = async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
+  const { id, status } = req.body;
   if (!status) {
     return res.status(400).json({ message: "status is required" });
+  }
+  if (!id) {
+    return res.status(400).json({ message: "id is required" });
   }
 
   try {
@@ -333,7 +335,28 @@ const getCarRegistrationsByDriverIdAndStatus = async (req, res) => {
   }
 };
 
+const getAllWithStatus = async (req, res) => {
+  try {
+    const carRegistrations = await CarRegistration.find({
+      status: "wait",
+    }).populate({
+      path: "driverId",
+      populate: {
+        path: "userId",
+        select: "fullName email",
+      },
+    });
+
+    res.status(200).json(carRegistrations);
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: "Unable to fetch car registrations", error });
+  }
+};
+
 module.exports = {
+  getAllWithStatus,
   createCarRegistration,
   getAllCarRegistrations,
   getCarRegistrationById,

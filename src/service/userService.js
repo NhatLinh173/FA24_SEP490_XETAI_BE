@@ -107,8 +107,8 @@ const loginUser = async (email, password) => {
     );
   }
 
-  if (!user || !(await user.matchPassword(password))) {
-    throw new Error("Invalid email or password");
+  if (!user || user.isBlocked || !(await user.matchPassword(password))) {
+    throw new Error("Invalid email, password or your account is blocked");
   }
 
   const accessToken = generateToken(
@@ -379,7 +379,6 @@ const getAllCustomers = async () => {
           creator: customer._id,
           status: "finish",
         });
-
         return {
           ...customer.toObject(),
           postCount,
@@ -424,6 +423,8 @@ const getAllStaff = async () => {
 };
 
 module.exports = {
+  addStaff,
+  getAllStaff,
   getTransactionsById,
   searchUser,
   registerUser,

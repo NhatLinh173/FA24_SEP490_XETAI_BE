@@ -9,7 +9,8 @@ const {
   deleteCarRegistration,
   updateCarRegistrationStatus,
   getCarRegistrationsByDriverId,
-  getCarRegistrationsByDriverIdAndStatus
+  getCarRegistrationsByDriverIdAndStatus,
+  getAllWithStatus,
 } = require("../controller/carRegistrationController");
 
 // Route tạo Car Registration mới
@@ -17,11 +18,11 @@ router.post(
   "/",
   upload.fields([
     { name: "imageCar", maxCount: 10 },
-    { name: "imageRegistration", maxCount: 10 }, 
+    { name: "imageRegistration", maxCount: 10 },
   ]),
   createCarRegistration
 );
-
+router.get("/wait", getAllWithStatus);
 // Route lấy tất cả Car Registrations
 router.get("/", getAllCarRegistrations);
 
@@ -42,7 +43,7 @@ router.put(
 router.delete("/:id", deleteCarRegistration);
 
 // Route cập nhật trạng thái Car Registration (chỉ cập nhật status)
-router.patch("/:id/status", updateCarRegistrationStatus);
+router.patch("/update/status", updateCarRegistrationStatus);
 
 // Route lấy Car Registration theo driverId
 router.get("/driver/:driverId", getCarRegistrationsByDriverId);
