@@ -101,6 +101,11 @@ const registerUser = async ({
 
 const loginUser = async (email, password) => {
   const user = await User.findOne({ email });
+  if (user.isBlocked === true) {
+    throw new Error(
+      "Tài khoản của bạn đã bị khóa vui lòng liên hệ với quản trị viên để biết thêm chi tiết"
+    );
+  }
 
   if (!user || !(await user.matchPassword(password))) {
     throw new Error("Invalid email or password");
@@ -346,7 +351,6 @@ const getTransactionsById = async (userId) => {
   }
 };
 
-
 const resetPassword = async (email, newPassword) => {
   try {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -369,19 +373,53 @@ const getAllCustomers = async () => {
   try {
     const customers = await User.find({ role: "customer" });
 
-    const customersWithPostCount = await Promise.all(customers.map(async (customer) => {
-      const postCount = await Post.countDocuments({ creator: customer._id, status: "finish" });
+    const customersWithPostCount = await Promise.all(
+      customers.map(async (customer) => {
+        const postCount = await Post.countDocuments({
+          creator: customer._id,
+          status: "finish",
+        });
 
-      return {
-        ...customer.toObject(), 
-        postCount 
-      };
-    }));
+        return {
+          ...customer.toObject(),
+          postCount,
+        };
+      })
+    );
 
-    return customersWithPostCount; 
-
+    return customersWithPostCount;
   } catch (error) {
     throw new Error(error.message);
+  }
+};
+
+const addStaff = async ({ email, fullName }) => {
+  const password = "staff123"; // Mật khẩu mặc định
+  const role = "staff";
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    throw new Error("Email already exists");
+  }
+
+  const user = await User.create({
+    email,
+    password: hashedPassword,
+    role,
+    fullName,
+  });
+
+  return user;
+};
+
+const getAllStaff = async () => {
+  try {
+    const staff = await User.find({ role: "staff" });
+    return staff;
+  } catch (error) {
+    console.error(error);
   }
 };
 
@@ -403,5 +441,6 @@ module.exports = {
   unlockUser,
   resetPassword,
   getAllCustomers,
-
+  addStaff,
+  getAllStaff,
 };

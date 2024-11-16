@@ -367,6 +367,36 @@ const getAllCustomers = async (req, res) => {
   }
 };
 
+const addStaff = async (req, res) => {
+  const { email, fullName } = req.body;
+
+  if (!email || !fullName) {
+    return res
+      .status(400)
+      .json({ message: "You need fill full information when you register" });
+  }
+
+  try {
+    const user = await authService.addStaff({
+      email,
+      fullName,
+    });
+    res.status(201).json(user);
+  } catch (error) {
+    console.error("Error during user registration:", error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+const getAllStaff = async (req, res) => {
+  try {
+    const staff = await authService.getAllStaff();
+    res.status(200).json(staff);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getTransactions,
   updateBalanceController,
@@ -388,5 +418,6 @@ module.exports = {
   unlockUser,
   resetPasswordController,
   getAllCustomers,
-
+  addStaff,
+  getAllStaff,
 };
