@@ -6,14 +6,22 @@ const transactionSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   type: {
     type: String,
-    enum: ["POST_PAYMENT", "DEPOSIT", "CANCEL_ORDER"],
+    enum: [
+      "POST_PAYMENT",
+      "DEPOSIT",
+      "CANCEL_ORDER",
+      "WITHDRAW",
+      "PAYING_FOR_ORDER",
+      "RECEIVING_PAYMENT_FROM_ORDER",
+    ],
     required: true,
   },
   status: {
     type: String,
-    enum: ["PAID", "PENDING", "FAILED"],
+    enum: ["PAID", "PENDING", "FAILED", "COMPLETED"],
     default: "PENDING",
   },
   createdAt: { type: Date, default: Date.now },
+  orderCode: { type: String, required: true },
 });
 module.exports = mongoose.model("Transaction", transactionSchema);

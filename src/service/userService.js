@@ -101,6 +101,11 @@ const registerUser = async ({
 
 const loginUser = async (email, password) => {
   const user = await User.findOne({ email });
+  if (user.isBlocked === true) {
+    throw new Error(
+      "Tài khoản của bạn đã bị khóa vui lòng liên hệ với quản trị viên để biết thêm chi tiết"
+    );
+  }
 
   if (!user || user.isBlocked || !(await user.matchPassword(password))) {
     throw new Error("Invalid email, password or your account is blocked");
@@ -374,7 +379,6 @@ const getAllCustomers = async () => {
           creator: customer._id,
           status: "finish",
         });
-
         return {
           ...customer.toObject(),
           postCount,
@@ -388,36 +392,33 @@ const getAllCustomers = async () => {
   }
 };
 
+const addStaff = async ({ email, fullName }) => {
+  const password = "staff123"; // Mật khẩu mặc định
+  const role = "staff";
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    throw new Error("Email already exists");
+  }
+
+  const user = await User.create({
+    email,
+    password: hashedPassword,
+    role,
+    fullName,
+  });
+
+  return user;
+};
+
 const getAllStaff = async () => {
   try {
     const staff = await User.find({ role: "staff" });
     return staff;
   } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-const addStaff = async (fullName, email, phone, address) => {
-  try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      throw new Error("Email này đã được đăng ký");
-    }
-
-    const hashedPassword = await bcrypt.hash("staff123", 10);
-
-    const newStaff = new User({
-      fullName,
-      email,
-      phone,
-      address,
-      role: "staff",
-      password: hashedPassword,
-    });
-
-    await newStaff.save();
-  } catch (error) {
-    throw new Error(error.message);
+    console.error(error);
   }
 };
 
@@ -441,4 +442,6 @@ module.exports = {
   unlockUser,
   resetPassword,
   getAllCustomers,
+  addStaff,
+  getAllStaff,
 };

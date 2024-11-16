@@ -20,5 +20,6 @@ router.get("/related/:idCategory", postController.getRelated);
 router.get("/:idUser/users/history", postController.showHistory);
 router.patch("/time/:idPost", postController.setTimes);
 router.patch("/:postId/deal", postController.updateDealId);
+router.patch("/complete/order", postController.completeOrder);
 
 module.exports = router;

@@ -367,7 +367,28 @@ const getAllCustomers = async (req, res) => {
   }
 };
 
-const getAllStaffController = async (req, res) => {
+const addStaff = async (req, res) => {
+  const { email, fullName } = req.body;
+
+  if (!email || !fullName) {
+    return res
+      .status(400)
+      .json({ message: "You need fill full information when you register" });
+  }
+
+  try {
+    const user = await authService.addStaff({
+      email,
+      fullName,
+    });
+    res.status(201).json(user);
+  } catch (error) {
+    console.error("Error during user registration:", error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+const getAllStaff = async (req, res) => {
   try {
     const staff = await authService.getAllStaff();
     res.status(200).json(staff);
@@ -376,32 +397,7 @@ const getAllStaffController = async (req, res) => {
   }
 };
 
-const addStaffController = async (req, res) => {
-  try {
-    const { fullName, email, phone, address } = req.body;
-    if (!fullName || !email || !phone || !address) {
-      return res
-        .status(400)
-        .json({ message: "You need fill full information when you register" });
-    }
-
-    const newStaff = await authService.addStaff(
-      fullName,
-      email,
-      phone,
-      address
-    );
-
-    return res.status(201).json(newStaff);
-  } catch (error) {
-    console.error("Error adding staff:", error);
-    res.status(500).json({ message: "An error occurred" });
-  }
-};
-
 module.exports = {
-  addStaffController,
-  getAllStaffController,
   getTransactions,
   updateBalanceController,
   searchUsersController,
@@ -422,4 +418,6 @@ module.exports = {
   unlockUser,
   resetPasswordController,
   getAllCustomers,
+  addStaff,
+  getAllStaff,
 };
