@@ -13,7 +13,6 @@ const getDriverById = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 const getDriverStatistics = async (req, res) => {
   try {
     const { driverId } = req.params;

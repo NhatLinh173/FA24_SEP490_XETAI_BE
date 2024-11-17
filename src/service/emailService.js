@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 require("dotenv").config();
-const emailTemplates = require("../utils/emailTemplate");
+const emailTemplate = require("../utils/emailTemplate");
 
 const sendEmail = async (to, subject, templateName, ...templateArgs) => {
   try {
@@ -12,7 +12,11 @@ const sendEmail = async (to, subject, templateName, ...templateArgs) => {
       },
     });
 
-    const htmlContent = emailTemplates[templateName](...templateArgs);
+    if (typeof emailTemplate[templateName] !== "function") {
+      throw new Error(`Template ${templateName} does not exist.`);
+    }
+
+    const htmlContent = emailTemplate[templateName](...templateArgs);
 
     let mailOptions = {
       from: process.env.EMAIL_USER,
@@ -25,6 +29,7 @@ const sendEmail = async (to, subject, templateName, ...templateArgs) => {
 
     return { success: true, message: "Email sent successfully" };
   } catch (error) {
+    console.error("Error in sendEmail:", error);
     return { success: false, message: error.message };
   }
 };

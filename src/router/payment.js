@@ -11,7 +11,7 @@ router.get(
 router.put("/:orderId", paymentController.cancelPayment);
 router.post("/confirm-webhook", paymentController.confirmWebhook);
 router.get(
-  "/callback",
+  "/callback-success",
   authMiddleware,
   paymentController.handlePaymentCallback
 );
@@ -20,5 +20,8 @@ router.get(
   authMiddleware,
   paymentController.getPaymentByUserId
 );
-
+router.post("/withdraw", paymentController.withdrawRequest);
+router.put("/withdraw/:id/process", paymentController.processWithdrawRequest);
+router.get("/all/withdraw", paymentController.getAllWithDraw);
+router.delete("/withdraw/:id/reject", paymentController.rejectWithdraw);
 module.exports = router;

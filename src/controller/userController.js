@@ -347,10 +347,51 @@ const getTransactions = async (req, res) => {
   }
 };
 
+const resetPasswordController = async (req, res) => {
+  const { email, newPassword } = req.body;
+  try {
+    const user = await authService.resetPassword(email, newPassword);
+    res.status(200).json({ message: "Password updated successfully", user });
+  } catch (error) {
+    console.error("Error forgotting password:", error);
+    res.status(500).json({ message: "An error occurred" });
+  }
+};
+
 const getAllCustomers = async (req, res) => {
   try {
     const customers = await authService.getAllCustomers();
     res.status(200).json(customers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const addStaff = async (req, res) => {
+  const { email, fullName } = req.body;
+
+  if (!email || !fullName) {
+    return res
+      .status(400)
+      .json({ message: "You need fill full information when you register" });
+  }
+
+  try {
+    const user = await authService.addStaff({
+      email,
+      fullName,
+    });
+    res.status(201).json(user);
+  } catch (error) {
+    console.error("Error during user registration:", error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+const getAllStaff = async (req, res) => {
+  try {
+    const staff = await authService.getAllStaff();
+    res.status(200).json(staff);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -375,5 +416,8 @@ module.exports = {
   changePasswordUser,
   getUserByRoleDriverController,
   unlockUser,
+  resetPasswordController,
   getAllCustomers,
+  addStaff,
+  getAllStaff,
 };

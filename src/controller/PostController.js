@@ -7,6 +7,7 @@ const Category = require("../model/categoryModel");
 const mongoose = require("mongoose");
 const cloudinary = require("../config/cloudinaryConfig");
 const dealPriceModel = require("../model/dealPriceModel");
+const Driver = require("../model/driverModel");
 
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -43,7 +44,11 @@ class PostController {
             cloudinary.uploader
               .upload_stream({ folder: "post_images" }, (error, result) => {
                 if (error) {
-                  reject(new Error("Lỗi khi tải ảnh lên Cloudinary: " + error.message));
+                  reject(
+                    new Error(
+                      "Lỗi khi tải ảnh lên Cloudinary: " + error.message
+                    )
+                  );
                 } else {
                   resolve(result.secure_url);
                 }
@@ -60,13 +65,16 @@ class PostController {
       });
 
       const savedPost = await newPost.save();
-
+      const generateOrderCode = () => {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+      };
       const newTransaction = new Transaction({
         userId: creator,
         postId: savedPost._id,
         amount: postFee,
         type: "POST_PAYMENT",
         status: "PAID",
+        orderCode: generateOrderCode(),
       });
       await newTransaction.save();
 
@@ -102,7 +110,11 @@ class PostController {
             cloudinary.uploader
               .upload_stream({ folder: "post_images" }, (error, result) => {
                 if (error) {
-                  reject(new Error("Error uploading image to Cloudinary: " + error.message));
+                  reject(
+                    new Error(
+                      "Error uploading image to Cloudinary: " + error.message
+                    )
+                  );
                 } else {
                   resolve(result.secure_url);
                 }
@@ -142,10 +154,12 @@ class PostController {
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
         if (currentStatus === "approve") {
-          const cancellationFee = price * 0.1;
+          const cancellationFee = price * 0.8;
           if (user) {
             if (user.balance < cancellationFee) {
-              return res.status(402).json({ message: "Không đủ số dư để hủy đơn hàng" });
+              return res
+                .status(402)
+                .json({ message: "Không đủ số dư để hủy đơn hàng" });
             } else {
               user.balance -= cancellationFee;
               const newTransaction = new Transaction({
@@ -525,10 +539,119 @@ class PostController {
         return res.status(404).json({ message: "Post not found" });
       }
 
-      res.status(200).json({ message: "Status updated successfully", post: updatedPost });
+      res
+        .status(200)
+        .json({ message: "Status updated successfully", post: updatedPost });
     } catch (error) {
       console.error("Error saving new deal:", error);
       res.status(500).json({ message: "Error updating status", error });
+    }
+  }
+
+  async completeOrder(req, res) {
+    try {
+      const { postId } = req.body;
+
+      if (!mongoose.Types.ObjectId.isValid(postId)) {
+        return res.status(400).json({ message: "ID không hợp lệ" });
+      }
+
+      const post = await Post.findById(postId).populate("dealId");
+
+      if (!post) {
+        return res.status(404).json({ message: "Không tìm thấy đơn hàng." });
+      }
+
+      if (post.status !== "finish") {
+        return res.status(400).json({
+          message: "Đơn hàng chưa được tài xế xác nhận giao hàng.",
+        });
+      }
+
+      if (post.userConfirmed) {
+        return res.status(400).json({
+          message: "Đơn hàng đã được xác nhận hoàn tất từ phía người dùng.",
+        });
+      }
+
+      post.userConfirmed = true;
+
+      if (post.paymentMethod === "bank_transfer") {
+        const transportFee = parseFloat(post.price.replace(/,/g, ""));
+
+        const driverId = post.dealId.driverId;
+
+        const driver = await Driver.findById(driverId).populate("userId");
+
+        if (!driver) {
+          return res.status(404).json({ message: "Tài xế không tồn tại." });
+        }
+
+        const customer = await User.findById(post.creator);
+
+        if (!customer) {
+          return res.status(404).json({ message: "Người dùng không tồn tại." });
+        }
+
+        if (customer.balance < transportFee) {
+          return res
+            .status(400)
+            .json({ message: "Số dư người dùng không đủ." });
+        }
+        customer.balance -= transportFee;
+        await customer.save();
+
+        const driverUser = await User.findById(driver.userId);
+
+        if (!driverUser) {
+          return res
+            .status(404)
+            .json({ message: "Người dùng tài xế không tồn tại." });
+        }
+
+        const driverAmount = transportFee * 0.95;
+        driverUser.balance += driverAmount;
+        await driverUser.save();
+
+        const generateOrderCode = () => {
+          return Math.floor(100000 + Math.random() * 900000).toString();
+        };
+
+        const customerTransaction = new Transaction({
+          userId: customer._id,
+          postId: post._id,
+          amount: transportFee,
+          type: "PAYING_FOR_ORDER",
+          status: "PAID",
+          orderCode: generateOrderCode(),
+        });
+        await customerTransaction.save();
+
+        // Create transaction for driver credit (95% of transport fee)
+        const driverTransaction = new Transaction({
+          userId: driverUser._id,
+          postId: post._id,
+          amount: driverAmount,
+          type: "RECEIVING_PAYMENT_FROM_ORDER",
+          status: "PAID",
+          orderCode: generateOrderCode(),
+        });
+        await driverTransaction.save();
+      }
+
+      post.status = "complete";
+      await post.save();
+
+      res.status(200).json({ message: "Người dùng đã xác nhận đã nhận hàng." });
+    } catch (error) {
+      console.error("Error completing order:", error);
+      res.status(500).json({
+        message: "Đã xảy ra lỗi trong quá trình xác nhận nhận hàng.",
+        error: {
+          message: error.message,
+          stack: error.stack,
+        },
+      });
     }
   }
 }

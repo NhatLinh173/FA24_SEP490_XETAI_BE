@@ -82,7 +82,6 @@ const Post = new Schema(
       default: null,
     },
 
-
     orderer: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -100,7 +99,15 @@ const Post = new Schema(
     },
     status: {
       type: String,
-      enum: ["wait", "approve", "inprogress", "finish", "cancel", "hide"], // Giới hạn các giá trị có thể nhận
+      enum: [
+        "wait",
+        "approve",
+        "inprogress",
+        "finish",
+        "cancel",
+        "hide",
+        "complete",
+      ], // Giới hạn các giá trị có thể nhận
       default: "wait", // Giá trị mặc định ban đầu
     },
     deliveryTime: {
@@ -134,6 +141,14 @@ const Post = new Schema(
     },
     endTime: {
       type: Date,
+    },
+    paymentMethod: {
+      type: String,
+      required: true,
+    },
+    userConfirmed: {
+      type: Boolean,
+      default: false,
     },
   },
   {

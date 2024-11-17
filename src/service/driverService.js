@@ -213,7 +213,6 @@ const updateDriverStatistics = async (driverId, earnings, trips) => {
   await driver.save();
 };
 
-
 module.exports = {
   getDriverById,
   getDriverStatistics,
