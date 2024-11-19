@@ -275,7 +275,7 @@ class PostController {
       var maxPage = Math.ceil(totalPosts / limitPage);
 
       // Lấy danh sách đơn hàng với phân trang
-      var salePosts = await Post.find({ status: "wait" }) // Lấy tất cả đơn hàng
+      var salePosts = await Post.find({ status: "wait", isLock: false }) // Lấy tất cả đơn hàng
         .sort({ createdAt: -1 }) // Sắp xếp theo ngày tạo
         .populate({
           path: "creator",
@@ -512,11 +512,15 @@ class PostController {
     }
 
     try {
-      const currentDate = new Date();
-      const inputDate = new Date(deliveryTime);
-
-      if (inputDate <= currentDate) {
-        return res.status(402).json({ message: "Invalid delivery time" });
+      const driver = await Driver.findById(driverId);
+      if (
+        !driver ||
+        !driver.carRegistrations ||
+        driver.carRegistrations.length === 0
+      ) {
+        return res
+          .status(422)
+          .json({ message: "Driver must have a car registration" });
       }
 
       const newDeal = new dealPriceModel({
@@ -627,7 +631,6 @@ class PostController {
         });
         await customerTransaction.save();
 
-        // Create transaction for driver credit (95% of transport fee)
         const driverTransaction = new Transaction({
           userId: driverUser._id,
           postId: post._id,
