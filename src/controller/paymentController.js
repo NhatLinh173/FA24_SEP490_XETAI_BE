@@ -330,6 +330,25 @@ const rejectWithdraw = async (req, res) => {
   }
 };
 
+const getAllTransactions = async (req, res) => {
+  try {
+    const transaction = await Transaction.find()
+      .populate("userId", "email")
+      .sort({ createdAt: -1 });
+    return res.status(200).json({
+      success: true,
+      message: "Lấy danh sách giao dịch thành công",
+      data: transaction,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Không thể lấy danh sách giao dịch thành công",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createPaymentLink,
   getPaymentInfo,
@@ -341,4 +360,5 @@ module.exports = {
   getAllWithDraw,
   withdrawRequest,
   rejectWithdraw,
+  getAllTransactions,
 };

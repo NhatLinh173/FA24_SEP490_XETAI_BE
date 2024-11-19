@@ -20,6 +20,7 @@ router.get(
   authMiddleware,
   paymentController.getPaymentByUserId
 );
+router.get("/all/transaction", paymentController.getAllTransactions);
 router.post("/withdraw", paymentController.withdrawRequest);
 router.put("/withdraw/:id/process", paymentController.processWithdrawRequest);
 router.get("/all/withdraw", paymentController.getAllWithDraw);

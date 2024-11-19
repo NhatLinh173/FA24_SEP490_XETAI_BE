@@ -15,7 +15,7 @@ const createDriverPost = async (req, res) => {
 
   if (missingFields.length > 0) {
     return res.status(400).json({
-      message: `Missing fields: ${missingFields.join(", ")}`
+      message: `Missing fields: ${missingFields.join(", ")}`,
     });
   }
 
@@ -25,13 +25,20 @@ const createDriverPost = async (req, res) => {
       images.map((file) => {
         return new Promise((resolve, reject) => {
           cloudinary.uploader
-            .upload_stream({ folder: "driver_post_images" }, (error, result) => {
-              if (error) {
-                reject(new Error("Error uploading image to Cloudinary: " + error.message));
-              } else {
-                resolve(result.secure_url);
+            .upload_stream(
+              { folder: "driver_post_images" },
+              (error, result) => {
+                if (error) {
+                  reject(
+                    new Error(
+                      "Error uploading image to Cloudinary: " + error.message
+                    )
+                  );
+                } else {
+                  resolve(result.secure_url);
+                }
               }
-            })
+            )
             .end(file.buffer);
         });
       })
@@ -48,9 +55,11 @@ const createDriverPost = async (req, res) => {
 
     // Lưu bài đăng mới và populate creatorId để trả về đầy đủ thông tin
     const savedDriverPost = await newDriverPost.save();
-    const populatedDriverPost = await DriverPost.findById(savedDriverPost._id).populate({
+    const populatedDriverPost = await DriverPost.findById(
+      savedDriverPost._id
+    ).populate({
       path: "creatorId",
-      populate: { path: "userId" }
+      populate: { path: "userId" },
     });
 
     res.status(200).json(populatedDriverPost);
@@ -64,7 +73,7 @@ const getAllDriverPosts = async (req, res) => {
   try {
     const driverPosts = await DriverPost.find().populate({
       path: "creatorId",
-      populate: { path: "userId" }
+      populate: { path: "userId" },
     });
     res.status(200).json(driverPosts);
   } catch (error) {
@@ -79,7 +88,7 @@ const getDriverPostById = async (req, res) => {
   try {
     const driverPost = await DriverPost.findById(id).populate({
       path: "creatorId",
-      populate: { path: "userId" }
+      populate: { path: "userId" },
     });
 
     if (!driverPost) {
@@ -110,13 +119,20 @@ const updateDriverPost = async (req, res) => {
       const uploadPromises = images.map((file) => {
         return new Promise((resolve, reject) => {
           cloudinary.uploader
-            .upload_stream({ folder: "driver_post_images" }, (error, result) => {
-              if (error) {
-                reject(new Error("Error uploading image to Cloudinary: " + error.message));
-              } else {
-                resolve(result.secure_url);
+            .upload_stream(
+              { folder: "driver_post_images" },
+              (error, result) => {
+                if (error) {
+                  reject(
+                    new Error(
+                      "Error uploading image to Cloudinary: " + error.message
+                    )
+                  );
+                } else {
+                  resolve(result.secure_url);
+                }
               }
-            })
+            )
             .end(file.buffer);
         });
       });
@@ -135,7 +151,7 @@ const updateDriverPost = async (req, res) => {
       { new: true }
     ).populate({
       path: "creatorId",
-      populate: { path: "userId" }
+      populate: { path: "userId" },
     });
 
     res.status(200).json(updatedDriverPost);
@@ -172,16 +188,20 @@ const getDriverPostsByCreatorId = async (req, res) => {
     // Tìm tất cả bài đăng dựa trên creatorId và populate để có đầy đủ thông tin
     const driverPosts = await DriverPost.find({ creatorId }).populate({
       path: "creatorId",
-      populate: { path: "userId" }
+      populate: { path: "userId" },
     });
 
     if (driverPosts.length === 0) {
-      return res.status(404).json({ message: "No driver posts found for this creatorId" });
+      return res
+        .status(404)
+        .json({ message: "No driver posts found for this creatorId" });
     }
 
     res.status(200).json(driverPosts);
   } catch (error) {
-    res.status(400).json({ message: "Unable to fetch driver posts by creatorId", error });
+    res
+      .status(400)
+      .json({ message: "Unable to fetch driver posts by creatorId", error });
   }
 };
 

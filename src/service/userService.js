@@ -253,6 +253,8 @@ const blockUser = async (id, duration) => {
     throw new Error("User not found");
   }
 
+  await Post.updateMany({ creator: id }, { isLock: true });
+
   return user;
 };
 
@@ -265,6 +267,8 @@ const unlockUser = async (id) => {
     { isBlocked: false, blockedUntil: null },
     { new: true }
   );
+
+  await Post.updateMany({ creator: id }, { isLock: true });
 };
 
 const changePassword = async (userId, oldPassword, newPassword) => {
