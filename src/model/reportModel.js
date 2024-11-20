@@ -11,7 +11,10 @@ const Report = new Schema(
     postId: {
       type: Schema.Types.ObjectId,
       ref: "Post",
-      required: true,
+    },
+    driverPostId: {
+      type: Schema.Types.ObjectId,
+      ref: "driverPost",
     },
     description: {
       type: String,

@@ -138,9 +138,7 @@ class PostController {
         updatePost.endTime = currentTime;
       } else if (bodyData.status === "cancel") {
         const user = await User.findById({ _id: bodyData.creator });
-        const price = parseFloat(
-          bodyData.price.replace(/,/g, "").replace(/\./g, "")
-        );
+        const price = parseFloat(bodyData.price.replace(/,/g, "").replace(/\./g, ""));
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.1;
           if (user) {
@@ -189,7 +187,6 @@ class PostController {
     await Post.find({ creator: userId })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limitPage)
-      .limit(limitPage)
       .populate({
         path: "creator",
         select: "_id email phone fullName avatar",

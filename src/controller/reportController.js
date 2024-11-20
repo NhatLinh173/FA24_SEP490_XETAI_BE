@@ -1,18 +1,12 @@
 const reportService = require("../service/reportService");
 
 const createReport = async (req, res) => {
-  const { reporterId, postId, description } = req.body;
+  const { reporterId, postId, driverPostId, description } = req.body;
   try {
-    const report = await reportService.createReport(
-      reporterId,
-      postId,
-      description
-    );
+    const report = await reportService.createReport(reporterId, postId, driverPostId, description);
     res.status(201).json({ message: "Report created successfully", report });
   } catch (error) {
-    if (
-      error.message === "Report already exists for this post by this reporter."
-    ) {
+    if (error.message === "Report already exists for this post by this reporter.") {
       return res.status(400).json({ message: error.message });
     }
     res.status(500).json({ message: "Error creating report", error });
@@ -54,9 +48,29 @@ const deleteReport = async (req, res) => {
   }
 };
 
+const getAllPostIds = async (req, res) => {
+  try {
+    const postIds = await reportService.getAllPostIds();
+    res.status(200).json(postIds);
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving post IDs", error });
+  }
+};
+
+const getAllDriverPostIds = async (req, res) => {
+  try {
+    const driverPostIds = await reportService.getAllDriverPostIds();
+    res.status(200).json(driverPostIds);
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving driver post IDs", error });
+  }
+};
+
 module.exports = {
   createReport,
   getReportById,
   getAllReports,
   deleteReport,
+  getAllPostIds,
+  getAllDriverPostIds,
 };

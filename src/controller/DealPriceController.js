@@ -139,7 +139,7 @@ const getDealsByDriverId = async (req, res) => {
     const deals = await Deal.find({
       driverId,
     })
-      .populate("postId")
+      .populate({ path: "postId", populate: { path: "dealId", model: "Deal" } })
       .populate({
         path: "driverId",
         populate: {
