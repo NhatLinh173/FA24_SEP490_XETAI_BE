@@ -96,7 +96,7 @@ const getDriverPostById = async (req, res) => {
 const updateDriverPost = async (req, res) => {
   const { id } = req.params;
   const { startCity, destinationCity, description } = req.body;
-  const { images } = req.files;
+  const  images  = req.files;
 
   try {
     const currentPost = await DriverPost.findById(id);
