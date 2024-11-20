@@ -5,8 +5,28 @@ const Post = require("../model/postModel");
 const Transaction = require("../model/transactionModel");
 const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
+const cron = require("node-cron");
 dotenv.config();
 
+cron.schedule("* * * * *", async () => {
+  try {
+    const now = new Date();
+    const users = await User.find({
+      isBlocked: true,
+      blockedUntil: { $ne: null },
+    });
+
+    for (const user of users) {
+      if (now > user.blockedUntil) {
+        user.isBlocked = false;
+        user.blockedUntil = null;
+        await user.save();
+      }
+    }
+  } catch (error) {
+    console.error("Error updating blocked users:", error);
+  }
+});
 const generateToken = (id, expiresIn, role) => {
   if (!id) {
     throw new Error("User ID is required to generate a token");
@@ -81,9 +101,14 @@ const registerUser = async ({
 
 const loginUser = async (email, password) => {
   const user = await User.findOne({ email });
+  if (user.isBlocked === true) {
+    throw new Error(
+      "Tài khoản của bạn đã bị khóa vui lòng liên hệ với quản trị viên để biết thêm chi tiết"
+    );
+  }
 
-  if (!user || !(await user.matchPassword(password))) {
-    throw new Error("Invalid email or password");
+  if (!user || user.isBlocked || !(await user.matchPassword(password))) {
+    throw new Error("Invalid email, password or your account is blocked");
   }
 
   const accessToken = generateToken(
@@ -208,7 +233,6 @@ const blockUser = async (id, duration) => {
   switch (duration) {
     case "1day":
       blockedUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-
       break;
     case "3days":
       blockedUntil = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
@@ -327,26 +351,80 @@ const getTransactionsById = async (userId) => {
   }
 };
 
-const getAllCustomers = async () => {
+const resetPassword = async (email, newPassword) => {
   try {
-    const customers = await User.find({ role: "customer" });
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const user = await User.findOneAndUpdate(
+      { email: email },
+      { password: hashedPassword },
+      { new: true }
+    );
+    if (!user) {
+      throw new Error("Người dùng không tồn tại!");
+    }
 
-    const customersWithPostCount = await Promise.all(customers.map(async (customer) => {
-      const postCount = await Post.countDocuments({ creator: customer._id, status: "finish" });
-
-      return {
-        ...customer.toObject(), 
-        postCount 
-      };
-    }));
-
-    return customersWithPostCount; 
+    return user;
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
+const getAllCustomers = async () => {
+  try {
+    const customers = await User.find({ role: "customer" });
+
+    const customersWithPostCount = await Promise.all(
+      customers.map(async (customer) => {
+        const postCount = await Post.countDocuments({
+          creator: customer._id,
+          status: "finish",
+        });
+        return {
+          ...customer.toObject(),
+          postCount,
+        };
+      })
+    );
+
+    return customersWithPostCount;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const addStaff = async ({ email, fullName }) => {
+  const password = "staff123"; // Mật khẩu mặc định
+  const role = "staff";
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    throw new Error("Email already exists");
+  }
+
+  const user = await User.create({
+    email,
+    password: hashedPassword,
+    role,
+    fullName,
+  });
+
+  return user;
+};
+
+const getAllStaff = async () => {
+  try {
+    const staff = await User.find({ role: "staff" });
+    return staff;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 module.exports = {
+  addStaff,
+  getAllStaff,
   getTransactionsById,
   searchUser,
   registerUser,
@@ -362,5 +440,8 @@ module.exports = {
   updateBalance,
   generateToken,
   unlockUser,
+  resetPassword,
   getAllCustomers,
+  addStaff,
+  getAllStaff,
 };

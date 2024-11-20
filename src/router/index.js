@@ -10,8 +10,12 @@ const conversationRouter = require("./conversationRouter");
 const dealPriceRouter = require("./dealPrice");
 const carRegistrationRouter = require("./carRegistration");
 const driverRouter = require("./driver");
+const verifyRouter = require("./verifyRouter");
 const reportRouter = require("./report");
 const blogRouter = require("./blog");
+const driverPostRouter = require("./driverPost");
+
+
 
 const router = (app) => {
   app.use("/auth", userRouter);
@@ -27,8 +31,10 @@ const router = (app) => {
   app.use("/dealPrice", dealPriceRouter);
   app.use("/car", carRegistrationRouter);
   app.use("/driver", driverRouter);
+  app.use("/verify", verifyRouter);
   app.use("/report", reportRouter);
   app.use("/blog", blogRouter);
+  app.use("/driverpost", driverPostRouter);
 };
 
 module.exports = router;
