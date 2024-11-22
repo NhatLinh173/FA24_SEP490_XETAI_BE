@@ -8,7 +8,7 @@ const mongoose = require("mongoose");
 const cloudinary = require("../config/cloudinaryConfig");
 const dealPriceModel = require("../model/dealPriceModel");
 const Driver = require("../model/driverModel");
-
+const { sendEmail } = require("../service/emailService");
 const ObjectId = mongoose.Types.ObjectId;
 
 class PostController {
@@ -142,6 +142,7 @@ class PostController {
       updatePost.deliveryTime = bodyData.deliveryTime;
       updatePost.startPointCity = bodyData.startPointCity;
       updatePost.destinationCity = bodyData.destinationCity;
+      updatePost.paymentMethod = bodyData.paymentMethod;
 
       const currentTime = new Date();
       if (bodyData.status === "inprogress") {
@@ -568,39 +569,39 @@ class PostController {
 
       if (post.status !== "finish") {
         return res.status(400).json({
+          code: "ORDER_NOT_CONFIRMED",
           message: "Đơn hàng chưa được tài xế xác nhận giao hàng.",
         });
       }
 
       if (post.userConfirmed) {
         return res.status(400).json({
+          code: "ORDER_ALREADY_CONFIRMED",
           message: "Đơn hàng đã được xác nhận hoàn tất từ phía người dùng.",
         });
       }
 
       post.userConfirmed = true;
-
+      const driver = await Driver.findById(driverId).populate("userId");
+      const customer = await User.findById(post.creator);
       if (post.paymentMethod === "bank_transfer") {
         const transportFee = parseFloat(post.price.replace(/,/g, ""));
 
         const driverId = post.dealId.driverId;
 
-        const driver = await Driver.findById(driverId).populate("userId");
-
         if (!driver) {
           return res.status(404).json({ message: "Tài xế không tồn tại." });
         }
-
-        const customer = await User.findById(post.creator);
 
         if (!customer) {
           return res.status(404).json({ message: "Người dùng không tồn tại." });
         }
 
         if (customer.balance < transportFee) {
-          return res
-            .status(400)
-            .json({ message: "Số dư người dùng không đủ." });
+          return res.status(400).json({
+            code: "INSUFFICIENT_BALANCE",
+            message: "Số dư người dùng không đủ.",
+          });
         }
         customer.balance -= transportFee;
         await customer.save();
@@ -640,6 +641,62 @@ class PostController {
           orderCode: generateOrderCode(),
         });
         await driverTransaction.save();
+      } else if (post.paymentMethod === "cash") {
+        const transportFee = parseFloat(post.price.replace(/,/g, ""));
+
+        const driverId = post.dealId.driverId;
+
+        const driver = await Driver.findById(driverId).populate("userId");
+
+        if (!driver) {
+          return res.status(404).json({ message: "Tài xế không tồn tại." });
+        }
+
+        const driverUser = await User.findById(driver.userId);
+
+        if (!driverUser) {
+          return res
+            .status(404)
+            .json({ message: "Người dùng tài xế không tồn tại." });
+        }
+
+        const driverAmount = transportFee * 0.05;
+        driverUser.balance -= driverAmount;
+        await driverUser.save();
+
+        const generateOrderCode = () => {
+          return Math.floor(100000 + Math.random() * 900000).toString();
+        };
+
+        const driverTransaction = new Transaction({
+          userId: driverUser._id,
+          postId: post._id,
+          amount: driverAmount,
+          type: "PAY_SYSTEM_FEE",
+          status: "PAID",
+          orderCode: generateOrderCode(),
+        });
+        await driverTransaction.save();
+      }
+
+      if (customer && customer.email) {
+        await sendEmail(
+          customer.email,
+          "Xác nhận hoàn tất đơn hàng",
+          "orderConfirmationForCustomer",
+          customer.fullName,
+          post._id
+        );
+      }
+
+      if (driver && driver.userId && driver.userId.email) {
+        await sendEmail(
+          driver.userId.email,
+          "Thông báo hoàn tất chuyến hàng",
+          "orderCompletionForDriver",
+          driver.fullName,
+          post._id
+        );
       }
 
       post.status = "complete";

@@ -38,7 +38,6 @@ const login = async (req, res) => {
 
   try {
     const { user, refreshToken } = await authService.loginUser(email, password);
-
     const refreshTokenExpiration = ms(process.env.JWT_REFRESH_EXPIRATION);
     if (isNaN(refreshTokenExpiration)) {
       throw new Error("Invalid JWT_REFRESH_EXPIRATION value");
@@ -49,9 +48,13 @@ const login = async (req, res) => {
       sameSite: "Strict",
       maxAge: refreshTokenExpiration * 1000,
     });
-    res.json(user);
+    res.status(200).json(user);
   } catch (error) {
-    res.status(401).json({ message: error.message });
+    const statusCode = error.code || 500;
+    res.status(statusCode).json({
+      message: error.message,
+      code: error.code || statusCode,
+    });
   }
 };
 

@@ -53,6 +53,29 @@ const createCarRegistration = async (req, res) => {
       })
     );
 
+    const carImageUrls = await Promise.all(
+      imageCar.map((file) => {
+        return new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream(
+              { folder: "car_registration_images" },
+              (error, result) => {
+                if (error) {
+                  reject(
+                    new Error(
+                      "Error uploading image to Cloudinary: " + error.message
+                    )
+                  );
+                } else {
+                  resolve(result.secure_url);
+                }
+              }
+            )
+            .end(file.buffer);
+        });
+      })
+    );
+    imageCarUrls = carImageUrls;
     imageRegistrationUrls = registrationImageUrls;
 
     const ocrPromises = imageRegistrationUrls.map(async (url) => {
