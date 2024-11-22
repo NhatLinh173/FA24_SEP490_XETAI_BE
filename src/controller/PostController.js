@@ -651,6 +651,35 @@ class PostController {
       });
     }
   }
+  async updatePostStatus(req, res) {
+    try {
+      const id = req.params.idPost;
+      const status  = req.body; // Chỉ lấy trạng thái mới từ yêu cầu
+  
+      const post = await Post.findById(id);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+  
+      // Cập nhật trạng thái
+      post.status = status;
+  
+      // Ghi lại thời gian nếu cần thiết
+      const currentTime = new Date();
+      if (status === "inprogress") {
+        post.startTime = currentTime;
+      } else if (status === "finish") {
+        post.endTime = currentTime;
+      }
+  
+      const updatedPost = await post.save(); // Lưu bài đăng sau khi cập nhật
+      return res.status(200).json(updatedPost); // Trả về bài đăng đã cập nhật
+    } catch (error) {
+      return res.status(500).json({ message: "Server error", error: error.message });
+    }
+  }
+  
+  
 }
 
 module.exports = new PostController();
