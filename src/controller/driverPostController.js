@@ -96,7 +96,7 @@ const getDriverPostById = async (req, res) => {
 const updateDriverPost = async (req, res) => {
   const { id } = req.params;
   const { startCity, destinationCity, description } = req.body;
-  const  images  = req.files;
+  const images = req.files;
 
   try {
     const currentPost = await DriverPost.findById(id);
@@ -104,8 +104,18 @@ const updateDriverPost = async (req, res) => {
       return res.status(404).json({ message: "Driver post not found" });
     }
 
-    let imageUrls = currentPost.images || [];
+    // Xóa ảnh cũ trên Cloudinary (nếu có)
+    if (currentPost.images && currentPost.images.length > 0) {
+      const deletePromises = currentPost.images.map((imageUrl) => {
+        const publicId = imageUrl.split('/').slice(-1)[0].split('.')[0]; // Lấy publicId từ URL
+        return cloudinary.uploader.destroy(`driver_post_images/${publicId}`);
+      });
+      await Promise.all(deletePromises);
+    }
 
+    let imageUrls = [];
+
+    // Tải lên ảnh mới lên Cloudinary
     if (images && images.length > 0) {
       const uploadPromises = images.map((file) => {
         return new Promise((resolve, reject) => {
@@ -121,16 +131,17 @@ const updateDriverPost = async (req, res) => {
         });
       });
 
-      imageUrls = [...imageUrls, ...(await Promise.all(uploadPromises))];
+      imageUrls = await Promise.all(uploadPromises);
     }
 
+    // Cập nhật bài đăng với danh sách ảnh mới
     const updatedDriverPost = await DriverPost.findByIdAndUpdate(
       id,
       {
         startCity,
         destinationCity,
         description,
-        images: imageUrls,
+        images: imageUrls, // Thay thế danh sách ảnh
       },
       { new: true }
     ).populate({
