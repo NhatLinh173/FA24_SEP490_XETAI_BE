@@ -27,18 +27,41 @@ const getDriverStatistics = async (req, res) => {
 
 const updateDriverStatisticsController = async (req, res) => {
   const { driverId } = req.params;
-  const { earnings, trips } = req.body;
+  let { earnings, trips } = req.body;
 
-  if (earnings === undefined || trips === undefined) {
-    return res.status(400).json({ message: "Earnings and trips are required" });
+  if (driverId === undefined || !driverId) {
+    return res.status(400).json({ message: "Driver ID is required" });
+  }
+
+  // Chuyển đổi earnings và trips thành số
+  earnings = parseFloat(earnings);
+  trips = parseInt(trips, 10);
+
+  if (isNaN(earnings) || isNaN(trips)) {
+    return res.status(400).json({
+      message: "Earnings and trips must be valid numbers",
+    });
+  }
+
+  if (earnings < 0 || trips < 0) {
+    return res.status(400).json({
+      message: "Earnings and trips cannot be negative",
+    });
   }
 
   try {
-    await driverService.updateDriverStatistics(driverId, earnings, trips);
+    await driverService.updateDriverStatistics(driverId, { earnings, trips });
     res.status(200).json({ message: "Driver statistics updated successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error updating driver statistics:", error.message);
+
+    if (error.message === "Driver not found") {
+      return res.status(404).json({ message: "Driver not found" });
+    }
+
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 

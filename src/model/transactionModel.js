@@ -13,6 +13,7 @@ const transactionSchema = new mongoose.Schema({
       "WITHDRAW",
       "PAYING_FOR_ORDER",
       "RECEIVING_PAYMENT_FROM_ORDER",
+      "PAY_SYSTEM_FEE",
     ],
     required: true,
   },

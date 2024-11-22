@@ -131,86 +131,103 @@ const getStatisticsForLastYear = async (driver) => {
   return driver.statistics.lastYear;
 };
 
-const updateDriverStatistics = async (driverId, earnings, trips) => {
-  const driver = await Driver.findById(driverId);
-  const timestamp = new Date();
+const updateDriverStatistics = async (driverId, tripData) => {
+  try {
+    const { trips, earnings } = tripData;
 
-  const currentHour = timestamp.getHours().toString().padStart(2, "0");
-  const currentDay = timestamp.toLocaleDateString("vi-VN", { day: "2-digit" });
-  const currentMonth = timestamp.toLocaleDateString("vi-VN", { month: "long" });
-  const currentYear = timestamp.getFullYear().toString();
-  const currentDate = timestamp.toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-  });
+    if (isNaN(trips) || isNaN(earnings)) {
+      throw new Error("Trips and earnings must be valid numbers");
+    }
 
-  const todayStat = driver.statistics.today.find(
-    (stat) => stat.hour === currentHour
-  ) || { hour: currentHour, trips: 0, earnings: 0, timestamp };
+    const currentDate = new Date();
+    const currentHour = `${currentDate.getHours()}:00`;
+    const currentDay = currentDate.toISOString().slice(0, 10); // YYYY-MM-DD
+    const currentWeekDay = currentDate.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+    const currentMonth = `${currentDate.getFullYear()}-${
+      currentDate.getMonth() + 1
+    }`;
+    const currentYear = `${currentDate.getFullYear()}`;
 
-  todayStat.trips += trips;
-  todayStat.earnings += earnings;
+    const driver = await Driver.findById(driverId);
 
-  if (!driver.statistics.today.some((stat) => stat.hour === currentHour)) {
-    driver.statistics.today.push(todayStat);
+    if (!driver) {
+      throw new Error("Driver not found!");
+    }
+
+    const todayStats = driver.statistics.today.find(
+      (item) => item.hour === currentHour
+    );
+    if (todayStats) {
+      todayStats.trips += trips;
+      todayStats.earnings += earnings;
+    } else {
+      driver.statistics.today.push({
+        hour: currentHour,
+        trips,
+        earnings,
+        timestamp: currentDate,
+      });
+    }
+
+    // Cập nhật thống kê "thisWeek"
+    const weekStats = driver.statistics.thisWeek.find(
+      (item) => item.day === currentWeekDay
+    );
+    if (weekStats) {
+      weekStats.trips += trips;
+      weekStats.earnings += earnings;
+    } else {
+      driver.statistics.thisWeek.push({
+        day: currentWeekDay,
+        trips,
+        earnings,
+        timestamp: currentDate,
+      });
+    }
+
+    // Cập nhật thống kê "thisMonth"
+    const monthStats = driver.statistics.thisMonth.find(
+      (item) => item.date === currentDay
+    );
+    if (monthStats) {
+      monthStats.trips += trips;
+      monthStats.earnings += earnings;
+    } else {
+      driver.statistics.thisMonth.push({
+        date: currentDay,
+        trips,
+        earnings,
+        timestamp: currentDate,
+      });
+    }
+
+    // Cập nhật thống kê "thisYear"
+    const yearStats = driver.statistics.thisYear.find(
+      (item) => item.year === currentYear && item.month === currentMonth
+    );
+    if (yearStats) {
+      yearStats.trips += trips;
+      yearStats.earnings += earnings;
+    } else {
+      driver.statistics.thisYear.push({
+        year: currentYear,
+        month: currentMonth,
+        trips,
+        earnings,
+        timestamp: currentDate,
+      });
+    }
+
+    // Lưu lại tài xế với thông tin cập nhật
+    await driver.save();
+
+    return { success: true, message: "Statistics updated successfully!" };
+  } catch (error) {
+    console.error("Error updating statistics:", error);
+    return { success: false, message: error.message };
   }
-
-  // Cập nhật thống kê của tuần này
-  const todayDayStat = driver.statistics.thisWeek.find(
-    (stat) => stat.day === currentDate
-  ) || { day: currentDate, trips: 0, earnings: 0, timestamp };
-
-  todayDayStat.trips += trips;
-  todayDayStat.earnings += earnings;
-
-  if (!driver.statistics.thisWeek.some((stat) => stat.day === currentDate)) {
-    driver.statistics.thisWeek.push(todayDayStat);
-  }
-
-  // Cập nhật thống kê của tháng này
-  const todayMonthStat = driver.statistics.thisMonth.find(
-    (stat) => stat.date === currentMonth
-  ) || { date: currentMonth, trips: 0, earnings: 0, timestamp };
-
-  todayMonthStat.trips += trips;
-  todayMonthStat.earnings += earnings;
-
-  if (!driver.statistics.thisMonth.some((stat) => stat.date === currentMonth)) {
-    driver.statistics.thisMonth.push(todayMonthStat);
-  }
-
-  driver.tripsThisWeek = driver.statistics.thisWeek.reduce(
-    (acc, stat) => acc + stat.trips,
-    0
-  );
-
-  driver.tripsThisMonth = driver.statistics.thisMonth.reduce(
-    (acc, stat) => acc + stat.trips,
-    0
-  );
-
-  const thisYearStat = driver.statistics.thisYear.find(
-    (stat) => stat.year === currentYear && stat.month === currentMonth
-  ) || {
-    year: currentYear,
-    month: currentMonth,
-    trips: 0,
-    earnings: 0,
-    timestamp,
-  };
-
-  thisYearStat.trips += trips;
-  thisYearStat.earnings += earnings;
-
-  if (
-    !driver.statistics.thisYear.some(
-      (stat) => stat.year === currentYear && stat.month === currentMonth
-    )
-  ) {
-    driver.statistics.thisYear.push(thisYearStat);
-  }
-
-  await driver.save();
 };
 
 module.exports = {
