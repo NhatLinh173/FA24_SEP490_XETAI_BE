@@ -5,11 +5,18 @@ const {
   getReportById,
   getAllReports,
   deleteReport,
+  getAllDriverPostIds,
+  getAllPostIds,
+  deleteReportAndLockPost,
 } = require("../controller/reportController");
 
 router.post("/", createReport);
-router.get("/:reportId", getReportById);
 router.get("/", getAllReports);
-router.delete("/:reportId", deleteReport);
+router.get("/post", getAllPostIds);
+router.get("/driverPost", getAllDriverPostIds);
+// router.delete("/:reportId", deleteReport);
+router.delete("/:reportId", deleteReportAndLockPost);
+
+router.get("/:reportId", getReportById);
 
 module.exports = router;

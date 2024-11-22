@@ -150,9 +150,7 @@ class PostController {
         updatePost.endTime = currentTime;
       } else if (bodyData.status === "cancel") {
         const user = await User.findById({ _id: bodyData.creator });
-        const price = parseFloat(
-          bodyData.price.replace(/,/g, "").replace(/\./g, "")
-        );
+        const price = parseFloat(bodyData.price.replace(/,/g, "").replace(/\./g, ""));
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
           if (user) {
@@ -203,7 +201,6 @@ class PostController {
     await Post.find({ creator: userId })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limitPage)
-      .limit(limitPage)
       .populate({
         path: "creator",
         select: "_id email phone fullName avatar",
@@ -657,6 +654,35 @@ class PostController {
       });
     }
   }
+  async updatePostStatus(req, res) {
+    try {
+      const id = req.params.idPost;
+      const status  = req.body; // Chỉ lấy trạng thái mới từ yêu cầu
+  
+      const post = await Post.findById(id);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+  
+      // Cập nhật trạng thái
+      post.status = status;
+  
+      // Ghi lại thời gian nếu cần thiết
+      const currentTime = new Date();
+      if (status === "inprogress") {
+        post.startTime = currentTime;
+      } else if (status === "finish") {
+        post.endTime = currentTime;
+      }
+  
+      const updatedPost = await post.save(); // Lưu bài đăng sau khi cập nhật
+      return res.status(200).json(updatedPost); // Trả về bài đăng đã cập nhật
+    } catch (error) {
+      return res.status(500).json({ message: "Server error", error: error.message });
+    }
+  }
+  
+  
 }
 
 module.exports = new PostController();
