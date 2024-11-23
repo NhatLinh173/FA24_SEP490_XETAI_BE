@@ -88,6 +88,7 @@ class PostController {
   }
 
   async updatePost(req, res, next) {
+    console.log("alooo:");
     try {
       const id = req.params.idPost;
       const bodyData = req.body;
@@ -151,7 +152,12 @@ class PostController {
         updatePost.endTime = currentTime;
       } else if (bodyData.status === "cancel") {
         const user = await User.findById({ _id: bodyData.creator });
-        const price = parseFloat(bodyData.price.replace(/,/g, "").replace(/\./g, ""));
+        const price = parseFloat(
+          bodyData.price.replace(/,/g, "").replace(/\./g, "")
+        );
+        const generateOrderCode = () => {
+          return Math.floor(100000 + Math.random() * 900000).toString();
+        };
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
           if (user) {
@@ -164,6 +170,7 @@ class PostController {
               const newTransaction = new Transaction({
                 userId: bodyData.creator,
                 postId: updatePost._id,
+                orderCode: generateOrderCode(),
                 amount: cancellationFee,
                 type: "CANCEL_ORDER",
                 status: "PAID",
@@ -579,13 +586,12 @@ class PostController {
       }
 
       post.userConfirmed = true;
-      const driver = await Driver.findById(driverId).populate("userId");
-      const customer = await User.findById(post.creator);
+
       if (post.paymentMethod === "bank_transfer") {
         const transportFee = parseFloat(post.price.replace(/,/g, ""));
-
         const driverId = post.dealId.driverId;
-
+        const driver = await Driver.findById(driverId).populate("userId");
+        const customer = await User.findById(post.creator);
         if (!driver) {
           return res.status(404).json({ message: "Tài xế không tồn tại." });
         }
@@ -714,16 +720,16 @@ class PostController {
   async updatePostStatus(req, res) {
     try {
       const id = req.params.idPost;
-      const status  = req.body; // Chỉ lấy trạng thái mới từ yêu cầu
-  
+      const status = req.body; // Chỉ lấy trạng thái mới từ yêu cầu
+
       const post = await Post.findById(id);
       if (!post) {
         return res.status(404).json({ message: "Post not found" });
       }
-  
+
       // Cập nhật trạng thái
       post.status = status;
-  
+
       // Ghi lại thời gian nếu cần thiết
       const currentTime = new Date();
       if (status === "inprogress") {
@@ -731,15 +737,15 @@ class PostController {
       } else if (status === "finish") {
         post.endTime = currentTime;
       }
-  
+
       const updatedPost = await post.save(); // Lưu bài đăng sau khi cập nhật
       return res.status(200).json(updatedPost); // Trả về bài đăng đã cập nhật
     } catch (error) {
-      return res.status(500).json({ message: "Server error", error: error.message });
+      return res
+        .status(500)
+        .json({ message: "Server error", error: error.message });
     }
   }
-  
-  
 }
 
 module.exports = new PostController();
