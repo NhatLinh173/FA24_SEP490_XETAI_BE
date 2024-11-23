@@ -32,6 +32,14 @@ const driverPost = new Schema(
       type: [String],
       required: true,
     },
+    status: {
+      type: String,
+      enum: [
+        "hide",
+        "locked"
+      ], // Giới hạn các giá trị có thể nhận
+      default: "wait", // Giá trị mặc định ban đầu
+    },
   },
   {
     timestamps: true,
