@@ -114,13 +114,13 @@ const updateDriverPost = async (req, res) => {
     }
 
     // Xóa ảnh cũ trên Cloudinary (nếu có)
-    if (currentPost.images && currentPost.images.length > 0) {
-      const deletePromises = currentPost.images.map((imageUrl) => {
-        const publicId = imageUrl.split('/').slice(-1)[0].split('.')[0]; // Lấy publicId từ URL
-        return cloudinary.uploader.destroy(`driver_post_images/${publicId}`);
-      });
-      await Promise.all(deletePromises);
-    }
+    // if (currentPost.images && currentPost.images.length > 0) {
+    //   const deletePromises = currentPost.images.map((imageUrl) => {
+    //     const publicId = imageUrl.split('/').slice(-1)[0].split('.')[0]; // Lấy publicId từ URL
+    //     return cloudinary.uploader.destroy(`driver_post_images/${publicId}`);
+    //   });
+    //   await Promise.all(deletePromises);
+    // }
 
     let imageUrls = [];
 
