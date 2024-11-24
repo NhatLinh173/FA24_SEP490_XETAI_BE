@@ -101,14 +101,19 @@ const registerUser = async ({
 
 const loginUser = async (email, password) => {
   const user = await User.findOne({ email });
+  if (!user) {
+    throw { message: "Email không tồn tại", code: 404 };
+  }
   if (user.isBlocked === true) {
-    throw new Error(
-      "Tài khoản của bạn đã bị khóa vui lòng liên hệ với quản trị viên để biết thêm chi tiết"
-    );
+    throw {
+      message:
+        "Tài khoản của bạn đã bị khóa, vui lòng liên hệ quản trị viên để biết thêm chi tiết",
+      code: 403,
+    };
   }
 
-  if (!user || user.isBlocked || !(await user.matchPassword(password))) {
-    throw new Error("Invalid email, password or your account is blocked");
+  if (!user || !(await user.matchPassword(password))) {
+    throw { message: "Mật khẩu không chính xác", code: 401 };
   }
 
   const accessToken = generateToken(
@@ -253,6 +258,8 @@ const blockUser = async (id, duration) => {
     throw new Error("User not found");
   }
 
+  await Post.updateMany({ creator: id }, { isLock: true });
+
   return user;
 };
 
@@ -265,6 +272,8 @@ const unlockUser = async (id) => {
     { isBlocked: false, blockedUntil: null },
     { new: true }
   );
+
+  await Post.updateMany({ creator: id }, { isLock: true });
 };
 
 const changePassword = async (userId, oldPassword, newPassword) => {
@@ -353,6 +362,9 @@ const getTransactionsById = async (userId) => {
 
 const resetPassword = async (email, newPassword) => {
   try {
+   
+
+ 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     const user = await User.findOneAndUpdate(
       { email: email },

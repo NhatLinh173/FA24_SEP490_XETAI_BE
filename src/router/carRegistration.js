@@ -15,7 +15,7 @@ const {
 
 // Route tạo Car Registration mới
 router.post(
-  "/",
+  "/add",
   upload.fields([
     { name: "imageCar", maxCount: 10 },
     { name: "imageRegistration", maxCount: 10 },

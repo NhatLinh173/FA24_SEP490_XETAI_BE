@@ -11,6 +11,7 @@ const bodyParser = require("body-parser");
 const session = require("express-session");
 const passport = require("./src/service/authGoogle");
 const cookieParser = require("cookie-parser");
+const { logVisit } = require("./src/controller/admin/adminController");
 const { corsWhiteList, cookieOptions } = require("./src/router/cors");
 dotenv.config();
 const PORT = process.env.PORT || 3005;
@@ -31,6 +32,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.json());
 app.use(bodyParser.json());
+app.use(logVisit);
 app.use(express.urlencoded({ extended: true }));
 
 routes(app);

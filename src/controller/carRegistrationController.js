@@ -1,7 +1,7 @@
 const CarRegistration = require("../model/carRegistrationModel");
 const cloudinary = require("../config/cloudinaryConfig");
 const Tesseract = require("tesseract.js");
-
+const Driver = require("../model/driverModel");
 const createCarRegistration = async (req, res) => {
   const {
     nameCar,
@@ -53,6 +53,29 @@ const createCarRegistration = async (req, res) => {
       })
     );
 
+    const carImageUrls = await Promise.all(
+      imageCar.map((file) => {
+        return new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream(
+              { folder: "car_registration_images" },
+              (error, result) => {
+                if (error) {
+                  reject(
+                    new Error(
+                      "Error uploading image to Cloudinary: " + error.message
+                    )
+                  );
+                } else {
+                  resolve(result.secure_url);
+                }
+              }
+            )
+            .end(file.buffer);
+        });
+      })
+    );
+    imageCarUrls = carImageUrls;
     imageRegistrationUrls = registrationImageUrls;
 
     const ocrPromises = imageRegistrationUrls.map(async (url) => {
@@ -81,8 +104,16 @@ const createCarRegistration = async (req, res) => {
       status,
       expirationDate,
     });
-
     await newCarRegistration.save();
+    const driver = await Driver.findById(driverId);
+    if (!driver) {
+      return res.status(404).json({ message: "Driver not found" });
+    }
+
+    driver.carRegistrations.push(newCarRegistration._id);
+
+    await driver.save();
+
     res.status(200).json(newCarRegistration);
   } catch (error) {
     res

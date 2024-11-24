@@ -8,7 +8,7 @@ const mongoose = require("mongoose");
 const cloudinary = require("../config/cloudinaryConfig");
 const dealPriceModel = require("../model/dealPriceModel");
 const Driver = require("../model/driverModel");
-
+const { sendEmail } = require("../service/emailService");
 const ObjectId = mongoose.Types.ObjectId;
 
 class PostController {
@@ -88,6 +88,7 @@ class PostController {
   }
 
   async updatePost(req, res, next) {
+    console.log("alooo:");
     try {
       const id = req.params.idPost;
       const bodyData = req.body;
@@ -142,6 +143,7 @@ class PostController {
       updatePost.deliveryTime = bodyData.deliveryTime;
       updatePost.startPointCity = bodyData.startPointCity;
       updatePost.destinationCity = bodyData.destinationCity;
+      updatePost.paymentMethod = bodyData.paymentMethod;
 
       const currentTime = new Date();
       if (bodyData.status === "inprogress") {
@@ -150,7 +152,12 @@ class PostController {
         updatePost.endTime = currentTime;
       } else if (bodyData.status === "cancel") {
         const user = await User.findById({ _id: bodyData.creator });
-        const price = parseFloat(bodyData.price.replace(/,/g, "").replace(/\./g, ""));
+        const price = parseFloat(
+          bodyData.price.replace(/,/g, "").replace(/\./g, "")
+        );
+        const generateOrderCode = () => {
+          return Math.floor(100000 + Math.random() * 900000).toString();
+        };
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
           if (user) {
@@ -163,6 +170,7 @@ class PostController {
               const newTransaction = new Transaction({
                 userId: bodyData.creator,
                 postId: updatePost._id,
+                orderCode: generateOrderCode(),
                 amount: cancellationFee,
                 type: "CANCEL_ORDER",
                 status: "PAID",
@@ -272,7 +280,7 @@ class PostController {
       var maxPage = Math.ceil(totalPosts / limitPage);
 
       // Lấy danh sách đơn hàng với phân trang
-      var salePosts = await Post.find({ status: "wait" }) // Lấy tất cả đơn hàng
+      var salePosts = await Post.find({ status: "wait", isLock: false }) // Lấy tất cả đơn hàng
         .sort({ createdAt: -1 }) // Sắp xếp theo ngày tạo
         .populate({
           path: "creator",
@@ -509,11 +517,15 @@ class PostController {
     }
 
     try {
-      const currentDate = new Date();
-      const inputDate = new Date(deliveryTime);
-
-      if (inputDate <= currentDate) {
-        return res.status(402).json({ message: "Invalid delivery time" });
+      const driver = await Driver.findById(driverId);
+      if (
+        !driver ||
+        !driver.carRegistrations ||
+        driver.carRegistrations.length === 0
+      ) {
+        return res
+          .status(422)
+          .json({ message: "Driver must have a car registration" });
       }
 
       const newDeal = new dealPriceModel({
@@ -561,12 +573,14 @@ class PostController {
 
       if (post.status !== "finish") {
         return res.status(400).json({
+          code: "ORDER_NOT_CONFIRMED",
           message: "Đơn hàng chưa được tài xế xác nhận giao hàng.",
         });
       }
 
       if (post.userConfirmed) {
         return res.status(400).json({
+          code: "ORDER_ALREADY_CONFIRMED",
           message: "Đơn hàng đã được xác nhận hoàn tất từ phía người dùng.",
         });
       }
@@ -575,25 +589,22 @@ class PostController {
 
       if (post.paymentMethod === "bank_transfer") {
         const transportFee = parseFloat(post.price.replace(/,/g, ""));
-
         const driverId = post.dealId.driverId;
-
         const driver = await Driver.findById(driverId).populate("userId");
-
+        const customer = await User.findById(post.creator);
         if (!driver) {
           return res.status(404).json({ message: "Tài xế không tồn tại." });
         }
-
-        const customer = await User.findById(post.creator);
 
         if (!customer) {
           return res.status(404).json({ message: "Người dùng không tồn tại." });
         }
 
         if (customer.balance < transportFee) {
-          return res
-            .status(400)
-            .json({ message: "Số dư người dùng không đủ." });
+          return res.status(400).json({
+            code: "INSUFFICIENT_BALANCE",
+            message: "Số dư người dùng không đủ.",
+          });
         }
         customer.balance -= transportFee;
         await customer.save();
@@ -624,7 +635,6 @@ class PostController {
         });
         await customerTransaction.save();
 
-        // Create transaction for driver credit (95% of transport fee)
         const driverTransaction = new Transaction({
           userId: driverUser._id,
           postId: post._id,
@@ -634,6 +644,62 @@ class PostController {
           orderCode: generateOrderCode(),
         });
         await driverTransaction.save();
+      } else if (post.paymentMethod === "cash") {
+        const transportFee = parseFloat(post.price.replace(/,/g, ""));
+
+        const driverId = post.dealId.driverId;
+
+        const driver = await Driver.findById(driverId).populate("userId");
+
+        if (!driver) {
+          return res.status(404).json({ message: "Tài xế không tồn tại." });
+        }
+
+        const driverUser = await User.findById(driver.userId);
+
+        if (!driverUser) {
+          return res
+            .status(404)
+            .json({ message: "Người dùng tài xế không tồn tại." });
+        }
+
+        const driverAmount = transportFee * 0.05;
+        driverUser.balance -= driverAmount;
+        await driverUser.save();
+
+        const generateOrderCode = () => {
+          return Math.floor(100000 + Math.random() * 900000).toString();
+        };
+
+        const driverTransaction = new Transaction({
+          userId: driverUser._id,
+          postId: post._id,
+          amount: driverAmount,
+          type: "PAY_SYSTEM_FEE",
+          status: "PAID",
+          orderCode: generateOrderCode(),
+        });
+        await driverTransaction.save();
+      }
+
+      if (customer && customer.email) {
+        await sendEmail(
+          customer.email,
+          "Xác nhận hoàn tất đơn hàng",
+          "orderConfirmationForCustomer",
+          customer.fullName,
+          post._id
+        );
+      }
+
+      if (driver && driver.userId && driver.userId.email) {
+        await sendEmail(
+          driver.userId.email,
+          "Thông báo hoàn tất chuyến hàng",
+          "orderCompletionForDriver",
+          driver.fullName,
+          post._id
+        );
       }
 
       post.status = "complete";
@@ -697,8 +763,6 @@ class PostController {
       return response;
     }
   }
-  
-  
 }
 
 module.exports = new PostController();

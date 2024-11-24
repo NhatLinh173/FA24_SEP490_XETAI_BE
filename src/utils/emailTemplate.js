@@ -118,6 +118,23 @@ const emailTemplates = {
     <p>Trân trọng,<br>Đội ngũ hỗ trợ</p>
   </div>
 `,
+  orderConfirmationForCustomer: (fullName, orderId) => `
+    <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; text-align: center;">
+      <p>Xin chào ${fullName},</p>
+      <p>Đơn hàng của bạn với mã <strong>${orderId}</strong> đã được xác nhận hoàn tất.</p>
+      <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
+      <p>Trân trọng,<br>Đội ngũ hỗ trợ</p>
+    </div>
+`,
+
+  orderCompletionForDriver: (fullName, orderId) => `
+   <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; text-align: center;">
+    <p>Xin chào ${fullName},</p>
+    <p>Chuyến hàng với mã <strong>${orderId}</strong> mà bạn đã nhận giao đã được xác nhận hoàn tất.</p>
+    <p>Chúc bạn có thêm nhiều chuyến giao hàng thành công!</p>
+    <p>Trân trọng,<br>Đội ngũ hỗ trợ</p>
+   </div>
+`,
 };
 
 module.exports = emailTemplates;
