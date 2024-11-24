@@ -217,33 +217,36 @@ const getDriverPostsByCreatorId = async (req, res) => {
 };
 
 const updateDriverPostStatus = async (req, res) => {
-  const { id } = req.params; // Lấy ID của bài đăng tài xế từ params
-  const { status } = req.body; // Lấy trạng thái mới từ body
+  const { id } = req.params; 
+  const { status } = req.body; 
 
   try {
-    // Tìm bài đăng tài xế theo ID
     const driverPost = await DriverPost.findById(id);
     if (!driverPost) {
-      return res.status(404).json({ message: "Driver post not found" });
+      const response = { status: 404, message: "Driver post not found" };
+      if (res) res.status(404).json(response);
+      return response;
     }
 
-    // Cập nhật trạng thái mới
     driverPost.status = status;
 
-    // Lưu lại bài đăng tài xế với trạng thái mới
     await driverPost.save();
 
-    // Trả về kết quả thành công
-    res.status(200).json({
+    const response = {
+      status: 200,
       message: "Driver post status updated successfully",
       driverPost,
-    });
+    };
+    if (res) res.status(200).json(response);
+    return response;
   } catch (error) {
-    // Xử lý lỗi
-    res.status(500).json({
+    const response = {
+      status: 500,
       message: "Error updating driver post status",
       error: error.message,
-    });
+    };
+    if (res) res.status(500).json(response);
+    return response;
   }
 };
 
