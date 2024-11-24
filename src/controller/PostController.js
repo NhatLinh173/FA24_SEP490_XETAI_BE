@@ -653,29 +653,48 @@ class PostController {
   }
   async updatePostStatus(req, res) {
     try {
-      const id = req.params.idPost;
-      const status  = req.body; // Chỉ lấy trạng thái mới từ yêu cầu
+      const { idPost } = req.params; 
+      const { status } = req.body;  
   
-      const post = await Post.findById(id);
-      if (!post) {
-        return res.status(404).json({ message: "Post not found" });
+      if (!status) {
+        const response = { status: 400, message: "Status is required" };
+        if (res) return res.status(400).json(response);
+        return response;
       }
   
-      // Cập nhật trạng thái
+      const post = await Post.findById(idPost);
+      if (!post) {
+        const response = { status: 404, message: "Post not found" };
+        if (res) return res.status(404).json(response);
+        return response;
+      }
+  
       post.status = status;
   
-      // Ghi lại thời gian nếu cần thiết
       const currentTime = new Date();
       if (status === "inprogress") {
-        post.startTime = currentTime;
+        post.startTime = currentTime; 
       } else if (status === "finish") {
-        post.endTime = currentTime;
+        post.endTime = currentTime; 
       }
   
-      const updatedPost = await post.save(); // Lưu bài đăng sau khi cập nhật
-      return res.status(200).json(updatedPost); // Trả về bài đăng đã cập nhật
+      const updatedPost = await post.save();
+  
+      const response = {
+        status: 200,
+        message: "Post status updated successfully",
+        updatedPost,
+      };
+      if (res) return res.status(200).json(response);
+      return response;
     } catch (error) {
-      return res.status(500).json({ message: "Server error", error: error.message });
+      const response = {
+        status: 500,
+        message: "Server error",
+        error: error.message,
+      };
+      if (res) return res.status(500).json(response);
+      return response;
     }
   }
   
