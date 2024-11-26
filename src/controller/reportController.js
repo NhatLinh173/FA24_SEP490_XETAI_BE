@@ -79,46 +79,42 @@ const deleteReportAndLockPost = async (req, res) => {
     if (!report) {
       return res.status(404).json({ message: "Report not found" });
     }
+    const postId = report.postId; 
+    const driverPostId = report.driverPostId; 
 
-    // Lấy thông tin bài đăng liên kết (Post hoặc DriverPost)
-    const postId = report.postId; // Trường hợp Post
-    const driverPostId = report.driverPostId; // Trường hợp DriverPost
-
-    // Nếu không có cả postId và driverPostId
+    
     if (!postId && !driverPostId) {
       return res.status(400).json({ message: "No associated post found in the report" });
     }
 
-    // Nếu có postId (Post) - gọi hàm updatePostStatus
     if (postId) {
       const updateStatusResult = await postController.updatePostStatus(
-        { params: { idPost: postId }, body: { status: "locked" } }, // Yêu cầu giả lập cho Post
+        { params: { idPost: postId }, body: { status: "locked" } },
         {
-          status: (code) => ({ json: (message) => message }), // Giả lập response object
+          status: (code) => ({ json: (message) => message }), 
         }
       );
 
-      if (updateStatusResult.error) {
+      if (!updateStatusResult || updateStatusResult.status !== 200) {
         return res.status(500).json({
           message: "Error updating post status after deleting report",
-          error: updateStatusResult.error,
+          error: updateStatusResult.error || "Unknown error",
         });
       }
     }
 
-    // Nếu có driverPostId (DriverPost) - gọi hàm updateDriverPostStatus
     if (driverPostId) {
       const updateDriverPostStatusResult = await driverPostController.updateDriverPostStatus(
-        { params: { id: driverPostId }, body: { status: "locked" } }, // Yêu cầu giả lập cho DriverPost
+        { params: { id: driverPostId }, body: { status: "locked" } },
         {
-          status: (code) => ({ json: (message) => message }), // Giả lập response object
+          status: (code) => ({ json: (message) => message }), 
         }
       );
 
-      if (updateDriverPostStatusResult.error) {
+      if (!updateDriverPostStatusResult || updateDriverPostStatusResult.status !== 200) {
         return res.status(500).json({
           message: "Error updating driver post status after deleting report",
-          error: updateDriverPostStatusResult.error,
+          error: updateDriverPostStatusResult.error || "Unknown error",
         });
       }
     }

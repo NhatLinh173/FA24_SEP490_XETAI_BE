@@ -720,22 +720,38 @@ class PostController {
   }
   async updatePostStatus(req, res) {
     try {
+
       const id = req.params.idPost;
       const status = req.body;
 
       const post = await Post.findById(id);
+
+  
+      if (!status) {
+        const response = { status: 400, message: "Status is required" };
+        if (res) return res.status(400).json(response);
+        return response;
+      }
+  
+      const post = await Post.findById(idPost);
+
       if (!post) {
-        return res.status(404).json({ message: "Post not found" });
+        const response = { status: 404, message: "Post not found" };
+        if (res) return res.status(404).json(response);
+        return response;
       }
 
+  
       post.status = status;
+  
 
       const currentTime = new Date();
       if (status === "inprogress") {
-        post.startTime = currentTime;
+        post.startTime = currentTime; 
       } else if (status === "finish") {
-        post.endTime = currentTime;
+        post.endTime = currentTime; 
       }
+
 
       const updatedPost = await post.save();
       return res.status(200).json(updatedPost);
@@ -760,11 +776,25 @@ class PostController {
         return res.status(404).json({ message: "Post not found" });
       }
 
-      return res.status(200).json(post);
+  
+      const updatedPost = await post.save();
+  
+      const response = {
+        status: 200,
+        message: "Post status updated successfully",
+        updatedPost,
+      };
+      if (res) return res.status(200).json(response);
+      return response;
+
     } catch (error) {
-      return res
-        .status(500)
-        .json({ message: "Server error", error: error.message });
+      const response = {
+        status: 500,
+        message: "Server error",
+        error: error.message,
+      };
+      if (res) return res.status(500).json(response);
+      return response;
     }
   }
 }
