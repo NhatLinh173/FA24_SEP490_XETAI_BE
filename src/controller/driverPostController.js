@@ -1,11 +1,15 @@
 const DriverPost = require("../model/driverPost");
 const cloudinary = require("../config/cloudinaryConfig");
-
+const Transaction = require("../model/transactionModel");
+const User = require("../model/userModel");
 // Tạo driver post mới
 const createDriverPost = async (req, res) => {
   const { creatorId, startCity, destinationCity, description } = req.body;
   const images = req.files;
-
+  const postFee = 5000;
+  const generateOrderCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
   const missingFields = [];
   if (!creatorId) missingFields.push("creatorId");
   if (!startCity) missingFields.push("startCity");
@@ -62,6 +66,31 @@ const createDriverPost = async (req, res) => {
       populate: { path: "userId" },
     });
 
+    const userId = populatedDriverPost.creatorId?.userId?._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Người dùng không tồn tại." });
+    }
+
+    if (user.balance < postFee) {
+      return res.status(402).json({
+        message: "Số dư không đủ để đăng bài. Vui lòng nạp thêm tiền.",
+      });
+    }
+
+    user.balance -= postFee;
+    await user.save();
+
+    const newTransaction = new Transaction({
+      userId: userId,
+      postId: savedDriverPost._id,
+      amount: postFee,
+      type: "POST_PAYMENT",
+      status: "PAID",
+      orderCode: generateOrderCode(),
+    });
+    await newTransaction.save();
     res.status(200).json(populatedDriverPost);
   } catch (error) {
     res.status(400).json({ message: "Unable to create driver post", error });
