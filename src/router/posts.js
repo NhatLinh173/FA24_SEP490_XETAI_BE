@@ -21,5 +21,6 @@ router.get("/:idUser/users/history", postController.showHistory);
 router.patch("/time/:idPost", postController.setTimes);
 router.patch("/:postId/deal", postController.updateDealId);
 router.patch("/complete/order", postController.completeOrder);
+router.get("/order/tracking", postController.getPostByOderCode);
 
 module.exports = router;

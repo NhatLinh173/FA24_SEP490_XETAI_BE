@@ -13,7 +13,7 @@ const addFavoriteDriver = async (userId, driverId) => {
       throw new Error("User not found");
     }
 
-    const driver = await User.findById(driverId);
+    const driver = await Driver.findById(driverId);
     if (!driver) {
       throw new Error("Driver not found");
     }
@@ -89,9 +89,20 @@ const getDriverDetails = async (userId) => {
   };
 };
 
+const getFavoriteStatus = async (driverId, userId) => {
+  try {
+    const favorite = await FavoriteDrivers.findOne({ driverId, userId });
+    return favorite !== null;
+  } catch (error) {
+    console.error("Error fetching favorite status:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   addFavoriteDriver,
   removeFavoriteDriver,
   getFavoriteDrivers,
   getDriverDetails,
+  getFavoriteStatus,
 };

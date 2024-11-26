@@ -69,9 +69,25 @@ const getDriverDetailsController = async (req, res) => {
   }
 };
 
+const getFavoriteStatus = async (req, res) => {
+  const { driverId, userId } = req.query;
+  try {
+    const isFavorite = await favoriteDriverService.getFavoriteStatus(
+      driverId,
+      userId
+    );
+    return res.status(200).json({ isFavorite });
+  } catch (error) {
+    console.log(error);
+    console.error("Error fetching favorite status:", error);
+    return res.status(500).json({ message: "Đã có lỗi xảy ra" });
+  }
+};
+
 module.exports = {
   addFavorite,
   removeFavorite,
   getFavorite,
   getDriverDetailsController,
+  getFavoriteStatus,
 };

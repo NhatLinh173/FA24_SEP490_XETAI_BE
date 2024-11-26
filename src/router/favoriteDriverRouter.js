@@ -13,4 +13,5 @@ router.get(
   "/details/:userId",
   favoriteDriverController.getDriverDetailsController
 );
+router.get("/check/status", favoriteDriverController.getFavoriteStatus);
 module.exports = router;

@@ -107,7 +107,7 @@ const Post = new Schema(
         "cancel",
         "hide",
         "complete",
-        "locked"
+        "locked",
       ], // Giới hạn các giá trị có thể nhận
       default: "wait", // Giá trị mặc định ban đầu
     },
@@ -150,6 +150,11 @@ const Post = new Schema(
     userConfirmed: {
       type: Boolean,
       default: false,
+    },
+    orderCode: {
+      type: String,
+      required: true,
+      unique: true,
     },
   },
   {

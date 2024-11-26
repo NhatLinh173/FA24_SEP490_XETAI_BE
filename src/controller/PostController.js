@@ -17,7 +17,7 @@ class PostController {
       const salePostDataBody = req.body;
       const images = req.files;
       const { creator } = salePostDataBody;
-      const postFee = 2000;
+      const postFee = 5000;
 
       if (!salePostDataBody || !images) {
         return res.status(400).json({ message: "Thông tin không hợp lệ." });
@@ -58,16 +58,17 @@ class PostController {
         });
         imageUrls = await Promise.all(uploadImagePromises);
       }
-
-      const newPost = new Post({
-        ...salePostDataBody,
-        images: imageUrls,
-      });
-
-      const savedPost = await newPost.save();
       const generateOrderCode = () => {
         return Math.floor(100000 + Math.random() * 900000).toString();
       };
+      const newPost = new Post({
+        ...salePostDataBody,
+        images: imageUrls,
+        orderCode: generateOrderCode(),
+      });
+
+      const savedPost = await newPost.save();
+
       const newTransaction = new Transaction({
         userId: creator,
         postId: savedPost._id,
@@ -88,7 +89,6 @@ class PostController {
   }
 
   async updatePost(req, res, next) {
-    console.log("alooo:");
     try {
       const id = req.params.idPost;
       const bodyData = req.body;
@@ -127,7 +127,9 @@ class PostController {
         const newImageUrls = await Promise.all(uploadImagePromises);
         imageUrls = [...imageUrls, ...newImageUrls];
       }
-
+      const generateOrderCode = () => {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+      };
       updatePost.title = bodyData.title;
       updatePost.detail = bodyData.detail;
       updatePost.images = imageUrls;
@@ -144,6 +146,7 @@ class PostController {
       updatePost.startPointCity = bodyData.startPointCity;
       updatePost.destinationCity = bodyData.destinationCity;
       updatePost.paymentMethod = bodyData.paymentMethod;
+      updatePost.orderCode = bodyData.orderCode;
 
       const currentTime = new Date();
       if (bodyData.status === "inprogress") {
@@ -155,9 +158,7 @@ class PostController {
         const price = parseFloat(
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
-        const generateOrderCode = () => {
-          return Math.floor(100000 + Math.random() * 900000).toString();
-        };
+
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
           if (user) {
@@ -720,17 +721,15 @@ class PostController {
   async updatePostStatus(req, res) {
     try {
       const id = req.params.idPost;
-      const status = req.body; // Chỉ lấy trạng thái mới từ yêu cầu
+      const status = req.body;
 
       const post = await Post.findById(id);
       if (!post) {
         return res.status(404).json({ message: "Post not found" });
       }
 
-      // Cập nhật trạng thái
       post.status = status;
 
-      // Ghi lại thời gian nếu cần thiết
       const currentTime = new Date();
       if (status === "inprogress") {
         post.startTime = currentTime;
@@ -738,8 +737,30 @@ class PostController {
         post.endTime = currentTime;
       }
 
-      const updatedPost = await post.save(); // Lưu bài đăng sau khi cập nhật
-      return res.status(200).json(updatedPost); // Trả về bài đăng đã cập nhật
+      const updatedPost = await post.save();
+      return res.status(200).json(updatedPost);
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Server error", error: error.message });
+    }
+  }
+
+  async getPostByOderCode(req, res) {
+    try {
+      const { orderCode } = req.query;
+      if (!orderCode) {
+        return res
+          .status(400)
+          .json({ message: "Missing orderCode in request" });
+      }
+      const post = await Post.findOne({ orderCode });
+
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      return res.status(200).json(post);
     } catch (error) {
       return res
         .status(500)

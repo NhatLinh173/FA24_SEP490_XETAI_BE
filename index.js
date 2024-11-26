@@ -11,6 +11,7 @@ const bodyParser = require("body-parser");
 const session = require("express-session");
 const passport = require("./src/service/authGoogle");
 const cookieParser = require("cookie-parser");
+const driverLocationWS = require("./src/socketHandler/driverLocationWS");
 const { logVisit } = require("./src/controller/admin/adminController");
 const { corsWhiteList, cookieOptions } = require("./src/router/cors");
 dotenv.config();
@@ -34,29 +35,20 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(logVisit);
 app.use(express.urlencoded({ extended: true }));
-
 routes(app);
 
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
     origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT"],
+    methods: ["GET", "POST"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
     preflightContinue: true,
   },
 });
-// const io = socketIO(server, {
-//   cors: {
-//     origin: "https://fa-24-sep-490-xetai-fe.vercel.app",
-//     methods: ["GET", "POST", "PUT"],
-//     credentials: true,
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//     preflightContinue: true,
-//   },
-// });
 
+driverLocationWS(io);
 socketHandle(io);
 
 connectDB()
