@@ -127,7 +127,32 @@ class RatingController {
         .json({ message: "Lỗi khi cập nhật đánh giá", error: err });
     }
   }
+  async getRatingsByPost(req, res) {
+    const { postId } = req.params;
 
+    try {
+      // Tìm tất cả đánh giá của bài post theo postId
+      const ratings = await Rating.find({ postId })
+        .populate("reviewerId", "fullName email") // Lấy thông tin người đánh giá
+        .populate("userId", "fullName email") // Lấy thông tin người được đánh giá
+        .exec();
+
+      if (ratings.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Không có đánh giá nào cho bài đăng này." });
+      }
+
+      return res.json({
+        message: "Lấy đánh giá cho bài đăng thành công",
+        ratings,
+      });
+    } catch (err) {
+      return res
+        .status(500)
+        .json({ message: "Lỗi khi lấy đánh giá", error: err });
+    }
+  }
   async getMyRatings(req, res) {
     const userId = req.params.userId;
 

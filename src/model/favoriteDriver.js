@@ -9,7 +9,7 @@ const favoriteDriversSchema = new mongoose.Schema(
     },
     driverId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Driver",
       required: true,
     },
   },

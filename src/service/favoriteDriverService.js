@@ -37,9 +37,9 @@ const removeFavoriteDriver = async (userId, driverId) => {
   if (!userId || !driverId) {
     throw new Error("User ID and Driver ID are required");
   }
-
   try {
     const result = await FavoriteDrivers.deleteOne({ userId, driverId });
+    console.log(result);
     if (result.deletedCount === 0) {
       throw new Error("Favorite not found");
     }
@@ -54,10 +54,13 @@ const getFavoriteDrivers = async (userId) => {
     throw new Error("User ID is required");
   }
   try {
-    return await FavoriteDrivers.findOne({ userId }).populate(
-      "driverId",
-      "fullName avatar phone"
-    );
+    return await FavoriteDrivers.findOne({ userId }).populate({
+      path: "driverId", // Chỉ ra rằng chúng ta đang populate driverId
+      populate: {
+        path: "userId", // Tại đây, populate userId của driverId (trong Driver model)
+        select: "fullName avatar phone", // Các trường cần lấy từ User
+      },
+    });
   } catch (error) {
     throw new Error(error.message);
   }

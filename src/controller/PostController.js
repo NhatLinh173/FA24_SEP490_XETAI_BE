@@ -10,7 +10,7 @@ const dealPriceModel = require("../model/dealPriceModel");
 const Driver = require("../model/driverModel");
 const { sendEmail } = require("../service/emailService");
 const ObjectId = mongoose.Types.ObjectId;
-
+const deleteOldPosts = require("../config/cronDeleteOldPosts");
 class PostController {
   async createPost(req, res) {
     try {
@@ -274,21 +274,21 @@ class PostController {
   async showPost(req, res, next) {
     var page = parseInt(req.query.page) || 1;
     var limitPage = 9;
-
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
     try {
-      // Đếm tổng số đơn hàng
+      await deleteOldPosts();
+
       var totalPosts = await Post.countDocuments({ status: "wait" });
       var maxPage = Math.ceil(totalPosts / limitPage);
 
-      // Lấy danh sách đơn hàng với phân trang
-      var salePosts = await Post.find({ status: "wait", isLock: false }) // Lấy tất cả đơn hàng
-        .sort({ createdAt: -1 }) // Sắp xếp theo ngày tạo
+      var salePosts = await Post.find({ status: "wait", isLock: false })
+        .sort({ createdAt: -1 })
         .populate({
           path: "creator",
           select: "firstName lastName",
         })
-        .skip((page - 1) * limitPage) // Bỏ qua các đơn hàng đã được hiển thị
-        .limit(limitPage); // Giới hạn số đơn hàng trên mỗi trang
+        .skip((page - 1) * limitPage)
+        .limit(limitPage);
 
       res.status(200).json({
         salePosts: salePosts,
@@ -567,9 +567,17 @@ class PostController {
       }
 
       const post = await Post.findById(postId).populate("dealId");
-
+      const driverId = post.dealId.driverId;
+      const customer = await User.findById(post.creator);
       if (!post) {
         return res.status(404).json({ message: "Không tìm thấy đơn hàng." });
+      }
+      const generateOrderCode = () => {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+      };
+      if (!post.orderCode) {
+        post.orderCode = generateOrderCode();
+        await post.save();
       }
 
       if (post.status !== "finish") {
@@ -590,9 +598,7 @@ class PostController {
 
       if (post.paymentMethod === "bank_transfer") {
         const transportFee = parseFloat(post.price.replace(/,/g, ""));
-        const driverId = post.dealId.driverId;
         const driver = await Driver.findById(driverId).populate("userId");
-        const customer = await User.findById(post.creator);
         if (!driver) {
           return res.status(404).json({ message: "Tài xế không tồn tại." });
         }
@@ -625,6 +631,7 @@ class PostController {
         const generateOrderCode = () => {
           return Math.floor(100000 + Math.random() * 900000).toString();
         };
+        const orderCode = generateOrderCode();
 
         const customerTransaction = new Transaction({
           userId: customer._id,
@@ -632,17 +639,16 @@ class PostController {
           amount: transportFee,
           type: "PAYING_FOR_ORDER",
           status: "PAID",
-          orderCode: generateOrderCode(),
+          orderCode: orderCode,
         });
         await customerTransaction.save();
-
         const driverTransaction = new Transaction({
           userId: driverUser._id,
           postId: post._id,
           amount: driverAmount,
           type: "RECEIVING_PAYMENT_FROM_ORDER",
           status: "PAID",
-          orderCode: generateOrderCode(),
+          orderCode: orderCode,
         });
         await driverTransaction.save();
       } else if (post.paymentMethod === "cash") {
@@ -681,26 +687,26 @@ class PostController {
           orderCode: generateOrderCode(),
         });
         await driverTransaction.save();
-      }
 
-      if (customer && customer.email) {
-        await sendEmail(
-          customer.email,
-          "Xác nhận hoàn tất đơn hàng",
-          "orderConfirmationForCustomer",
-          customer.fullName,
-          post._id
-        );
-      }
+        if (customer && customer.email) {
+          await sendEmail(
+            customer.email,
+            "Xác nhận hoàn tất đơn hàng",
+            "orderConfirmationForCustomer",
+            customer.fullName,
+            post._id
+          );
+        }
 
-      if (driver && driver.userId && driver.userId.email) {
-        await sendEmail(
-          driver.userId.email,
-          "Thông báo hoàn tất chuyến hàng",
-          "orderCompletionForDriver",
-          driver.fullName,
-          post._id
-        );
+        if (driver && driver.userId && driver.userId.email) {
+          await sendEmail(
+            driver.userId.email,
+            "Thông báo hoàn tất chuyến hàng",
+            "orderCompletionForDriver",
+            driver.fullName,
+            post._id
+          );
+        }
       }
 
       post.status = "complete";
@@ -720,20 +726,16 @@ class PostController {
   }
   async updatePostStatus(req, res) {
     try {
-
       const id = req.params.idPost;
       const status = req.body;
 
       const post = await Post.findById(id);
 
-  
       if (!status) {
         const response = { status: 400, message: "Status is required" };
         if (res) return res.status(400).json(response);
         return response;
       }
-  
-      const post = await Post.findById(idPost);
 
       if (!post) {
         const response = { status: 404, message: "Post not found" };
@@ -741,17 +743,14 @@ class PostController {
         return response;
       }
 
-  
       post.status = status;
-  
 
       const currentTime = new Date();
       if (status === "inprogress") {
-        post.startTime = currentTime; 
+        post.startTime = currentTime;
       } else if (status === "finish") {
-        post.endTime = currentTime; 
+        post.endTime = currentTime;
       }
-
 
       const updatedPost = await post.save();
       return res.status(200).json(updatedPost);
@@ -776,9 +775,8 @@ class PostController {
         return res.status(404).json({ message: "Post not found" });
       }
 
-  
       const updatedPost = await post.save();
-  
+
       const response = {
         status: 200,
         message: "Post status updated successfully",
@@ -786,7 +784,6 @@ class PostController {
       };
       if (res) return res.status(200).json(response);
       return response;
-
     } catch (error) {
       const response = {
         status: 500,
