@@ -4,8 +4,8 @@ const bcrypt = require("bcrypt");
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
-    sparse: true, // Allow `null` values to not be indexed for uniqueness
-    default: null, // Default to `null` if no email is provided
+    sparse: true,
+    default: null,
   },
   password: {
     type: String,

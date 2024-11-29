@@ -49,13 +49,22 @@ const registerUser = async ({
   address = "",
   email = "",
 }) => {
-  if (!phone || !password) {
-    throw new Error("Phone and password are required");
+  if ((!phone && !email) || !password) {
+    throw new Error("Email or phone and password are required");
   }
 
-  const userExists = await User.findOne({ phone: phone });
-  if (userExists) {
-    throw new Error("Phone already exists");
+  if (phone) {
+    const phoneExists = await User.findOne({ phone });
+    if (phoneExists) {
+      throw new Error("Phone already exists");
+    }
+  }
+
+  if (email) {
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      throw new Error("Email already exists");
+    }
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -64,10 +73,10 @@ const registerUser = async ({
     password: hashedPassword,
     role,
     phone,
+    email,
     fullName,
     address,
     refreshToken: "",
-    email,
   });
 
   if (!user) {
@@ -75,7 +84,7 @@ const registerUser = async ({
   }
 
   if (role === "personal") {
-    const driver = await Driver.create({
+    await Driver.create({
       userId: user._id,
       fullName: user.fullName,
     });
@@ -92,18 +101,26 @@ const registerUser = async ({
 
   return {
     _id: user._id,
-    // email: user.email,
+    phone: user.phone,
+    email: user.email,
     accessToken,
     refreshToken,
     role: user.role,
   };
 };
 
-const loginUser = async (phone, password) => {
-  const user = await User.findOne({ phone });
+const loginUser = async (phoneOrEmail, password) => {
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(phoneOrEmail);
+  const query = isEmail ? { email: phoneOrEmail } : { phone: phoneOrEmail };
+
+  const user = await User.findOne(query);
   if (!user) {
-    throw { message: "Số điện thoại không tồn tại", code: 404 };
+    throw {
+      message: isEmail ? "Email không tồn tại" : "Số điện thoại không tồn tại",
+      code: 404,
+    };
   }
+
   if (user.isBlocked === true) {
     throw {
       message:
@@ -133,6 +150,7 @@ const loginUser = async (phone, password) => {
   const response = {
     _id: user._id,
     email: user.email,
+    phone: user.phone,
     accessToken,
     role: user.role,
   };

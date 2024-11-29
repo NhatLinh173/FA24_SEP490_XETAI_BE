@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const visitSchema = new mongoose.Schema({
-  ip: { type: String, required: true },
+  ip: { type: String, required: false },
   url: { type: String, required: true },
   method: { type: String, required: true },
   userAgent: { type: String },

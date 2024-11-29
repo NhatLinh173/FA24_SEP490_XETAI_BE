@@ -872,6 +872,22 @@ class PostController {
         }
       }
 
+      const driverNotification = new Notification({
+        userId: customer,
+        title: "Đơn hàng đã bị hủy.",
+        message: `Đơn hàng  ${id} của bạn đã được hoàn thành. Vui lòng kiểm tra và xác nhận nhận hàng`,
+        data: { postId: id, status: "cancel" },
+      });
+
+      await driverNotification.save();
+
+      req.io.to(customer.toString()).emit("receiveNotification", {
+        title: "Đơn hàng bị hủy",
+        message: `Đơn hàng  ${id} của bạn đã được hoàn thành. Vui lòng kiểm tra và xác nhận nhận hàng`,
+        data: { postId: id, status: "cancel" },
+        timestamp: currentTime,
+      });
+
       post.status = "complete";
       await post.save();
 
