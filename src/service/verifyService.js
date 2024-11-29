@@ -1,40 +1,41 @@
-const { createClient } = require("redis");
-const { sendEmail } = require("../service/emailService");
+const admin = require("../config/firebaseConfig");
 const User = require("../model/userModel");
+const { parsePhoneNumberFromString } = require("libphonenumber-js");
 require("dotenv").config();
 
-const client = createClient({
-  url: process.env.REDIS_URL || "redis://127.0.0.1:6379",
-});
-client.connect().catch(console.error);
+const sendOtp = async (phoneNumber) => {
+  const phoneNumberParsed = parsePhoneNumberFromString(phoneNumber, "VN");
 
-const sendOtp = async (email) => {
-  const user = await User.findOne({ email });
-  if (!user) throw new Error("Email không tồn tại trong hệ thống.");
+  if (!phoneNumberParsed || !phoneNumberParsed.isValid()) {
+    throw new Error(
+      "Số điện thoại phải ở định dạng quốc tế, ví dụ: +84912345678"
+    );
+  }
 
-  // Generate OTP and store it in Redis
-  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-  await client.setEx(email, 300, otpCode); // Save OTP in Redis for 5 minutes
+  const internationalPhoneNumber = phoneNumberParsed.format("E.164");
 
-  // Send OTP email using the email service
-  await sendEmail(email, "Mã OTP xác thực", "otpVerification", otpCode);
-  console.log("OTP sent to:", email);
-  return otpCode;
+  try {
+    const confirmationResult = await admin
+      .auth()
+      .signInWithPhoneNumber(internationalPhoneNumber);
+
+    return confirmationResult.verificationId;
+  } catch (error) {
+    throw new Error("Lỗi khi gửi OTP: " + error.message);
+  }
 };
 
-const verifyOtp = async (email, otpCode) => {
-  const storedOtp = await client.get(email);
-  if (!storedOtp) throw new Error("OTP đã hết hạn hoặc không tồn tại.");
-  if (otpCode !== storedOtp) throw new Error("OTP không chính xác.");
+const verifyOtp = async (phoneNumber, otpCode) => {
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(otpCode);
+    if (decodedToken.phone_number !== phoneNumber) {
+      throw new Error("Số điện thoại không khớp với mã OTP.");
+    }
 
-  // Delete OTP from Redis after successful verification
-  await client.del(email);
-  return "Xác thực thành công";
+    return "Xác thực thành công";
+  } catch (error) {
+    throw new Error("OTP không hợp lệ hoặc đã hết hạn.");
+  }
 };
-
-// Ensure Redis connection closes when not in use
-process.on("exit", () => {
-  client.quit();
-});
 
 module.exports = { sendOtp, verifyOtp };

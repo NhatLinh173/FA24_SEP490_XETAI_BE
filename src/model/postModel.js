@@ -115,6 +115,10 @@ const Post = new Schema(
       //thời gian giao hàng dự kiến
       type: Date,
     },
+    deliveryHour: {
+      //thời gian giao hàng dự kiến
+      type: String,
+    },
     startPointCity: {
       //TP/tỉnh nơi lấy hàng
       type: String,

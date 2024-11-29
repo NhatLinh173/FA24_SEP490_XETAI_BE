@@ -12,6 +12,7 @@ const session = require("express-session");
 const passport = require("./src/service/authGoogle");
 const cookieParser = require("cookie-parser");
 const driverLocationWS = require("./src/socketHandler/driverLocationWS");
+const notificationWS = require("./src/socketHandler/notificationHandler");
 const { logVisit } = require("./src/controller/admin/adminController");
 const { corsWhiteList, cookieOptions } = require("./src/router/cors");
 dotenv.config();
@@ -35,13 +36,17 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(logVisit);
 app.use(express.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 routes(app);
 
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
     origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "PATCH"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
     preflightContinue: true,
@@ -50,6 +55,7 @@ const io = socketIO(server, {
 
 driverLocationWS(io);
 socketHandle(io);
+notificationWS(io);
 
 connectDB()
   .then(() => {

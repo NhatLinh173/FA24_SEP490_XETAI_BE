@@ -9,9 +9,9 @@ const cloudinary = require("../config/cloudinaryConfig");
 dotenv.config();
 
 const register = async (req, res) => {
-  const { email, password, fullName, phone, role, address } = req.body;
+  const { password, fullName, phone, role, address, email } = req.body;
 
-  if (!email || !password || !fullName || !phone || !role) {
+  if (!password || !fullName || !phone || !role) {
     return res
       .status(400)
       .json({ message: "You need fill full information when you register" });
@@ -19,12 +19,12 @@ const register = async (req, res) => {
 
   try {
     const user = await authService.registerUser({
-      email,
       password,
       role,
       phone,
       fullName,
       address,
+      email,
     });
     res.status(201).json(user);
   } catch (error) {

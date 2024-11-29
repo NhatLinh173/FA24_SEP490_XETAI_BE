@@ -42,39 +42,39 @@ const generateToken = (id, expiresIn, role) => {
 };
 
 const registerUser = async ({
-  email,
   password,
   role = "",
   phone = "",
   fullName = "",
   address = "",
+  email = "",
 }) => {
-  if (!email || !password) {
-    throw new Error("Email and password are required");
+  if (!phone || !password) {
+    throw new Error("Phone and password are required");
   }
 
-  const userExists = await User.findOne({ email: email });
+  const userExists = await User.findOne({ phone: phone });
   if (userExists) {
-    throw new Error("Email already exists");
+    throw new Error("Phone already exists");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await User.create({
-    email,
     password: hashedPassword,
     role,
     phone,
     fullName,
     address,
     refreshToken: "",
+    email,
   });
 
   if (!user) {
     throw new Error("Failed to register user");
   }
 
-  if (role === "business" || role === "personal") {
+  if (role === "personal") {
     const driver = await Driver.create({
       userId: user._id,
       fullName: user.fullName,
@@ -92,17 +92,17 @@ const registerUser = async ({
 
   return {
     _id: user._id,
-    email: user.email,
+    // email: user.email,
     accessToken,
     refreshToken,
     role: user.role,
   };
 };
 
-const loginUser = async (email, password) => {
-  const user = await User.findOne({ email });
+const loginUser = async (phone, password) => {
+  const user = await User.findOne({ phone });
   if (!user) {
-    throw { message: "Email không tồn tại", code: 404 };
+    throw { message: "Số điện thoại không tồn tại", code: 404 };
   }
   if (user.isBlocked === true) {
     throw {
@@ -362,9 +362,6 @@ const getTransactionsById = async (userId) => {
 
 const resetPassword = async (email, newPassword) => {
   try {
-   
-
- 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     const user = await User.findOneAndUpdate(
       { email: email },

@@ -1,29 +1,31 @@
 const verifyService = require("../service/verifyService");
 
 const sendOtpController = async (req, res) => {
-  const { email } = req.body;
+  const { phoneNumber } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ error: "Email là bắt buộc." });
+  if (!phoneNumber) {
+    return res.status(400).json({ error: "Số điện thoại là bắt buộc." });
   }
 
   try {
-    await verifyService.sendOtp(email);
-    res.status(200).json({ message: "OTP đã được gửi qua email." });
+    const verificationId = await verifyService.sendOtp(phoneNumber);
+    res.status(200).json({ verificationId });
   } catch (error) {
     res.status(500).json({ error: "Lỗi khi gửi OTP.", details: error.message });
   }
 };
 
 const verifyOtpController = async (req, res) => {
-  const { email, otpCode } = req.body;
+  const { phoneNumber, otpCode } = req.body;
 
-  if (!email || !otpCode) {
-    return res.status(400).json({ error: "Email và mã OTP là bắt buộc." });
+  if (!phoneNumber || !otpCode) {
+    return res
+      .status(400)
+      .json({ error: "Số điện thoại và mã OTP là bắt buộc." });
   }
 
   try {
-    const message = await verifyService.verifyOtp(email, otpCode);
+    const message = await verifyService.verifyOtp(phoneNumber, otpCode);
     res.status(200).json({ message });
   } catch (error) {
     res

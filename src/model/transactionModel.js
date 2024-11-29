@@ -14,6 +14,7 @@ const transactionSchema = new mongoose.Schema({
       "PAYING_FOR_ORDER",
       "RECEIVING_PAYMENT_FROM_ORDER",
       "PAY_SYSTEM_FEE",
+      "RECEIVE_CANCELLATION_FEE",
     ],
     required: true,
   },
