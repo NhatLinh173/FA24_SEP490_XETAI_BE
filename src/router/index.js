@@ -16,6 +16,7 @@ const blogRouter = require("./blog");
 const driverPostRouter = require("./driverPost");
 const adminRouter = require("./admin/adminStatic");
 const trackingRouter = require("./driverLocation");
+const notificationRouter = require("./notification");
 const router = (app) => {
   app.use("/auth", userRouter);
   app.use("/posts", postsRouter);
@@ -36,6 +37,7 @@ const router = (app) => {
   app.use("/driverpost", driverPostRouter);
   app.use("/admin", adminRouter);
   app.use("/tracking", trackingRouter);
+  app.use("/notifications", notificationRouter);
 };
 
 module.exports = router;

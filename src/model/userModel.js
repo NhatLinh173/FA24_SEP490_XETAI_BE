@@ -4,15 +4,15 @@ const bcrypt = require("bcrypt");
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
-    required: true,
-    unique: true,
+    sparse: true, // Allow `null` values to not be indexed for uniqueness
+    default: null, // Default to `null` if no email is provided
   },
   password: {
     type: String,
     required: false,
   },
   role: { type: String },
-  phone: String,
+  phone: { type: String, required: true, unique: true },
   fullName: String,
   refreshToken: String,
   address: { type: String, default: null },
@@ -28,6 +28,8 @@ const userSchema = new mongoose.Schema({
   businessName: { type: String, default: null },
   balance: { type: Number, default: 0 },
 });
+
+userSchema.index({ email: 1 }, { unique: true, sparse: true });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
   const isMatch = await bcrypt.compare(enteredPassword, this.password);

@@ -112,14 +112,10 @@ const getAllDriverPosts = async (req, res) => {
 
 // Lấy driver post theo ID
 const getDriverPostById = async (req, res) => {
-  const { id } = req.params;
+  const { creatorId } = req.params;
 
   try {
-    const driverPost = await DriverPost.findById(id).populate({
-      path: "creatorId",
-      populate: { path: "userId" },
-    });
-
+    const driverPost = await DriverPost.find(creatorId);
     if (!driverPost) {
       return res.status(404).json({ message: "Driver post not found" });
     }
@@ -246,8 +242,8 @@ const getDriverPostsByCreatorId = async (req, res) => {
 };
 
 const updateDriverPostStatus = async (req, res) => {
-  const { id } = req.params; 
-  const { status } = req.body; 
+  const { id } = req.params;
+  const { status } = req.body;
 
   try {
     const driverPost = await DriverPost.findById(id);

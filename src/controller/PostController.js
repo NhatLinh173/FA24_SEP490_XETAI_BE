@@ -8,6 +8,7 @@ const mongoose = require("mongoose");
 const cloudinary = require("../config/cloudinaryConfig");
 const dealPriceModel = require("../model/dealPriceModel");
 const Driver = require("../model/driverModel");
+const Notification = require("../model/notificationModel");
 const { sendEmail } = require("../service/emailService");
 const ObjectId = mongoose.Types.ObjectId;
 const deleteOldPosts = require("../config/cronDeleteOldPosts");
@@ -151,8 +152,37 @@ class PostController {
       const currentTime = new Date();
       if (bodyData.status === "inprogress") {
         updatePost.startTime = currentTime;
+        const notification = new Notification({
+          userId: bodyData.creator,
+          title: "Đơn hàng của bạn đã được tài xế nhận và đang vận chuyển.",
+          message: `Tài xế đã bắt đầu vận chuyển đơn hàng của bạn: ${id}`,
+          data: { postId: id, status: "inprogress" },
+        });
+        await notification.save();
+
+        req.io.to(bodyData.creator.toString()).emit("receiveNotification", {
+          title: "Đơn hàng đang vận chuyển",
+          message: `Tài xế đã bắt đầu vận chuyển đơn hàng của bạn: ${id}`,
+          data: { postId: id, status: "inprogress" },
+          timestamp: currentTime,
+        });
       } else if (bodyData.status === "finish") {
         updatePost.endTime = currentTime;
+
+        const notification = new Notification({
+          userId: bodyData.creator,
+          title: "Đơn hàng của bạn đã được giao thành công.",
+          message: `Đơn hàng của bạn đã được giao thành công: ${id}`,
+          data: { postId: id, status: "finish" },
+        });
+        await notification.save();
+
+        req.io.to(bodyData.creator.toString()).emit("receiveNotification", {
+          title: "Đơn hàng đã hoàn thành",
+          message: `Đơn hàng của bạn đã được giao thành công: ${id}`,
+          data: { postId: id, status: "finish" },
+          timestamp: currentTime,
+        });
       } else if (bodyData.status === "cancel") {
         const user = await User.findById({ _id: bodyData.creator });
         const price = parseFloat(
@@ -161,24 +191,133 @@ class PostController {
 
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
-          if (user) {
-            if (user.balance < cancellationFee) {
-              return res
-                .status(402)
-                .json({ message: "Không đủ số dư để hủy đơn hàng" });
-            } else {
-              user.balance -= cancellationFee;
-              const newTransaction = new Transaction({
-                userId: bodyData.creator,
-                postId: updatePost._id,
-                orderCode: generateOrderCode(),
-                amount: cancellationFee,
-                type: "CANCEL_ORDER",
-                status: "PAID",
-              });
 
-              await newTransaction.save();
-              await user.save();
+          if (user) {
+            const userRole = user.role;
+
+            const deal = await Deal.findOne({ postId: updatePost._id });
+            if (!deal) {
+              return res
+                .status(404)
+                .json({ message: "Không tìm thấy giao dịch liên quan" });
+            }
+
+            const driverId = deal.driverId;
+
+            if (userRole === "customer") {
+              if (user.balance < cancellationFee) {
+                return res
+                  .status(402)
+                  .json({ message: "Không đủ số dư để hủy đơn hàng" });
+              } else {
+                user.balance -= cancellationFee;
+
+                const driver = await User.findById(driverId);
+                if (!driver) {
+                  return res
+                    .status(404)
+                    .json({ message: "Tài xế không tìm thấy" });
+                }
+
+                driver.balance += cancellationFee;
+
+                const customerTransaction = new Transaction({
+                  userId: bodyData.creator,
+                  postId: updatePost._id,
+                  orderCode: generateOrderCode(),
+                  amount: cancellationFee,
+                  type: "RECEIVE_CANCELLATION_FEE",
+                  status: "PAID",
+                });
+
+                const driverTransaction = new Transaction({
+                  userId: driverId,
+                  postId: updatePost._id,
+                  orderCode: generateOrderCode(),
+                  amount: cancellationFee,
+                  type: "CANCEL_ORDER",
+                  status: "PAID",
+                });
+
+                await customerTransaction.save();
+                await driverTransaction.save();
+                await user.save();
+                await driver.save();
+
+                const driverNotification = new Notification({
+                  userId: driverId,
+                  title: "Đơn hàng đã bị hủy.",
+                  message: `Đơn hàng  ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
+                  data: { postId: id, status: "cancel" },
+                });
+
+                await driverNotification.save();
+
+                req.io.to(driverId.toString()).emit("receiveNotification", {
+                  title: "Đơn hàng bị hủy",
+                  message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
+                  data: { postId: id, status: "cancel" },
+                  timestamp: currentTime,
+                });
+              }
+            } else if (userRole === "personal") {
+              if (user.balance < cancellationFee) {
+                return res
+                  .status(402)
+                  .json({ message: "Không đủ số dư để hủy đơn hàng" });
+              } else {
+                user.balance -= cancellationFee;
+
+                const customer = await User.findById(updatePost.creator);
+                if (!customer) {
+                  return res
+                    .status(404)
+                    .json({ message: "Người đăng bài không tìm thấy" });
+                }
+
+                customer.balance += cancellationFee;
+
+                const driverTransaction = new Transaction({
+                  userId: bodyData.creator,
+                  postId: updatePost._id,
+                  orderCode: generateOrderCode(),
+                  amount: cancellationFee,
+                  type: "CANCEL_ORDER",
+                  status: "PAID",
+                });
+
+                const customerTransaction = new Transaction({
+                  userId: updatePost.creator,
+                  postId: updatePost._id,
+                  orderCode: generateOrderCode(),
+                  amount: cancellationFee,
+                  type: "CANCEL_ORDER",
+                  status: "PAID",
+                });
+
+                await driverTransaction.save();
+                await customerTransaction.save();
+                await user.save();
+                await customer.save();
+
+                const customerNotification = new Notification({
+                  userId: updatePost.creator,
+                  title: "Đơn hàng đã bị hủy.",
+                  message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn `,
+                  data: { postId: id, status: "cancel" },
+                });
+
+                await customerNotification.save();
+
+                req.io
+                  .to(updatePost.creator.toString())
+                  .emit("receiveNotification", {
+                    title: "Đơn hàng bị hủy",
+                    message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
+                    data: { postId: id, status: "cancel" },
+                    timestamp: currentTime,
+                  });
+              }
             }
           }
         }
@@ -511,7 +650,8 @@ class PostController {
 
   async updateDealId(req, res) {
     const { postId } = req.params;
-    const { status, driverId, deliveryTime, dealPrice } = req.body;
+    const { status, driverId, deliveryTime, dealPrice, deliveryHour } =
+      req.body;
 
     if (!postId || !status || !deliveryTime || !dealPrice) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -541,13 +681,35 @@ class PostController {
 
       const updatedPost = await Post.findByIdAndUpdate(
         postId,
-        { status: status, dealId: newDeal._id, deliverTime: deliveryTime },
+        {
+          status: status,
+          dealId: newDeal._id,
+          deliverTime: deliveryTime,
+          deliveryHour: deliveryHour,
+        },
         { new: true }
       );
 
       if (!updatedPost) {
         return res.status(404).json({ message: "Post not found" });
       }
+
+      const postCreator = updatedPost.creator;
+
+      const notification = new Notification({
+        userId: postCreator._id,
+        title: "Đơn hàng của bạn đã được tài xế nhận đơn",
+        message: `Tài xế đã chấp nhận đơn hàng của bạn: ${postId}`,
+        data: { postId, driverId, dealPrice, deliveryTime },
+      });
+
+      await notification.save();
+      req.io.to(postCreator._id.toString()).emit("receiveNotification", {
+        title: "Đơn hàng đã được cập nhật",
+        message: `Tài xế đã chấp nhận đơn hàng của bạn: ${postId}`,
+        data: { postId, driverId, dealPrice, deliveryTime },
+        timestamp: new Date(),
+      });
 
       res
         .status(200)
