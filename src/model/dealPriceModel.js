@@ -27,6 +27,10 @@ const Deal = new Schema(
       type: Date,
       required: true,
     },
+    estimatedHour: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,
