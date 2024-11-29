@@ -64,10 +64,10 @@ const Post = new Schema(
       type: String,
       required: true,
     },
-    email: {
-      type: String,
-      required: true,
-    },
+    // email: {
+    //   type: String,
+    //   required: true,
+    // },
     phone: {
       type: String,
       required: true,
@@ -129,10 +129,10 @@ const Post = new Schema(
       type: String,
       required: true,
     },
-    recipientEmail: {
-      type: String,
-      required: true,
-    },
+    // recipientEmail: {
+    //   type: String,
+    //   required: true,
+    // },
     recipientPhone: {
       type: String,
       required: true,
