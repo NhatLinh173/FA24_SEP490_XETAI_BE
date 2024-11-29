@@ -138,7 +138,8 @@ const logVisit = async (req, res, next) => {
       ip:
         req.ip ||
         req.headers["x-forwarded-for"] ||
-        req.connection.remoteAddress,
+        req.connection.remoteAddress ||
+        "unknown",
       url: req.originalUrl,
       method: req.method,
       userAgent: req.headers["user-agent"],

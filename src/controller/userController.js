@@ -34,10 +34,10 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { phone, password } = req.body;
 
   try {
-    const { user, refreshToken } = await authService.loginUser(email, password);
+    const { user, refreshToken } = await authService.loginUser(phone, password);
     const refreshTokenExpiration = ms(process.env.JWT_REFRESH_EXPIRATION);
     if (isNaN(refreshTokenExpiration)) {
       throw new Error("Invalid JWT_REFRESH_EXPIRATION value");
@@ -117,18 +117,18 @@ const googleAuthCallback = (req, res, next) => {
   passport.authenticate("google", async (err, user, info) => {
     if (err) {
       return res.redirect(
-        "http://localhost:3006/error?message=" + encodeURIComponent(err.message)
+        "http://localhost:3000/error?message=" + encodeURIComponent(err.message)
       );
     }
     if (!user) {
       return res.redirect(
-        "http://localhost:3006/error?message=Authentication Failed"
+        "http://localhost:3000/error?message=Authentication Failed"
       );
     }
     req.logIn(user, async (err) => {
       if (err) {
         return res.redirect(
-          "http://localhost:3006/error?message=" +
+          "http://localhost:3000/error?message=" +
             encodeURIComponent(err.message)
         );
       }
@@ -154,7 +154,7 @@ const googleAuthCallback = (req, res, next) => {
       });
       const role = req.query.state;
 
-      res.redirect(`http://localhost:3006/?token=${token}`);
+      res.redirect(`http://localhost:3000/?token=${token}`);
     });
   })(req, res, next);
 };
@@ -194,7 +194,7 @@ const facebookAuthCallback = (req, res, next) => {
         maxAge: refreshTokenExpiration * 1000,
       });
 
-      res.redirect(`http://localhost:3006/?token=${token}`);
+      res.redirect(`http://localhost:3000/?token=${token}`);
     });
   })(req, res, next);
 };

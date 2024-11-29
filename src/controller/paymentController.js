@@ -2,7 +2,7 @@ const paymentService = require("../service/paymentService");
 const User = require("../model/userModel");
 const Transaction = require("../model/transactionModel");
 const Withdraw = require("../model/withdrawModel");
-
+const Notification = require("../model/notificationModel");
 const createPaymentLink = async (req, res) => {
   const {
     description,
@@ -284,7 +284,30 @@ const processWithdrawRequest = async (req, res) => {
 
     withdrawRequest.status = "COMPLETED";
     await withdrawRequest.save();
+    withdrawRequest.status = "COMPLETED";
+    await withdrawRequest.save();
 
+    // Gửi thông báo cho người dùng
+    const notification = new Notification({
+      userId: withdrawRequest.userId,
+      title: "Yêu cầu rút tiền đã hoàn thành",
+      message: `Số tiền ${withdrawRequest.amount} đã được chuyển thành công.`,
+      data: {
+        withdrawRequestId: withdrawRequest._id,
+        status: "COMPLETED",
+      },
+    });
+    await notification.save();
+
+    req.io.to(withdrawRequest.userId.toString()).emit("receiveNotification", {
+      title: "Yêu cầu rút tiền đã hoàn thành",
+      message: `Số tiền ${withdrawRequest.amount} đã được chuyển thành công.`,
+      data: {
+        withdrawRequestId: withdrawRequest._id,
+        status: "COMPLETED",
+      },
+      timestamp: new Date(),
+    });
     res.status(200).json({
       message: "Withdrawal processed successfully",
       transaction: newTransaction,
@@ -338,7 +361,7 @@ const rejectWithdraw = async (req, res) => {
 const getAllTransactions = async (req, res) => {
   try {
     const transaction = await Transaction.find()
-      .populate("userId", "email")
+      .populate("userId", "email phone")
       .sort({ createdAt: -1 });
     return res.status(200).json({
       success: true,
