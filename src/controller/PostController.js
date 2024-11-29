@@ -136,7 +136,7 @@ class PostController {
       updatePost.images = imageUrls;
       updatePost.load = bodyData.load;
       updatePost.fullname = bodyData.fullname;
-      updatePost.email = bodyData.email;
+      //updatePost.email = bodyData.email;
       updatePost.phone = bodyData.phone;
       updatePost.startPoint = bodyData.startPoint;
       updatePost.destination = bodyData.destination;
