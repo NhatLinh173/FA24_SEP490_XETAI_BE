@@ -1,3 +1,5 @@
 node_modules/
 
-.env
+.env 
+
+src/config/xatai-a1865-firebase-adminsdk-uuwhv-3e9bc5b707.json

@@ -675,6 +675,7 @@ class PostController {
         driverId: driverId,
         dealPrice: dealPrice,
         estimatedTime: deliveryTime,
+        estimatedHour: deliveryHour,
       });
 
       await newDeal.save();
