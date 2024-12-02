@@ -214,8 +214,7 @@ const withdrawRequest = async (req, res) => {
       res.status(404).json({ message: "Missing required fields" });
     }
 
-    const sanitizedAmount = Number(amount.replace(/[^0-9.-]+/g, ""));
-
+    const sanitizedAmount = Number(amount); // Direct conversion to number
     if (isNaN(sanitizedAmount)) {
       return res.status(400).json({ message: "Invalid amount format" });
     }

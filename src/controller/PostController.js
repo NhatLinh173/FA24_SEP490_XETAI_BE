@@ -18,7 +18,7 @@ class PostController {
       const salePostDataBody = req.body;
       const images = req.files;
       const { creator } = salePostDataBody;
-      const postFee = 5000;
+      const postFee = 10000;
 
       if (!salePostDataBody || !images) {
         return res.status(400).json({ message: "Thông tin không hợp lệ." });

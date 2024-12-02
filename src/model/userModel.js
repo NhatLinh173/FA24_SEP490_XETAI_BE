@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
     required: false,
   },
   role: { type: String },
-  phone: { type: String, required: true, unique: true },
+  phone: { type: String, required: false, unique: true },
   fullName: String,
   refreshToken: String,
   address: { type: String, default: null },
