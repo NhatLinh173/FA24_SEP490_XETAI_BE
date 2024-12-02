@@ -34,10 +34,13 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  const { phone, password } = req.body;
+  const { identifier, password } = req.body;
 
   try {
-    const { user, refreshToken } = await authService.loginUser(phone, password);
+    const { user, refreshToken } = await authService.loginUser(
+      identifier,
+      password
+    );
     const refreshTokenExpiration = ms(process.env.JWT_REFRESH_EXPIRATION);
     if (isNaN(refreshTokenExpiration)) {
       throw new Error("Invalid JWT_REFRESH_EXPIRATION value");
@@ -113,7 +116,7 @@ const googleAuth = (req, res, next) => {
   })(req, res, next);
 };
 
-const googleAuthCallback = (req, res, next) => {
+const googleAuthCallback = async (req, res, next) => {
   passport.authenticate("google", async (err, user, info) => {
     if (err) {
       return res.redirect(
@@ -203,7 +206,7 @@ const ensureAuthenticated = (req, res, next) => {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.redirect("/login");
+  res.redirect("/signIn");
 };
 
 const getAllUsers = async (req, res) => {
@@ -268,7 +271,6 @@ const updateUserController = async (req, res) => {
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }
-    // const
     res.status(200).json({ message: "User has been updated", updatedUser });
   } catch (error) {
     console.error("Error updating user:", error);
@@ -309,9 +311,9 @@ const getUserByRoleDriverController = async (req, res) => {
 };
 
 const searchUsersController = async (req, res) => {
-  const { email } = req.query;
+  const { phone } = req.query;
   try {
-    const users = await authService.searchUser(email);
+    const users = await authService.searchUser(phone);
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: "An error occurred" });

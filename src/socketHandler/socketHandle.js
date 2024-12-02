@@ -45,10 +45,8 @@ module.exports = (io) => {
           conversation.messages.push(newMessage);
           await conversation.save();
 
-          // Lấy thông tin người gửi
           const sender = await User.findById(senderId).select("name avatar");
 
-          // Gửi thông báo đến người nhận
           io.to(receiverId).emit("newMessageNotification", {
             senderId,
             senderName: sender.name,

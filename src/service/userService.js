@@ -109,9 +109,9 @@ const registerUser = async ({
   };
 };
 
-const loginUser = async (phoneOrEmail, password) => {
-  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(phoneOrEmail);
-  const query = isEmail ? { email: phoneOrEmail } : { phone: phoneOrEmail };
+const loginUser = async (identifier, password) => {
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
+  const query = isEmail ? { email: identifier } : { phone: identifier };
 
   const user = await User.findOne(query);
   if (!user) {
@@ -330,17 +330,16 @@ const getUserByRoleDriver = async (excludedRoles) => {
   }
 };
 
-const searchUser = async (email) => {
-  if (!email) {
-    throw new Error("Email is required");
-    return;
+const searchUser = async (phone) => {
+  if (!phone) {
+    throw new Error("Phone is required");
   }
 
   try {
     const users = await User.find({
-      email: { $regex: new RegExp(email, "i") },
+      phone: { $regex: new RegExp(phone, "i") },
     });
-    if (!users) {
+    if (!users || users.length === 0) {
       throw new Error("User not found");
     }
     return users;
