@@ -43,9 +43,19 @@ app.use((req, res, next) => {
 routes(app);
 
 const server = http.createServer(app);
+// const io = socketIO(server, {
+//   cors: {
+//     origin: "http://localhost:3000",
+//     methods: ["GET", "POST", "PUT", "PATCH"],
+//     credentials: true,
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//     preflightContinue: true,
+//   },
+// });
+
 const io = socketIO(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "https://fa-24-sep-490-xetai-be.vercel.app/",
     methods: ["GET", "POST", "PUT", "PATCH"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],

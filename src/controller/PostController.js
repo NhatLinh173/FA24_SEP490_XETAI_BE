@@ -154,14 +154,14 @@ class PostController {
         updatePost.startTime = currentTime;
         const notification = new Notification({
           userId: bodyData.creator,
-          title: "Đơn hàng của bạn đã được tài xế nhận và đang vận chuyển.",
+          title: "Đơn hàng",
           message: `Tài xế đã bắt đầu vận chuyển đơn hàng của bạn: ${id}`,
           data: { postId: id, status: "inprogress" },
         });
         await notification.save();
 
         req.io.to(bodyData.creator.toString()).emit("receiveNotification", {
-          title: "Đơn hàng đang vận chuyển",
+          title: "Đơn hàng",
           message: `Tài xế đã bắt đầu vận chuyển đơn hàng của bạn: ${id}`,
           data: { postId: id, status: "inprogress" },
           timestamp: currentTime,
@@ -171,14 +171,14 @@ class PostController {
 
         const notification = new Notification({
           userId: bodyData.creator,
-          title: "Đơn hàng của bạn đã được giao thành công.",
+          title: "Đơn hàng",
           message: `Đơn hàng của bạn đã được giao thành công: ${id}`,
           data: { postId: id, status: "finish" },
         });
         await notification.save();
 
         req.io.to(bodyData.creator.toString()).emit("receiveNotification", {
-          title: "Đơn hàng đã hoàn thành",
+          title: "Đơn hàng",
           message: `Đơn hàng của bạn đã được giao thành công: ${id}`,
           data: { postId: id, status: "finish" },
           timestamp: currentTime,
@@ -246,7 +246,7 @@ class PostController {
 
                 const driverNotification = new Notification({
                   userId: driverId,
-                  title: "Đơn hàng đã bị hủy.",
+                  title: "Đơn hàng",
                   message: `Đơn hàng  ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
                   data: { postId: id, status: "cancel" },
                 });
@@ -254,7 +254,7 @@ class PostController {
                 await driverNotification.save();
 
                 req.io.to(driverId.toString()).emit("receiveNotification", {
-                  title: "Đơn hàng bị hủy",
+                  title: "Đơn hàng",
                   message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
                   data: { postId: id, status: "cancel" },
                   timestamp: currentTime,
@@ -302,7 +302,7 @@ class PostController {
 
                 const customerNotification = new Notification({
                   userId: updatePost.creator,
-                  title: "Đơn hàng đã bị hủy.",
+                  title: "Đơn hàng",
                   message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn `,
                   data: { postId: id, status: "cancel" },
                 });
@@ -699,14 +699,14 @@ class PostController {
 
       const notification = new Notification({
         userId: postCreator._id,
-        title: "Đơn hàng của bạn đã được tài xế nhận đơn",
+        title: "Đơn hàng",
         message: `Tài xế đã chấp nhận đơn hàng của bạn: ${postId}`,
         data: { postId, driverId, dealPrice, deliveryTime },
       });
 
       await notification.save();
       req.io.to(postCreator._id.toString()).emit("receiveNotification", {
-        title: "Đơn hàng đã được cập nhật",
+        title: "Đơn hàng",
         message: `Tài xế đã chấp nhận đơn hàng của bạn: ${postId}`,
         data: { postId, driverId, dealPrice, deliveryTime },
         timestamp: new Date(),
@@ -874,7 +874,7 @@ class PostController {
 
       const driverNotification = new Notification({
         userId: customer,
-        title: "Đơn hàng đã bị hủy.",
+        title: "Đơn hàng",
         message: `Đơn hàng  ${id} của bạn đã được hoàn thành. Vui lòng kiểm tra và xác nhận nhận hàng`,
         data: { postId: id, status: "cancel" },
       });
@@ -882,7 +882,7 @@ class PostController {
       await driverNotification.save();
 
       req.io.to(customer.toString()).emit("receiveNotification", {
-        title: "Đơn hàng bị hủy",
+        title: "Đơn hàng",
         message: `Đơn hàng  ${id} của bạn đã được hoàn thành. Vui lòng kiểm tra và xác nhận nhận hàng`,
         data: { postId: id, status: "cancel" },
         timestamp: currentTime,
