@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { ConversationModel } = require("../model/messageModel");
 const User = require("../model/userModel");
+const Notification = require("../model/notificationModel");
 
 module.exports = (io) => {
   io.on("connection", (socket) => {
@@ -45,7 +46,9 @@ module.exports = (io) => {
           conversation.messages.push(newMessage);
           await conversation.save();
 
-          const sender = await User.findById(senderId).select("name avatar");
+          const sender = await User.findById(senderId).select(
+            "fullName avatar"
+          );
 
           io.to(receiverId).emit("newMessageNotification", {
             senderId,
@@ -57,6 +60,21 @@ module.exports = (io) => {
           });
 
           io.to(receiverId).emit("receiveMessage", newMessage);
+
+          const notification = new Notification({
+            userId: receiverId,
+            title: "Tin nhắn mới",
+            message: `${sender.fullName}`,
+            data: { conversationId: conversation._id, senderId },
+          });
+          await notification.save();
+
+          io.to(receiverId).emit("receiveNotification", {
+            title: "Tin nhắn mới",
+            message: `${sender.fullName}`,
+            data: { conversationId: conversation._id, senderId },
+            timestamp: notification.createdAt,
+          });
         } catch (error) {
           console.error("Error saving message:", error);
         }
