@@ -17,7 +17,15 @@ const { logVisit } = require("./src/controller/admin/adminController");
 const { corsWhiteList, cookieOptions } = require("./src/router/cors");
 dotenv.config();
 const PORT = process.env.PORT || 3005;
-app.use(corsWhiteList);
+const EC2_IP = "http://13.55.38.250";
+
+app.use(
+  cors({
+    origin: "*", // Cho phép tất cả các nguồn gốc
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH"],
+  })
+);
 app.use(cookieParser());
 app.use(
   session({
@@ -42,14 +50,13 @@ app.use((req, res, next) => {
 });
 routes(app);
 
+// Tạo server và cấu hình Socket.IO
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "*", // Cổng của client trong môi trường phát triển
     methods: ["GET", "POST", "PUT", "PATCH"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-    preflightContinue: true,
+    credentials: true, // Cho phép cookie và các thông tin xác thực
   },
 });
 
@@ -61,7 +68,7 @@ connectDB()
   .then(() => {
     console.log("MongoDB connected successfully");
     server.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+      console.log(`Server is running on ${EC2_IP}:${PORT}`);
     });
   })
   .catch((error) => {
