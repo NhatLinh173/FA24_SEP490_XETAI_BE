@@ -1,5 +1,8 @@
+const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+
+const app = express();
 
 const whitelist = [
   "https://fa-24-sep-490-xetai-fe.vercel.app",
@@ -15,10 +18,7 @@ const whitelist = [
 const corsOptions = (req, callback) => {
   const origin = req.header("Origin");
   if (whitelist.includes(origin)) {
-    callback(null, {
-      origin: true, // Cho phép Origin gửi request
-      credentials: true, // Cho phép cookie
-    });
+    callback(null, { origin: origin, credentials: true });
   } else {
     console.error(`CORS Error: Origin ${origin} is not allowed.`);
     callback(new Error("Not allowed by CORS"));
@@ -30,6 +30,8 @@ const cookieOptions = {
   secure: process.env.NODE_ENV === "production",
   maxAge: 1000 * 60 * 60 * 24 * 7,
 };
+
+app.use(cors(corsOptions));
 
 module.exports = {
   cors: cors(),
