@@ -5,36 +5,24 @@ require("dotenv").config();
 const app = express();
 
 const whitelist = [
+  "http://localhost:3000", // Cổng của client trong môi trường phát triển
+  "http://13.55.38.250:3000",
   "https://fa-24-sep-490-xetai-fe.vercel.app",
-  "http://localhost:3000",
-  "http://localhost:3005",
-  "https://localhost:3443",
-  "http://localhost:3006",
-  "https://fa-24-sep-490-xetai-fe.vercel.app/api/user/google/callback",
-  "https://fa-24-sep-490-xetai-fe.vercel.app/api/user/forgot-password",
-  "https://fa-24-sep-490-xetai-8bgeaipys-nhatlinh173s-projects.vercel.app",
 ];
 
 const corsOptions = (req, callback) => {
-  const origin = req.header("Origin");
-  if (whitelist.includes(origin)) {
-    callback(null, { origin: origin, credentials: true });
-  } else {
-    console.error(`CORS Error: Origin ${origin} is not allowed.`);
-    callback(new Error("Not allowed by CORS"));
-  }
+  callback(null, { origin: true, credentials: true });
 };
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: process.env.NODE_ENV === "production", // Cấu hình cookie chỉ sử dụng qua HTTPS trong môi trường production
   maxAge: 1000 * 60 * 60 * 24 * 7,
 };
 
 app.use(cors(corsOptions));
 
 module.exports = {
-  cors: cors(),
   corsWhiteList: cors(corsOptions),
   cookieOptions: cookieOptions,
 };
