@@ -5,7 +5,7 @@ require("dotenv").config();
 const app = express();
 
 const whitelist = [
-  "http://localhost:3000", // Cổng của client trong môi trường phát triển
+  "http://localhost:3000",
   "http://13.55.38.250:3000",
   "https://fa-24-sep-490-xetai-fe.vercel.app",
 ];
@@ -16,7 +16,7 @@ const corsOptions = (req, callback) => {
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production", // Cấu hình cookie chỉ sử dụng qua HTTPS trong môi trường production
+  secure: process.env.NODE_ENV === "production",
   maxAge: 1000 * 60 * 60 * 24 * 7,
 };
 

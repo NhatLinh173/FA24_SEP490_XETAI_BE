@@ -21,7 +21,7 @@ const EC2_IP = "http://13.55.38.250";
 
 app.use(
   cors({
-    origin: "*", // Cho phép tất cả các nguồn gốc
+    origin: "https://fa-24-sep-490-xetai-fe.vercel.app",
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH"],
   })
@@ -35,6 +35,7 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: false,
+      sameSite: "None",
     },
   })
 );
@@ -50,13 +51,12 @@ app.use((req, res, next) => {
 });
 routes(app);
 
-// Tạo server và cấu hình Socket.IO
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-    origin: "*", // Cổng của client trong môi trường phát triển
+    origin: "https://fa-24-sep-490-xetai-fe.vercel.app",
     methods: ["GET", "POST", "PUT", "PATCH"],
-    credentials: true, // Cho phép cookie và các thông tin xác thực
+    credentials: true,
   },
 });
 
