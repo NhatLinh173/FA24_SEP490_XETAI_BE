@@ -55,7 +55,8 @@ const server = http.createServer(app);
 
 const io = socketIO(server, {
   cors: {
-    origin: "https://fa-24-sep-490-xetai-fe.vercel.app",
+    origin:
+      "https://fa-24-sep-490-xetai-qmy8p03lp-nhatlinh173s-projects.vercel.app",
     methods: ["GET", "POST", "PUT", "PATCH"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
