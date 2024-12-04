@@ -13,7 +13,7 @@ const whitelist = [
   "http://localhost:3006",
   "http://localhost:3005/api/user/google/callback",
   "http://localhost:3005/api/user/forgot-password",
-  "https://fa-24-sep-490-xetai-be.vercel.app/",
+  "https://fa-24-sep-490-xetai-ozwcon2zp-nhatlinh173s-projects.vercel.app/",
 ];
 
 const corsOptions = (req, callback) => {
