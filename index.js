@@ -17,7 +17,7 @@ const { logVisit } = require("./src/controller/admin/adminController");
 const { corsWhiteList, cookieOptions } = require("./src/router/cors");
 dotenv.config();
 const PORT = process.env.PORT || 3005;
-const EC2_IP = "http://13.55.38.250";
+const EC2_IP = "https://xehang.site";
 
 app.use(
   cors({
