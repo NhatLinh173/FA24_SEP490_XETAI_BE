@@ -14,13 +14,12 @@ const cookieParser = require("cookie-parser");
 const driverLocationWS = require("./src/socketHandler/driverLocationWS");
 const notificationWS = require("./src/socketHandler/notificationHandler");
 const { logVisit } = require("./src/controller/admin/adminController");
-const { corsWhiteList, cookieOptions } = require("./src/router/cors");
 dotenv.config();
 const PORT = process.env.PORT || 3005;
 
 app.use(
   cors({
-    origin: "https://fa-24-sep-490-xetai-fe.vercel.app",
+    origin: "https://fa-24-sep-490-xetai-fe-jvy4.vercel.app",
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH"],
   })
@@ -53,7 +52,7 @@ routes(app);
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-    origin: "https://fa-24-sep-490-xetai-fe.vercel.app",
+    origin: "https://fa-24-sep-490-xetai-fe-jvy4.vercel.app",
     methods: ["GET", "POST", "PUT", "PATCH"],
     credentials: true,
   },
