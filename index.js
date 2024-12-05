@@ -17,7 +17,6 @@ const { logVisit } = require("./src/controller/admin/adminController");
 const { corsWhiteList, cookieOptions } = require("./src/router/cors");
 dotenv.config();
 const PORT = process.env.PORT || 3005;
-const EC2_IP = "https://xehang.site";
 
 app.use(
   cors({
@@ -68,7 +67,7 @@ connectDB()
   .then(() => {
     console.log("MongoDB connected successfully");
     server.listen(PORT, () => {
-      console.log(`Server is running on ${EC2_IP}:${PORT}`);
+      console.log(`Server is running on http://localhost:${PORT}`);
     });
   })
   .catch((error) => {
