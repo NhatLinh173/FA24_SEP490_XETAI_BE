@@ -8,6 +8,7 @@ const whitelist = [
   "http://localhost:3000",
   "http://13.55.38.250:3000",
   "https://fa-24-sep-490-xetai-fe-jvy4.vercel.app",
+  "https://www.xehang.online",
 ];
 
 const corsOptions = (req, callback) => {
