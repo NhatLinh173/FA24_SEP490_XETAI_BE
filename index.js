@@ -19,7 +19,10 @@ const PORT = process.env.PORT || 3005;
 
 app.use(
   cors({
-    origin: "https://fa-24-sep-490-xetai-fe-jvy4.vercel.app",
+    origin: [
+      "https://fa-24-sep-490-xetai-fe-jvy4.vercel.app",
+      "http://localhost:3000",
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH"],
   })
@@ -52,7 +55,10 @@ routes(app);
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-    origin: "https://fa-24-sep-490-xetai-fe-jvy4.vercel.app",
+    origin: [
+      "https://fa-24-sep-490-xetai-fe-jvy4.vercel.app",
+      "http://localhost:3000",
+    ],
     methods: ["GET", "POST", "PUT", "PATCH"],
     credentials: true,
   },
