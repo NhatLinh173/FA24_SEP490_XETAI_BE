@@ -22,6 +22,8 @@ app.use(
     origin: [
       "https://fa-24-sep-490-xetai-fe-jvy4.vercel.app",
       "http://localhost:3000",
+      "https://xehang.online",
+      "https://www.xehang.online",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH"],
