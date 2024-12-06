@@ -58,6 +58,7 @@ const io = socketIO(server, {
     origin: [
       "https://fa-24-sep-490-xetai-fe-jvy4.vercel.app",
       "http://localhost:3000",
+      "https://www.xehang.online",
     ],
     methods: ["GET", "POST", "PUT", "PATCH"],
     credentials: true,
