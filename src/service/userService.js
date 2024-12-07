@@ -419,7 +419,7 @@ const getAllCustomers = async () => {
 };
 
 const addStaff = async ({ email, fullName }) => {
-  const password = "staff123"; // Mật khẩu mặc định
+  const password = "staff123";
   const role = "staff";
 
   const hashedPassword = await bcrypt.hash(password, 10);
