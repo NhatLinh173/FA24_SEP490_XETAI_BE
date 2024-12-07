@@ -259,6 +259,12 @@ const updateUserController = async (req, res) => {
         console.error("Error uploading to Cloudinary:", uploadError);
         return res.status(500).json({ message: "Failed to upload avatar" });
       }
+    } else if (!avatar) {
+      const existingUser = await authService.getUserById(id);
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      avatarUrl = existingUser.avatar;
     }
     const updatedUser = await authService.updateUser(id, {
       email,
