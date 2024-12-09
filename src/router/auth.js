@@ -22,6 +22,7 @@ const {
   getAllCustomers,
   addStaff,
   getAllStaff,
+  checkPhoneExists,
 } = require("../controller/userController");
 const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -67,4 +68,6 @@ router.get("/users/customer", getAllCustomers);
 router.post("/users/add-staff", addStaff);
 // http://localhost:3005/auth/users/getAllStaff
 router.get("/users/getAllStaff", getAllStaff);
+// http://localhost:3005/auth/check-phone
+router.get("/check-phone", checkPhoneExists);
 module.exports = router;

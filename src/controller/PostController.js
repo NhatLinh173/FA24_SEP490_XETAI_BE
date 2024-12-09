@@ -153,14 +153,14 @@ class PostController {
       if (bodyData.status === "inprogress") {
         updatePost.startTime = currentTime;
         const notification = new Notification({
-          userId: bodyData.creator,
+          userId: updatePost.creator,
           title: "Đơn hàng",
           message: `Tài xế đã bắt đầu vận chuyển đơn hàng của bạn: ${id}`,
           data: { postId: id, status: "inprogress" },
         });
         await notification.save();
 
-        req.io.to(bodyData.creator.toString()).emit("receiveNotification", {
+        req.io.to(updatePost.creator.toString()).emit("receiveNotification", {
           title: "Đơn hàng",
           message: `Tài xế đã bắt đầu vận chuyển đơn hàng của bạn: ${id}`,
           data: { postId: id, status: "inprogress" },
@@ -170,14 +170,14 @@ class PostController {
         updatePost.endTime = currentTime;
 
         const notification = new Notification({
-          userId: bodyData.creator,
+          userId: updatePost.creator,
           title: "Đơn hàng",
           message: `Đơn hàng của bạn đã được giao thành công: ${id}`,
           data: { postId: id, status: "finish" },
         });
         await notification.save();
 
-        req.io.to(bodyData.creator.toString()).emit("receiveNotification", {
+        req.io.to(updatePost.creator.toString()).emit("receiveNotification", {
           title: "Đơn hàng",
           message: `Đơn hàng của bạn đã được giao thành công: ${id}`,
           data: { postId: id, status: "finish" },

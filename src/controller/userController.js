@@ -29,7 +29,13 @@ const register = async (req, res) => {
     res.status(201).json(user);
   } catch (error) {
     console.error("Error during user registration:", error);
-    res.status(400).json({ message: error.message });
+    const statusCode = error.code || 500;
+    const message = error.message || "Có lỗi xảy ra trong quá trình đăng ký";
+
+    res.status(statusCode).json({
+      message: message,
+      code: statusCode,
+    });
   }
 };
 
@@ -359,7 +365,7 @@ const getTransactions = async (req, res) => {
 };
 
 const resetPasswordController = async (req, res) => {
-  const { email, newPassword } = req.body;
+  const { phone, newPassword } = req.body;
   try {
     const user = await authService.resetPassword(email, newPassword);
     res.status(200).json({ message: "Password updated successfully", user });
@@ -408,7 +414,18 @@ const getAllStaff = async (req, res) => {
   }
 };
 
+const checkPhoneExists = async (req, res) => {
+  try {
+    const { phone } = req.query;
+    const user = await authService.checkPhoneExists(phone);
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
+  checkPhoneExists,
   getTransactions,
   updateBalanceController,
   searchUsersController,
