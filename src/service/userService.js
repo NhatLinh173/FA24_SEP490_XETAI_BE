@@ -56,14 +56,20 @@ const registerUser = async ({
   if (phone) {
     const phoneExists = await User.findOne({ phone });
     if (phoneExists) {
-      throw new Error("Phone already exists");
+      throw {
+        code: 409, // Conflict status code
+        message: "Số điện thoại đã được đăng ký",
+      };
     }
   }
 
   if (email) {
     const emailExists = await User.findOne({ email });
     if (emailExists) {
-      throw new Error("Email already exists");
+      throw {
+        code: 409,
+        message: "Email đã được đăng ký",
+      };
     }
   }
 
@@ -377,11 +383,11 @@ const getTransactionsById = async (userId) => {
   }
 };
 
-const resetPassword = async (email, newPassword) => {
+const resetPassword = async (phone, newPassword) => {
   try {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     const user = await User.findOneAndUpdate(
-      { email: email },
+      { phone: phone },
       { password: hashedPassword },
       { new: true }
     );
@@ -448,7 +454,17 @@ const getAllStaff = async () => {
   }
 };
 
+const checkPhoneExists = async (phone) => {
+  try {
+    const user = await User.findOne({ phone });
+    return user ? true : false;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
+  checkPhoneExists,
   addStaff,
   getAllStaff,
   getTransactionsById,
