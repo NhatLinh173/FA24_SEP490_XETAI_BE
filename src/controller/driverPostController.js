@@ -129,7 +129,7 @@ const getDriverPostById = async (req, res) => {
 // Cập nhật driver post
 const updateDriverPost = async (req, res) => {
   const { id } = req.params;
-  const { startCity, destinationCity, description } = req.body;
+  const { startCity, destinationCity, description, existingImages } = req.body;
   const images = req.files;
 
   try {
@@ -138,18 +138,19 @@ const updateDriverPost = async (req, res) => {
       return res.status(404).json({ message: "Driver post not found" });
     }
 
-    // Xóa ảnh cũ trên Cloudinary (nếu có)
-    // if (currentPost.images && currentPost.images.length > 0) {
-    //   const deletePromises = currentPost.images.map((imageUrl) => {
-    //     const publicId = imageUrl.split('/').slice(-1)[0].split('.')[0]; // Lấy publicId từ URL
-    //     return cloudinary.uploader.destroy(`driver_post_images/${publicId}`);
-    //   });
-    //   await Promise.all(deletePromises);
-    // }
-
     let imageUrls = [];
 
-    // Tải lên ảnh mới lên Cloudinary
+    // Giữ lại các ảnh cũ từ existingImages
+    if (existingImages) {
+      // Nếu existingImages là string, parse nó
+      const existingImagesArray =
+        typeof existingImages === "string"
+          ? JSON.parse(existingImages)
+          : existingImages;
+      imageUrls = [...existingImagesArray];
+    }
+
+    // Tải lên và thêm ảnh mới (nếu có)
     if (images && images.length > 0) {
       const uploadPromises = images.map((file) => {
         return new Promise((resolve, reject) => {
@@ -157,32 +158,27 @@ const updateDriverPost = async (req, res) => {
             .upload_stream(
               { folder: "driver_post_images" },
               (error, result) => {
-                if (error) {
-                  reject(
-                    new Error(
-                      "Error uploading image to Cloudinary: " + error.message
-                    )
-                  );
-                } else {
-                  resolve(result.secure_url);
-                }
+                if (error)
+                  reject(new Error("Error uploading image: " + error.message));
+                else resolve(result.secure_url);
               }
             )
             .end(file.buffer);
         });
       });
 
-      imageUrls = await Promise.all(uploadPromises);
+      const newImageUrls = await Promise.all(uploadPromises);
+      imageUrls = [...imageUrls, ...newImageUrls]; // Kết hợp ảnh cũ và mới
     }
 
-    // Cập nhật bài đăng với danh sách ảnh mới
+    // Cập nhật bài đăng với danh sách ảnh đã kết hợp
     const updatedDriverPost = await DriverPost.findByIdAndUpdate(
       id,
       {
         startCity,
         destinationCity,
         description,
-        images: imageUrls, // Thay thế danh sách ảnh
+        images: imageUrls,
       },
       { new: true }
     ).populate({
@@ -192,7 +188,10 @@ const updateDriverPost = async (req, res) => {
 
     res.status(200).json(updatedDriverPost);
   } catch (error) {
-    res.status(400).json({ message: "Unable to update driver post", error });
+    console.error("Update error:", error);
+    res
+      .status(400)
+      .json({ message: "Unable to update driver post", error: error.message });
   }
 };
 

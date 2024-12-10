@@ -99,9 +99,8 @@ const getSummaryData = async (req, res) => {
 
     const monthlyFinalAmount = monthlyTotalAmount - monthlyWithdrawAmount;
 
-    // Lấy các đơn hàng đã hoàn thành
     const completedOrders = await Post.find({ status: "complete" });
-
+    console.log(completedOrders);
     // Nếu không có đơn hàng hoàn thành, vẫn trả về kết quả với thông tin mặc định
     const totalOrders = completedOrders.length;
     const totalPrice = completedOrders.reduce((total, order) => {

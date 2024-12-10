@@ -24,8 +24,20 @@ const getDriverStatistics = async (req, res) => {
     const statistics = await driverService.getDriverStatistics(driverId, range);
     res.status(200).json(statistics);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in getDriverStatistics:", error);
+
+    // Xử lý các loại lỗi cụ thể
+    if (error.message === "Driver not found") {
+      return res.status(404).json({ message: "Không tìm thấy tài xế" });
+    }
+    if (error.message === "Invalid date range") {
+      return res.status(400).json({ message: "Khoảng thời gian không hợp lệ" });
+    }
+
+    res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
 

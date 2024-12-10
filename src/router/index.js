@@ -16,7 +16,10 @@ const driverPostRouter = require("./driverPost");
 const adminRouter = require("./admin/adminStatic");
 const trackingRouter = require("./driverLocation");
 const notificationRouter = require("./notification");
+const express = require("express");
 const router = (app) => {
+  app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.use("/auth", userRouter);
   app.use("/posts", postsRouter);
   app.use("/categories", categoriesRouter);
