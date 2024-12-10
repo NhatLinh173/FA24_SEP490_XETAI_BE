@@ -3,16 +3,20 @@ const driverService = require("../service/driverService");
 const getDriverById = async (req, res) => {
   const { driverId } = req.params;
   try {
-    const driver = await driverService.getDriverById(driverId);
-    if (!driver) {
-      return res.status(404).json({ message: "Driver not found" });
-    }
-    res.status(200).json(driver);
+    const result = await driverService.getDriverById(driverId);
+    res.status(200).json(result);
   } catch (error) {
     console.error(error);
+    if (
+      error.message === "Tài xế không tồn tại" ||
+      error.message === "Không tìm thấy thông tin người dùng"
+    ) {
+      return res.status(404).json({ message: error.message });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 const getDriverStatistics = async (req, res) => {
   try {
     const { driverId } = req.params;
