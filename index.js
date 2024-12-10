@@ -26,7 +26,7 @@ app.use(
       "https://www.xehang.online",
     ],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   })
 );
 app.use(cookieParser());

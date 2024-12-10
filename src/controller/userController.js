@@ -203,7 +203,7 @@ const facebookAuthCallback = (req, res, next) => {
         maxAge: refreshTokenExpiration * 1000,
       });
 
-      res.redirect(`http://localhost:3000/?token=${token}`);
+      res.redirect(`https://xehang.online/?token=${token}`);
     });
   })(req, res, next);
 };
@@ -367,7 +367,7 @@ const getTransactions = async (req, res) => {
 const resetPasswordController = async (req, res) => {
   const { phone, newPassword } = req.body;
   try {
-    const user = await authService.resetPassword(email, newPassword);
+    const user = await authService.resetPassword(phone, newPassword);
     res.status(200).json({ message: "Password updated successfully", user });
   } catch (error) {
     console.error("Error forgotting password:", error);

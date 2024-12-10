@@ -1,4 +1,5 @@
 const Driver = require("../model/driverModel");
+const User = require("../model/userModel");
 const cron = require("node-cron");
 
 cron.schedule("0 0 * * *", async () => {
@@ -44,10 +45,14 @@ cron.schedule("0 0 * * *", async () => {
 const getDriverById = async (driverId) => {
   try {
     const driver = await Driver.findById(driverId);
+    const user = await User.findById(driver.userId);
     if (!driver) {
       throw new Error("Tài xế không tồn tại");
     }
-    return driver;
+    return {
+      driver,
+      user,
+    };
   } catch (error) {
     console.error(error);
     throw error;
