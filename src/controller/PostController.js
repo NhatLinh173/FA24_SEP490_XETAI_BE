@@ -415,12 +415,20 @@ class PostController {
     var limitPage = 9;
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
     try {
-      await deleteOldPosts();
+      // Xóa các bài đăng cũ hơn 3 ngày và có status là "wait"
+      await Post.deleteMany({
+        status: "wait",
+        createdAt: { $lt: threeDaysAgo },
+      });
 
       var totalPosts = await Post.countDocuments({ status: "wait" });
       var maxPage = Math.ceil(totalPosts / limitPage);
 
-      var salePosts = await Post.find({ status: "wait", isLock: false })
+      var salePosts = await Post.find({
+        status: "wait",
+        isLock: false,
+        createdAt: { $gte: threeDaysAgo },
+      })
         .sort({ createdAt: -1 })
         .populate({
           path: "creator",
@@ -432,8 +440,8 @@ class PostController {
       res.status(200).json({
         salePosts: salePosts,
         totalPosts: totalPosts,
-        maxPage: maxPage, // Trả về tổng số trang
-        currentPage: page, // Trả về trang hiện tại
+        maxPage: maxPage,
+        currentPage: page,
       });
     } catch (err) {
       res.status(500).json({
@@ -875,17 +883,17 @@ class PostController {
       const driverNotification = new Notification({
         userId: customer,
         title: "Đơn hàng",
-        message: `Đơn hàng  ${id} của bạn đã được hoàn thành. Vui lòng kiểm tra và xác nhận nhận hàng`,
-        data: { postId: id, status: "cancel" },
+        message: `Đơn hàng  ${postId} của bạn đã được hoàn thành. Vui lòng kiểm tra và xác nhận nhận hàng`,
+        data: { postId: postId, status: "complete" },
       });
 
       await driverNotification.save();
 
       req.io.to(customer.toString()).emit("receiveNotification", {
         title: "Đơn hàng",
-        message: `Đơn hàng  ${id} của bạn đã được hoàn thành. Vui lòng kiểm tra và xác nhận nhận hàng`,
-        data: { postId: id, status: "cancel" },
-        timestamp: currentTime,
+        message: `Đơn hàng  ${postId} của bạn đã được hoàn thành. Vui lòng kiểm tra và xác nhận nhận hàng`,
+        data: { postId: postId, status: "complete" },
+        timestamp: new Date(),
       });
 
       post.status = "complete";

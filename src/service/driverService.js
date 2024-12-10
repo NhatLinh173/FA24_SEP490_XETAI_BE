@@ -45,10 +45,33 @@ cron.schedule("0 0 * * *", async () => {
 const getDriverById = async (driverId) => {
   try {
     const driver = await Driver.findById(driverId);
-    const user = await User.findById(driver.userId);
     if (!driver) {
       throw new Error("Tài xế không tồn tại");
     }
+
+    if (!driver.statistics) {
+      driver.statistics = {
+        today: [],
+        yesterday: [],
+        thisWeek: [],
+        thisMonth: [],
+        lastMonth: [],
+        thisYear: [],
+        lastYear: [],
+      };
+      await driver.save();
+    }
+
+    const userId = driver.userId;
+    if (!userId) {
+      throw new Error("Không tìm thấy thông tin người dùng");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("Không tìm thấy thông tin người dùng");
+    }
+
     return {
       driver,
       user,
@@ -70,70 +93,117 @@ const rangeMapping = {
 };
 
 const getDriverStatistics = async (driverId, range) => {
-  const driver = await getDriverById(driverId);
-  const statistics = {};
+  try {
+    const driverData = await getDriverById(driverId);
 
-  const mappedRange = rangeMapping[range];
-  if (!mappedRange) {
-    throw new Error("Khoảng thời gian không hợp lệ");
-  }
+    // Kiểm tra xem driver có tồn tại không
+    if (!driverData || !driverData.driver) {
+      throw new Error("Không tìm thấy thông tin tài xế");
+    }
 
-  switch (mappedRange) {
-    case "yesterday":
-      statistics.yesterday = await getStatisticsForYesterday(driver);
-      break;
-    case "today":
-      statistics.today = await getStatisticsForToday(driver);
-      break;
-    case "thisWeek":
-      statistics.week = await getStatisticsForThisWeek(driver);
-      break;
-    case "thisMonth":
-      statistics.month = await getStatisticsForThisMonth(driver);
-      break;
-    case "lastMonth":
-      statistics.lastMonth = await getStatisticsForLastMonth(driver);
-      break;
-    case "thisYear":
-      statistics.year = await getStatisticsForThisYear(driver);
-      break;
-    case "lastYear":
-      statistics.lastYear = await getStatisticsForLastYear(driver);
-      break;
-    default:
+    // Kiểm tra xem statistics có tồn tại không
+    if (!driverData.driver.statistics) {
+      // Nếu chưa có statistics, khởi tạo object rỗng
+      driverData.driver.statistics = {
+        today: [],
+        yesterday: [],
+        thisWeek: [],
+        thisMonth: [],
+        lastMonth: [],
+        thisYear: [],
+        lastYear: [],
+      };
+      await driverData.driver.save();
+    }
+
+    const statistics = {};
+    const mappedRange = rangeMapping[range];
+
+    if (!mappedRange) {
       throw new Error("Khoảng thời gian không hợp lệ");
-  }
+    }
 
-  return statistics;
+    switch (mappedRange) {
+      case "yesterday":
+        statistics.yesterday = await getStatisticsForYesterday(driverData);
+        break;
+      case "today":
+        statistics.today = await getStatisticsForToday(driverData);
+        break;
+      case "thisWeek":
+        statistics.week = await getStatisticsForThisWeek(driverData);
+        break;
+      case "thisMonth":
+        statistics.month = await getStatisticsForThisMonth(driverData);
+        break;
+      case "lastMonth":
+        statistics.lastMonth = await getStatisticsForLastMonth(driverData);
+        break;
+      case "thisYear":
+        statistics.year = await getStatisticsForThisYear(driverData);
+        break;
+      case "lastYear":
+        statistics.lastYear = await getStatisticsForLastYear(driverData);
+        break;
+      default:
+        throw new Error("Khoảng thời gian không hợp lệ");
+    }
+
+    return statistics;
+  } catch (error) {
+    console.error("Error in getDriverStatistics:", error);
+    throw error;
+  }
 };
 
 // Các hàm lấy thống kê cho từng khoảng thời gian
-const getStatisticsForToday = async (driver) => {
-  return driver.statistics.today;
+const getStatisticsForToday = async (driverData) => {
+  if (!driverData?.driver?.statistics?.today) {
+    return [];
+  }
+  return driverData.driver.statistics.today;
 };
 
-const getStatisticsForYesterday = async (driver) => {
-  return driver.statistics.yesterday;
+const getStatisticsForYesterday = async (driverData) => {
+  if (!driverData?.driver?.statistics?.yesterday) {
+    return [];
+  }
+  return driverData.driver.statistics.yesterday;
 };
 
-const getStatisticsForThisWeek = async (driver) => {
-  return driver.statistics.thisWeek;
+const getStatisticsForThisWeek = async (driverData) => {
+  if (!driverData?.driver?.statistics?.thisWeek) {
+    return [];
+  }
+  return driverData.driver.statistics.thisWeek;
 };
 
-const getStatisticsForThisMonth = async (driver) => {
-  return driver.statistics.thisMonth;
+const getStatisticsForThisMonth = async (driverData) => {
+  if (!driverData?.driver?.statistics?.thisMonth) {
+    return [];
+  }
+  return driverData.driver.statistics.thisMonth;
 };
 
-const getStatisticsForLastMonth = async (driver) => {
-  return driver.statistics.lastMonth;
+const getStatisticsForLastMonth = async (driverData) => {
+  if (!driverData?.driver?.statistics?.lastMonth) {
+    return [];
+  }
+  return driverData.driver.statistics.lastMonth;
 };
 
-const getStatisticsForThisYear = async (driver) => {
-  return driver.statistics.thisYear;
+const getStatisticsForThisYear = async (driverData) => {
+  if (!driverData?.driver?.statistics?.thisYear) {
+    return [];
+  }
+  return driverData.driver.statistics.thisYear;
 };
 
-const getStatisticsForLastYear = async (driver) => {
-  return driver.statistics.lastYear;
+const getStatisticsForLastYear = async (driverData) => {
+  if (!driverData?.driver?.statistics?.lastYear) {
+    return [];
+  }
+  return driverData.driver.statistics.lastYear;
 };
 
 const updateDriverStatistics = async (driverId, tripData) => {
