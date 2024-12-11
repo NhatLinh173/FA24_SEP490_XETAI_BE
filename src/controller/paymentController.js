@@ -286,7 +286,6 @@ const processWithdrawRequest = async (req, res) => {
     withdrawRequest.status = "COMPLETED";
     await withdrawRequest.save();
 
-    // Gửi thông báo cho người dùng
     const notification = new Notification({
       userId: withdrawRequest.userId,
       title: "Yêu cầu rút tiền đã hoàn thành",

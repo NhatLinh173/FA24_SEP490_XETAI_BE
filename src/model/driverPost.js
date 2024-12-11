@@ -32,6 +32,10 @@ const driverPost = new Schema(
       type: [String],
       required: true,
     },
+    isLock: {
+      type: Boolean,
+      default: false,
+    },
     // status: {
     //   type: String,
     //   enum: [

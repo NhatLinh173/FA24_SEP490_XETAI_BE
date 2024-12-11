@@ -283,7 +283,7 @@ const blockUser = async (id, duration) => {
   }
 
   await Post.updateMany({ creator: id }, { isLock: true });
-
+  await DriverPost.updateMany({ creatorId: id }, { isLock: true });
   return user;
 };
 
@@ -297,7 +297,7 @@ const unlockUser = async (id) => {
     { new: true }
   );
 
-  await Post.updateMany({ creator: id }, { isLock: true });
+  await Post.updateMany({ creator: id }, { isLock: false });
 };
 
 const changePassword = async (userId, oldPassword, newPassword) => {
@@ -327,10 +327,22 @@ const changePassword = async (userId, oldPassword, newPassword) => {
 
 const getUserByRoleDriver = async (excludedRoles) => {
   try {
-    const users = await Driver.find({
+    const users = await User.find({
       role: { $nin: excludedRoles },
-    }).populate("userId", "fullName email phone address avatar isBlocked");
-    return users;
+    });
+
+    const drivers = await Driver.find({
+      userId: { $in: users.map((user) => user._id) },
+    }).populate("userId", "fullName email phone address avatar isBlocked role");
+
+    const totalPersonalUsers = await User.countDocuments({
+      role: "personal",
+    });
+
+    return {
+      drivers,
+      total: totalPersonalUsers,
+    };
   } catch (error) {
     throw new Error(error.message);
   }
