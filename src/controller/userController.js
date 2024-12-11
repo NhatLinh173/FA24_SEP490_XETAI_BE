@@ -313,8 +313,11 @@ const changePasswordUser = async (req, res) => {
 
 const getUserByRoleDriverController = async (req, res) => {
   try {
-    const excludedRoles = ["customer", "admin", "staff"];
-    const users = await authService.getUserByRoleDriver(excludedRoles);
+    const users = await authService.getUserByRoleDriver([
+      "admin",
+      "customer",
+      "staff",
+    ]);
     res.status(200).json(users);
   } catch (error) {
     console.error("Error getting users by role:", error);

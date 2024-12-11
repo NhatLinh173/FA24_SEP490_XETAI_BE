@@ -88,7 +88,7 @@ const rangeMapping = {
   "Tuần này": "thisWeek",
   "Tháng này": "thisMonth",
   "Tháng trước": "lastMonth",
-  "Năm này": "thisYear",
+  "Năm nay": "thisYear",
   "Năm trước": "lastYear",
 };
 
@@ -96,14 +96,11 @@ const getDriverStatistics = async (driverId, range) => {
   try {
     const driverData = await getDriverById(driverId);
 
-    // Kiểm tra xem driver có tồn tại không
     if (!driverData || !driverData.driver) {
       throw new Error("Không tìm thấy thông tin tài xế");
     }
 
-    // Kiểm tra xem statistics có tồn tại không
     if (!driverData.driver.statistics) {
-      // Nếu chưa có statistics, khởi tạo object rỗng
       driverData.driver.statistics = {
         today: [],
         yesterday: [],

@@ -2,15 +2,20 @@ const reportService = require("../service/reportService");
 const postController = require("../controller/PostController");
 const driverPostController = require("../controller/driverPostController");
 
-
-
 const createReport = async (req, res) => {
   const { reporterId, postId, driverPostId, description } = req.body;
   try {
-    const report = await reportService.createReport(reporterId, postId, driverPostId, description);
+    const report = await reportService.createReport(
+      reporterId,
+      postId,
+      driverPostId,
+      description
+    );
     res.status(201).json({ message: "Report created successfully", report });
   } catch (error) {
-    if (error.message === "Report already exists for this post by this reporter.") {
+    if (
+      error.message === "Report already exists for this post by this reporter."
+    ) {
       return res.status(400).json({ message: error.message });
     }
     res.status(500).json({ message: "Error creating report", error });
@@ -66,7 +71,9 @@ const getAllDriverPostIds = async (req, res) => {
     const driverPostIds = await reportService.getAllDriverPostIds();
     res.status(200).json(driverPostIds);
   } catch (error) {
-    res.status(500).json({ message: "Error retrieving driver post IDs", error });
+    res
+      .status(500)
+      .json({ message: "Error retrieving driver post IDs", error });
   }
 };
 
@@ -74,56 +81,44 @@ const deleteReportAndLockPost = async (req, res) => {
   const { reportId } = req.params;
 
   try {
-    // Xóa báo cáo
-    const report = await reportService.deleteReport(reportId);
+    // Lấy thông tin report trước khi xóa
+    const report = await reportService.getReportById(reportId);
     if (!report) {
       return res.status(404).json({ message: "Report not found" });
     }
-    const postId = report.postId; 
-    const driverPostId = report.driverPostId; 
 
-    
+    const postId = report.postId;
+    const driverPostId = report.driverPostId;
+
     if (!postId && !driverPostId) {
-      return res.status(400).json({ message: "No associated post found in the report" });
+      return res
+        .status(400)
+        .json({ message: "No associated post found in the report" });
     }
 
+    // Xóa bài post thường nếu có
     if (postId) {
-      const updateStatusResult = await postController.updatePostStatus(
-        { params: { idPost: postId }, body: { status: "locked" } },
-        {
-          status: (code) => ({ json: (message) => message }), 
-        }
+      await postController.deletePost(
+        { params: { idPost: postId } },
+        { status: (code) => ({ json: (message) => message }) }
       );
-
-      if (!updateStatusResult || updateStatusResult.status !== 200) {
-        return res.status(500).json({
-          message: "Error updating post status after deleting report",
-          error: updateStatusResult.error || "Unknown error",
-        });
-      }
     }
 
+    // Xóa bài post của tài xế nếu có
     if (driverPostId) {
-      const updateDriverPostStatusResult = await driverPostController.updateDriverPostStatus(
-        { params: { id: driverPostId }, body: { status: "locked" } },
-        {
-          status: (code) => ({ json: (message) => message }), 
-        }
+      await driverPostController.deleteDriverPost(
+        { params: { id: driverPostId } },
+        { status: (code) => ({ json: (message) => message }) }
       );
-
-      if (!updateDriverPostStatusResult || updateDriverPostStatusResult.status !== 200) {
-        return res.status(500).json({
-          message: "Error updating driver post status after deleting report",
-          error: updateDriverPostStatusResult.error || "Unknown error",
-        });
-      }
     }
+
+    await reportService.deleteReport(reportId);
 
     res.status(200).json({
-      message: "Report deleted and post status updated to locked successfully",
+      message: "Report and associated post deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting report", error });
+    res.status(500).json({ message: "Error deleting report and post", error });
   }
 };
 
