@@ -39,7 +39,6 @@ const removeFavoriteDriver = async (userId, driverId) => {
   }
   try {
     const result = await FavoriteDrivers.deleteOne({ userId, driverId });
-    console.log(result);
     if (result.deletedCount === 0) {
       throw new Error("Favorite not found");
     }
