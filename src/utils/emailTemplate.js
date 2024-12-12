@@ -7,7 +7,7 @@ const emailTemplates = {
         Đơn hàng của bạn với mã <strong>${orderId}</strong> đã được xác nhận thành công!
       </p>
       <p style="color: #555; font-size: 16px;">Vui lòng bạn chuẩn bị hàng hóa để tài xế có thể đến nhận hàng!</p>
-      <a href="http://localhost:3000/service/${orderId}" style="display: inline-block; padding: 10px 20px; background-color: #28a745; color: #fff; text-decoration: none; border-radius: 5px;">Xem đơn hàng của bạn</a>
+      <a href="http://xehang.online/service/${orderId}" style="display: inline-block; padding: 10px 20px; background-color: #28a745; color: #fff; text-decoration: none; border-radius: 5px;">Xem đơn hàng của bạn</a>
       <p style="color: #555; font-size: 16px;">Công ty Vận Tải RFTMS cảm ơn quý khách đã tin tưởng và chọn lựa chúng tôi</p>
     </div>
   `,
@@ -35,7 +35,7 @@ const emailTemplates = {
         Đơn hàng của bạn với mã <strong>${orderId}</strong> đã được tài xế ${driverId} thương lượng giá.
       </p>
       <p style="color: #555; font-size: 16px;">Vui lòng kiểm tra và chọn giá phù hợp với đơn hàng của mình!</p>
-      <a href="http://localhost:3000/service/${orderId}" style="display: inline-block; padding: 10px 20px; background-color: #28a745; color: #fff; text-decoration: none; border-radius: 5px;">Xem đơn hàng của bạn</a>
+      <a href="http://xehang.online/service/${orderId}" style="display: inline-block; padding: 10px 20px; background-color: #28a745; color: #fff; text-decoration: none; border-radius: 5px;">Xem đơn hàng của bạn</a>
       <p style="color: #555; font-size: 16px;">Công ty Vận Tải RFTMS cảm ơn quý khách đã tin tưởng và chọn lựa chúng tôi</p>
     </div>
   `,

@@ -26,8 +26,7 @@ const getDriverStatistics = async (req, res) => {
   } catch (error) {
     console.error("Error in getDriverStatistics:", error);
 
-    // Xử lý các loại lỗi cụ thể
-    if (error.message === "Driver not found") {
+      if (error.message === "Driver not found") {
       return res.status(404).json({ message: "Không tìm thấy tài xế" });
     }
     if (error.message === "Invalid date range") {

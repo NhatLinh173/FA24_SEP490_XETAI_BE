@@ -704,18 +704,24 @@ class PostController {
       }
 
       const postCreator = updatedPost.creator;
-
+      let notificationMessage = "";
+      if (status === "approve") {
+        notificationMessage = `Tài xế đã chấp nhận đơn hàng của bạn: ${postId}`;
+      } else if (status === "wait") {
+        notificationMessage = `Bạn đang có tài xế thương lượng giá cho đơn hàng ${postId}. Vui lòng kiểm tra đơn hàng để xác nhận tài xế`;
+      }
       const notification = new Notification({
         userId: postCreator._id,
         title: "Đơn hàng",
-        message: `Tài xế đã chấp nhận đơn hàng của bạn: ${postId}`,
+        message: notificationMessage,
         data: { postId, driverId, dealPrice, deliveryTime },
       });
 
       await notification.save();
+
       req.io.to(postCreator._id.toString()).emit("receiveNotification", {
         title: "Đơn hàng",
-        message: `Tài xế đã chấp nhận đơn hàng của bạn: ${postId}`,
+        message: notificationMessage,
         data: { postId, driverId, dealPrice, deliveryTime },
         timestamp: new Date(),
       });

@@ -194,19 +194,14 @@ const getStats = async (req, res) => {
 
 const getCustomerAnalysis = async (req, res) => {
   try {
-    // Lấy tất cả các user có trong cơ sở dữ liệu
     const allUsers = await User.find({});
 
-    // Tạo mảng lưu trữ thông tin khách hàng mới và quay lại
     let newCustomers = 0;
     let returningCustomers = 0;
 
-    // Phân loại khách hàng
     for (let user of allUsers) {
-      // Tìm các lần truy cập của người dùng
       const visits = await Visit.find({ userId: user._id });
 
-      // Nếu người dùng có ít nhất 1 lần truy cập và lần truy cập đầu tiên sau khi đăng ký
       const firstVisitDate = visits.length > 0 ? visits[0].visitDate : null;
 
       if (
@@ -219,7 +214,7 @@ const getCustomerAnalysis = async (req, res) => {
       }
     }
 
-    // Trả về kết quả phân tích
+    h;
     res.json({
       newCustomers,
       returningCustomers,

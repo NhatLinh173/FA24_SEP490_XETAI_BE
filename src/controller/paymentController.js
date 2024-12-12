@@ -27,8 +27,8 @@ const createPaymentLink = async (req, res) => {
     orderCode: Number(String(new Date().getTime()).slice(-6)),
     amount: totalPrice,
     description,
-    cancelUrl: "http://localhost:3000/payment/failed",
-    returnUrl: "http://localhost:3000/payment/success",
+    cancelUrl: "https://xehang.online/payment/failed",
+    returnUrl: "https://xehang.online/payment/success",
     orderCodeStatus,
   };
 

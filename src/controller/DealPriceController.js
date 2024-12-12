@@ -27,7 +27,11 @@ const updateDealPrice = async (req, res) => {
   const { dealPrice, dealId } = req.body;
 
   try {
-    const updatedDeal = await Deal.findByIdAndUpdate(dealId, { dealPrice }, { new: true });
+    const updatedDeal = await Deal.findByIdAndUpdate(
+      dealId,
+      { dealPrice },
+      { new: true }
+    );
 
     if (!updatedDeal) {
       return res.status(404).json({ message: "Deal not found" });
@@ -100,7 +104,11 @@ const updateDealStatus = async (req, res) => {
   const { dealId, status } = req.body;
 
   try {
-    const updatedDeal = await Deal.findByIdAndUpdate(dealId, { status }, { new: true });
+    const updatedDeal = await Deal.findByIdAndUpdate(
+      dealId,
+      { status },
+      { new: true }
+    );
 
     if (!updatedDeal) {
       return res.status(404).json({ message: "Deal not found" });
@@ -113,6 +121,25 @@ const updateDealStatus = async (req, res) => {
 
     if (status === "approve") {
       updatePostData.price = updatedDeal.dealPrice;
+
+      const notification = new Notification({
+        userId: updatedDeal.driverId.userId, // ID của tài xế
+        title: "Đơn hàng",
+        message: `Bạn đã được nhận đơn hàng với ID: ${postId}`,
+        data: { postId, status: "approve" },
+      });
+
+      await notification.save();
+
+      // Gửi thông báo realtime qua socket
+      req.io
+        .to(updatedDeal.driverId.userId.toString())
+        .emit("receiveNotification", {
+          title: "Đơn hàng",
+          message: `Bạn đã được nhận đơn hàng với ID: ${postId}`,
+          data: { postId, status: "approve" },
+          timestamp: new Date(),
+        });
     }
 
     const updatePost = await Post.findByIdAndUpdate(postId, updatePostData, {
@@ -149,7 +176,9 @@ const getDealsByDriverId = async (req, res) => {
       });
 
     if (!deals || deals.length === 0) {
-      return res.status(404).json({ message: "No deals found for this driver" });
+      return res
+        .status(404)
+        .json({ message: "No deals found for this driver" });
     }
 
     res.status(200).json(deals);
@@ -176,7 +205,9 @@ const getDealsByPostIdAndStatusWait = async (req, res) => {
       });
 
     if (!deals || deals.length === 0) {
-      return res.status(404).json({ message: "No waiting deals found for this post" });
+      return res
+        .status(404)
+        .json({ message: "No waiting deals found for this post" });
     }
 
     res.status(200).json(deals);

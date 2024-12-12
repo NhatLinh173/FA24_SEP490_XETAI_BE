@@ -126,18 +126,18 @@ const googleAuthCallback = async (req, res, next) => {
   passport.authenticate("google", async (err, user, info) => {
     if (err) {
       return res.redirect(
-        "http://localhost:3000/error?message=" + encodeURIComponent(err.message)
+        "https://xehang.online/error?message=" + encodeURIComponent(err.message)
       );
     }
     if (!user) {
       return res.redirect(
-        "http://localhost:3000/error?message=Authentication Failed"
+        "http://xehang.online/error?message=Authentication Failed"
       );
     }
     req.logIn(user, async (err) => {
       if (err) {
         return res.redirect(
-          "http://localhost:3000/error?message=" +
+          "http://xehang.online/error?message=" +
             encodeURIComponent(err.message)
         );
       }
@@ -163,7 +163,7 @@ const googleAuthCallback = async (req, res, next) => {
       });
       const role = req.query.state;
 
-      res.redirect(`http://localhost:3000/?token=${token}`);
+      res.redirect(`https://xehang.online/?token=${token}`);
     });
   })(req, res, next);
 };
