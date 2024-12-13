@@ -10,7 +10,7 @@ router.get(
 );
 router.put("/:orderId", paymentController.cancelPayment);
 router.post("/confirm-webhook", paymentController.confirmWebhook);
-router.get(
+router.post(
   "/callback-success",
   authMiddleware,
   paymentController.handlePaymentCallback
