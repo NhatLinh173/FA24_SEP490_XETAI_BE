@@ -4,27 +4,40 @@ const Transaction = require("../model/transactionModel");
 const User = require("../model/userModel");
 // Tạo driver post mới
 const createDriverPost = async (req, res) => {
-  const { creatorId, startCity, destinationCity, description } = req.body;
-  const images = req.files;
-  const postFee = 5000;
-  const generateOrderCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  };
-  const missingFields = [];
-  if (!creatorId) missingFields.push("creatorId");
-  if (!startCity) missingFields.push("startCity");
-  if (!destinationCity) missingFields.push("destinationCity");
-  if (!description) missingFields.push("description");
-  if (!images) missingFields.push("images");
-
-  if (missingFields.length > 0) {
-    return res.status(400).json({
-      message: `Missing fields: ${missingFields.join(", ")}`,
-    });
-  }
-
   try {
-    // Upload hình ảnh lên Cloudinary
+    const { creatorId, startCity, destinationCity, description } = req.body;
+    const images = req.files;
+    const postFee = 5000;
+
+    // Validate required fields
+    const missingFields = [];
+    if (!creatorId) missingFields.push("creatorId");
+    if (!startCity) missingFields.push("startCity");
+    if (!destinationCity) missingFields.push("destinationCity");
+    if (!description) missingFields.push("description");
+    if (!images || images.length === 0) missingFields.push("images");
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        message: `Missing fields: ${missingFields.join(", ")}`,
+      });
+    }
+
+    // Check user existence and balance
+    const creator = await User.findById(creatorId);
+    if (!creator) {
+      return res.status(404).json({ message: "Người dùng không tồn tại." });
+    }
+
+    if (creator.balance < postFee) {
+      return res.status(402).json({
+        message: "Số dư không đủ để đăng bài. Vui lòng nạp thêm tiền.",
+        requiredBalance: postFee,
+        currentBalance: creator.balance,
+      });
+    }
+
+    // Upload images to Cloudinary
     const imageUrls = await Promise.all(
       images.map((file) => {
         return new Promise((resolve, reject) => {
@@ -48,7 +61,35 @@ const createDriverPost = async (req, res) => {
       })
     );
 
+    // Create new driver post
+    const newDriverPost = new DriverPost({
+      creatorId,
+      startCity,
+      destinationCity,
+      description,
+      images: imageUrls,
+      status: "PENDING", // Add default status if needed
+    });
+
+    // Save the post
     const savedDriverPost = await newDriverPost.save();
+
+    // Deduct balance and save user
+    creator.balance -= postFee;
+    await creator.save();
+
+    // Create transaction record
+    const newTransaction = new Transaction({
+      userId: creatorId,
+      postId: savedDriverPost._id,
+      amount: postFee,
+      type: "POST_PAYMENT",
+      status: "PAID",
+      orderCode: Math.floor(100000 + Math.random() * 900000).toString(),
+    });
+    await newTransaction.save();
+
+    // Get populated post data
     const populatedDriverPost = await DriverPost.findById(
       savedDriverPost._id
     ).populate({
@@ -56,45 +97,19 @@ const createDriverPost = async (req, res) => {
       populate: { path: "userId" },
     });
 
-    const userId = populatedDriverPost.creatorId?.userId?._id;
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "Người dùng không tồn tại." });
-    }
-
-    if (user.balance < postFee) {
-      return res.status(402).json({
-        message: "Số dư không đủ để đăng bài. Vui lòng nạp thêm tiền.",
-      });
-    }
-
-    // Tạo driver post mới
-    const newDriverPost = new DriverPost({
-      creatorId,
-      startCity,
-      destinationCity,
-      description,
-      images: imageUrls,
+    // Return success response
+    res.status(200).json({
+      message: "Tạo bài đăng thành công",
+      data: populatedDriverPost,
+      transaction: newTransaction,
     });
-
-    // Lưu bài đăng mới và populate creatorId để trả về đầy đủ thông tin
-
-    user.balance -= postFee;
-    await user.save();
-
-    const newTransaction = new Transaction({
-      userId: userId,
-      postId: savedDriverPost._id,
-      amount: postFee,
-      type: "POST_PAYMENT",
-      status: "PAID",
-      orderCode: generateOrderCode(),
-    });
-    await newTransaction.save();
-    res.status(200).json(populatedDriverPost);
   } catch (error) {
-    res.status(400).json({ message: "Unable to create driver post", error });
+    console.error("Error in createDriverPost:", error);
+    res.status(500).json({
+      message: "Không thể tạo bài đăng",
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
   }
 };
 
