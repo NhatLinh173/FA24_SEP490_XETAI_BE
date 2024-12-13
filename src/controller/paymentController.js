@@ -44,7 +44,6 @@ const createPaymentLink = async (req, res) => {
     });
 
     await newTransaction.save();
-    console.log("Transaction saved:", newTransaction);
     return res.json({
       error: 0,
       message: "Success",
@@ -74,7 +73,6 @@ const getPaymentInfo = async (req, res) => {
     const order = await paymentService.getPaymentLinkInformation(
       req.params.orderId
     );
-    console.log("Order fetched:", order);
 
     if (!order || order.status !== "PAID") {
       console.log("Order is not paid or does not exist.");
@@ -89,7 +87,6 @@ const getPaymentInfo = async (req, res) => {
     }
 
     const payment = await paymentService.getPaymentByOrderCode(order.orderCode);
-    console.log("Payment fetched:", payment);
 
     if (!payment) {
       console.log("Payment not found.");
@@ -152,30 +149,99 @@ const confirmWebhook = async (req, res) => {
 
 const handlePaymentCallback = async (req, res) => {
   try {
+    // Log request body để debug
+    console.log("Payment callback received:", req.body);
+
     const { status, orderCode } = req.body;
-    const userId = req.user.id;
 
     if (!orderCode || !status) {
+      console.log("Missing fields:", { status, orderCode });
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const transaction = await Transaction.findOne({ orderCode, userId });
+    // Tìm transaction mà không cần userId (vì webhook từ cổng thanh toán không có thông tin này)
+    const transaction = await Transaction.findOne({ orderCode });
 
     if (!transaction) {
+      console.log("Transaction not found for orderCode:", orderCode);
       return res.status(404).json({ message: "Transaction not found" });
     }
 
-    if (status === "PAID") {
+    if (status === "PAID" || status === "SUCCESS") {
+      // Thêm case SUCCESS
+      // Kiểm tra nếu transaction đã được xử lý
+      if (transaction.status === "PAID") {
+        return res.json({
+          error: 0,
+          message: "Transaction already processed",
+          data: transaction,
+        });
+      }
+
+      // Cập nhật trạng thái transaction
       transaction.status = "PAID";
       await transaction.save();
+
+      // Tìm và cập nhật số dư user
+      const user = await User.findById(transaction.userId);
+      if (!user) {
+        console.log("User not found:", transaction.userId);
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Cộng tiền vào tài khoản user
+      user.balance += transaction.amount;
+      await user.save();
+
+      // Tạo thông báo
+      const notification = new Notification({
+        userId: transaction.userId,
+        title: "Nạp tiền thành công",
+        message: `Bạn đã nạp thành công ${transaction.amount.toLocaleString(
+          "vi-VN"
+        )} VNĐ vào tài khoản.`,
+        data: {
+          transactionId: transaction._id,
+          amount: transaction.amount,
+          type: "DEPOSIT",
+        },
+      });
+      await notification.save();
+
+      // Gửi thông báo realtime
+      if (req.io) {
+        req.io.to(transaction.userId.toString()).emit("receiveNotification", {
+          title: "Nạp tiền thành công",
+          message: `Bạn đã nạp thành công ${transaction.amount.toLocaleString(
+            "vi-VN"
+          )} VNĐ vào tài khoản.`,
+          data: {
+            transactionId: transaction._id,
+            amount: transaction.amount,
+            type: "DEPOSIT",
+          },
+          timestamp: new Date(),
+        });
+      }
+
+      console.log("Payment processed successfully:", {
+        transactionId: transaction._id,
+        userId: transaction.userId,
+        amount: transaction.amount,
+        newBalance: user.balance,
+      });
 
       return res.json({
         error: 0,
         message: "Transaction updated to PAID successfully",
-        data: transaction,
+        data: {
+          transaction,
+          newBalance: user.balance,
+        },
       });
-    } else if (status === "CANCELLED") {
-      await Transaction.deleteOne({ orderCode, userId });
+    } else if (status === "CANCELLED" || status === "FAILED") {
+      await Transaction.deleteOne({ orderCode });
+      console.log("Transaction cancelled:", orderCode);
 
       return res.json({
         error: 0,
@@ -183,6 +249,7 @@ const handlePaymentCallback = async (req, res) => {
         data: null,
       });
     } else {
+      console.log("Invalid status received:", status);
       return res.status(400).json({ message: "Invalid status" });
     }
   } catch (error) {
