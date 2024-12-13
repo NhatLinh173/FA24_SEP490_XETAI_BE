@@ -1,6 +1,7 @@
 const DriverPost = require("../model/driverPost");
 const cloudinary = require("../config/cloudinaryConfig");
 const Transaction = require("../model/transactionModel");
+const Driver = require("../model/driverModel");
 const User = require("../model/userModel");
 // Tạo driver post mới
 const createDriverPost = async (req, res) => {
@@ -22,14 +23,14 @@ const createDriverPost = async (req, res) => {
         message: `Missing fields: ${missingFields.join(", ")}`,
       });
     }
-
-    // Check user existence and balance
-    const creator = await User.findById(creatorId);
-    if (!creator) {
+    const creator = await Driver.findById(creatorId);
+    const userId = creator.userId._id;
+    const user = await User.findById(userId);
+    if (!user) {
       return res.status(404).json({ message: "Người dùng không tồn tại." });
     }
 
-    if (creator.balance < postFee) {
+    if (user.balance < postFee) {
       return res.status(402).json({
         message: "Số dư không đủ để đăng bài. Vui lòng nạp thêm tiền.",
         requiredBalance: postFee,
