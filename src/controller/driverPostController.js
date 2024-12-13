@@ -48,16 +48,6 @@ const createDriverPost = async (req, res) => {
       })
     );
 
-    // Tạo driver post mới
-    const newDriverPost = new DriverPost({
-      creatorId,
-      startCity,
-      destinationCity,
-      description,
-      images: imageUrls,
-    });
-
-    // Lưu bài đăng mới và populate creatorId để trả về đầy đủ thông tin
     const savedDriverPost = await newDriverPost.save();
     const populatedDriverPost = await DriverPost.findById(
       savedDriverPost._id
@@ -78,6 +68,17 @@ const createDriverPost = async (req, res) => {
         message: "Số dư không đủ để đăng bài. Vui lòng nạp thêm tiền.",
       });
     }
+
+    // Tạo driver post mới
+    const newDriverPost = new DriverPost({
+      creatorId,
+      startCity,
+      destinationCity,
+      description,
+      images: imageUrls,
+    });
+
+    // Lưu bài đăng mới và populate creatorId để trả về đầy đủ thông tin
 
     user.balance -= postFee;
     await user.save();
