@@ -146,7 +146,7 @@ const updateDealStatus = async (req, res) => {
     //       data: { postId, status: "approve" },
     //       timestamp: new Date(),
     //     });
-    // }
+    }
 
     const updatePost = await Post.findByIdAndUpdate(postId, updatePostData, {
       new: true,
