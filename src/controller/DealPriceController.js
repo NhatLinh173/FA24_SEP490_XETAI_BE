@@ -108,7 +108,13 @@ const updateDealStatus = async (req, res) => {
       dealId,
       { status },
       { new: true }
-    );
+    ).populate({
+      path: "driverId",
+      populate: {
+        path: "userId",
+        model: "User",
+      },
+    });
 
     if (!updatedDeal) {
       return res.status(404).json({ message: "Deal not found" });
