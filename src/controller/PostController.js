@@ -184,7 +184,7 @@ class PostController {
           timestamp: currentTime,
         });
       } else if (bodyData.status === "cancel") {
-        const user = await User.findById({ _id: bodyData.creator });
+        const user = await User.findById(updatePost.creator);
         const price = parseFloat(
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
@@ -201,9 +201,7 @@ class PostController {
                 .status(404)
                 .json({ message: "Không tìm thấy giao dịch liên quan" });
             }
-
             const driverId = deal.driverId;
-
             if (userRole === "customer") {
               if (user.balance < cancellationFee) {
                 return res
@@ -212,7 +210,8 @@ class PostController {
               } else {
                 user.balance -= cancellationFee;
 
-                const driver = await User.findById(driverId);
+                const driver = await Driver.findById(driverId);
+
                 if (!driver) {
                   return res
                     .status(404)
