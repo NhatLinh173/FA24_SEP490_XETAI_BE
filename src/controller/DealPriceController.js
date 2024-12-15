@@ -1,10 +1,6 @@
 const Deal = require("../model/dealPriceModel");
 const Post = require("../model/postModel");
 const Notification = require("../model/notificationModel");
-const User = require("../model/userModel");
-const Driver = require("../model/driverModel");
-
-const mongoose = require("mongoose");
 
 const createDeal = async (req, res) => {
   const { postId, driverId, dealPrice, estimatedTime } = req.body;
@@ -223,6 +219,34 @@ const getDealsByPostIdAndStatusWait = async (req, res) => {
   }
 };
 
+const getDealsByPostIdAndStatus = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    const deals = await Deal.find({
+      postId,
+    })
+      .populate("postId")
+      .populate({
+        path: "driverId",
+        populate: {
+          path: "userId",
+          model: "User",
+        },
+      });
+
+    if (!deals || deals.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No waiting deals found for this post" });
+    }
+
+    res.status(200).json(deals);
+  } catch (error) {
+    res.status(400).json({ message: "Unable to fetch waiting deals", error });
+  }
+};
+
 module.exports = {
   createDeal,
   getAllDeals,
@@ -232,4 +256,5 @@ module.exports = {
   deleteDeal,
   getDealsByDriverId,
   getDealsByPostIdAndStatusWait,
+  getDealsByPostIdAndStatus,
 };

@@ -202,6 +202,7 @@ class PostController {
                 .json({ message: "Không tìm thấy giao dịch liên quan" });
             }
             const driverId = deal.driverId;
+
             if (userRole === "customer") {
               if (user.balance < cancellationFee) {
                 return res
