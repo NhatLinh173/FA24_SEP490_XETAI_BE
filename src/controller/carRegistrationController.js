@@ -298,6 +298,41 @@ const updateCarRegistrationStatus = async (req, res) => {
       return res.status(404).json({ message: "Car registration not found" });
     }
 
+    let notificationMessage = "";
+    if (status === "approve") {
+      notificationMessage = `Đăng ký xe ${updatedCarRegistration.nameCar} của bạn đã được phê duyệt`;
+    } else if (status === "reject") {
+      notificationMessage = `Đăng ký xe ${updatedCarRegistration.nameCar} của bạn đã bị từ chối`;
+    } else if (status === "wait") {
+      notificationMessage = `Đăng ký xe ${updatedCarRegistration.nameCar} của bạn đang được xem xét`;
+    }
+
+    const notification = new Notification({
+      userId: updatedCarRegistration.driverId.userId, 
+      title: "Đăng ký xe",
+      message: notificationMessage,
+      data: {
+        carRegistrationId: id,
+        status: status,
+        carName: updatedCarRegistration.nameCar,
+      },
+    });
+
+    req.io
+      .to(updatedCarRegistration.driverId.userId.toString())
+      .emit("receiveNotification", {
+        title: "Đăng ký xe",
+        message: notificationMessage,
+        data: {
+          carRegistrationId: id,
+          status: status,
+          carName: updatedCarRegistration.nameCar,
+        },
+        timestamp: new Date(),
+      });
+
+    await notification.save();
+
     res.status(200).json(updatedCarRegistration);
   } catch (error) {
     res

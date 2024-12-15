@@ -1,53 +1,68 @@
 const DriverLocation = require("../model/driverLocation");
 const Post = require("../model/postModel");
+const User = require("../model/userModel");
 
 module.exports = (io) => {
-  io.on("connection", (socket) => {
-    let updateInterval;
+  const driverIntervals = new Map();
 
-    socket.on("updateDriverLocation", async ({ orderCode, location }) => {
+  io.on("connection", async (socket) => {
+    socket.on("authenticate", async ({ userId }) => {
       try {
-        const post = await Post.findOne({ orderCode });
-        if (!post) {
-          throw new Error("Order not found");
+        const user = await User.findById(userId);
+        if (!user) {
+          socket.emit("locationError", { message: "User not found" });
+          return;
         }
-        const driverId = post.dealId;
 
-        if (post.status === "inprogress") {
-          if (updateInterval) {
-            clearInterval(updateInterval);
-          }
+        if (user.role === "driver") {
+          socket.userId = userId;
+          socket.emit("requestLocation");
 
-          await DriverLocation.findOneAndUpdate(
-            { driverId, orderCode },
-            { location, updatedAt: new Date() },
-            { upsert: true, new: true }
-          );
+          const interval = setInterval(() => {
+            socket.emit("requestLocation");
+          }, 900000);
 
-          updateInterval = setInterval(async () => {
-            await DriverLocation.findOneAndUpdate(
-              { driverId, orderCode },
-              { location, updatedAt: new Date() },
-              { upsert: true, new: true }
-            );
-            console.log(
-              `Location auto-updated for driver ${driverId} and order ${orderCode}`
-            );
-          }, 60 * 60 * 1000);
-        } else {
-          console.log(
-            "Stopped location update as order status is not 'inprogress'."
-          );
+          driverIntervals.set(socket.userId, interval);
         }
       } catch (error) {
-        console.error("Error processing driver location update:", error);
+        console.error("Authentication error:", error);
+        socket.emit("locationError", { message: "Authentication failed" });
       }
     });
 
-    socket.on("disconnect", () => {
-      if (updateInterval) {
-        clearInterval(updateInterval);
-        console.log("Clearing interval on disconnect");
+    socket.on("sendLocation", async ({ location }) => {
+      try {
+        if (!socket.userId) {
+          throw new Error("User not authenticated");
+        }
+
+        await DriverLocation.findOneAndUpdate(
+          { driverId: socket.userId },
+          {
+            location,
+            updatedAt: new Date(),
+            isAvailable: true,
+          },
+          { upsert: true, new: true }
+        );
+
+        // Broadcast vị trí mới
+        io.emit("driverLocationUpdated", {
+          driverId: socket.userId,
+          location,
+        });
+      } catch (error) {
+        console.error("Error updating location:", error);
+        socket.emit("locationError", { message: "Failed to update location" });
+      }
+    });
+
+    socket.on("disconnect", async () => {
+      if (socket.userId) {
+        if (driverIntervals.has(socket.userId)) {
+          clearInterval(driverIntervals.get(socket.userId));
+          driverIntervals.delete(socket.userId);
+        }
       }
     });
   });

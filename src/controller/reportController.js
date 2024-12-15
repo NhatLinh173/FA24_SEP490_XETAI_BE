@@ -1,7 +1,9 @@
 const reportService = require("../service/reportService");
 const postController = require("../controller/PostController");
 const driverPostController = require("../controller/driverPostController");
-
+const Notification = require("../model/notificationModel");
+const Post = require("../model/postModel");
+const DriverPost = require("../model/driverPost");
 const createReport = async (req, res) => {
   const { reporterId, postId, driverPostId, description } = req.body;
   try {
@@ -79,9 +81,7 @@ const getAllDriverPostIds = async (req, res) => {
 
 const deleteReportAndLockPost = async (req, res) => {
   const { reportId } = req.params;
-
   try {
-    // Lấy thông tin report trước khi xóa
     const report = await reportService.getReportById(reportId);
     if (!report) {
       return res.status(404).json({ message: "Report not found" });
@@ -96,20 +96,70 @@ const deleteReportAndLockPost = async (req, res) => {
         .json({ message: "No associated post found in the report" });
     }
 
-    // Xóa bài post thường nếu có
     if (postId) {
-      await postController.deletePost(
-        { params: { idPost: postId } },
-        { status: (code) => ({ json: (message) => message }) }
-      );
+      const post = await Post.findById(postId);
+      if (post) {
+        const notification = new Notification({
+          userId: post.creator,
+          title: "Vi phạm bài đăng",
+          message: `Bài đăng ${postId} của bạn đã bị xóa do vi phạm quy định cộng đồng. Lý do: ${report.description}`,
+          data: {
+            postId: postId,
+            status: "deleted",
+            reason: report.description,
+          },
+        });
+        await notification.save();
+
+        req.io.to(post.creator.toString()).emit("receiveNotification", {
+          title: "Vi phạm bài đăng",
+          message: `Bài đăng ${postId} của bạn đã bị xóa do vi phạm quy định cộng đồng. Lý do: ${report.description}`,
+          data: {
+            postId: postId,
+            status: "deleted",
+            reason: report.description,
+          },
+          timestamp: new Date(),
+        });
+
+        await postController.deletePost(
+          { params: { idPost: postId } },
+          { status: (code) => ({ json: (message) => message }) }
+        );
+      }
     }
 
-    // Xóa bài post của tài xế nếu có
     if (driverPostId) {
-      await driverPostController.deleteDriverPost(
-        { params: { id: driverPostId } },
-        { status: (code) => ({ json: (message) => message }) }
-      );
+      const driverPost = await DriverPost.findById(driverPostId);
+      if (driverPost) {
+        const notification = new Notification({
+          userId: driverPost.creatorId,
+          title: "Vi phạm bài đăng",
+          message: `Bài đăng ${driverPost.creatorId} của bạn đã bị xóa do vi phạm quy định cộng đồng. Lý do: ${report.description}`,
+          data: {
+            driverPostId: driverPostId,
+            status: "deleted",
+            reason: report.description,
+          },
+        });
+        await notification.save();
+
+        req.io.to(driverPost.creatorId.toString()).emit("receiveNotification", {
+          title: "Vi phạm bài đăng",
+          message: `Bài đăng ${driverPost.creatorId} của bạn đã bị xóa do vi phạm quy định cộng đồng. Lý do: ${report.description}`,
+          data: {
+            driverPostId: driverPostId,
+            status: "deleted",
+            reason: report.description,
+          },
+          timestamp: new Date(),
+        });
+
+        await driverPostController.deleteDriverPost(
+          { params: { id: driverPostId } },
+          { status: (code) => ({ json: (message) => message }) }
+        );
+      }
     }
 
     await reportService.deleteReport(reportId);

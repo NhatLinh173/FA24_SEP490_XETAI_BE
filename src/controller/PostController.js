@@ -888,7 +888,7 @@ class PostController {
 
       const driverNotification = new Notification({
         userId: customer,
-        title: "Đơn hàng",
+        title: "Đơn hàng hoàn tất",
         message: `Đơn hàng  ${postId} của bạn đã được hoàn thành. Vui lòng kiểm tra và xác nhận nhận hàng`,
         data: { postId: postId, status: "complete" },
       });
@@ -896,7 +896,7 @@ class PostController {
       await driverNotification.save();
 
       req.io.to(customer.toString()).emit("receiveNotification", {
-        title: "Đơn hàng",
+        title: "Đơn hàng hoàn tất",
         message: `Đơn hàng  ${postId} của bạn đã được hoàn thành. Vui lòng kiểm tra và xác nhận nhận hàng`,
         data: { postId: postId, status: "complete" },
         timestamp: new Date(),
