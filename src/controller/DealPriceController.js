@@ -129,7 +129,7 @@ const updateDealStatus = async (req, res) => {
       updatePostData.price = updatedDeal.dealPrice;
 
       const notification = new Notification({
-        userId: updatedDeal.driverId.userId, // ID của tài xế
+        userId: updatedDeal.driverId.userId,
         title: "Đơn hàng",
         message: `Bạn đã được nhận đơn hàng với ID: ${postId}`,
         data: { postId, status: "approve" },
@@ -137,7 +137,6 @@ const updateDealStatus = async (req, res) => {
 
       await notification.save();
 
-      // Gửi thông báo realtime qua socket
       req.io
         .to(updatedDeal.driverId.userId.toString())
         .emit("receiveNotification", {

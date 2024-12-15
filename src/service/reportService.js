@@ -19,7 +19,7 @@ const createReport = async (reporterId, postId, driverPostId, description) => {
 
 const getReportById = async (reportId) => {
   return await Report.findById(reportId)
-    .populate("reporterId", "fullName email phone avatar") // Thông tin đầy đủ của user
+    .populate("reporterId", "fullName email phone avatar")
     .populate({
       path: "postId",
       populate: [
@@ -40,7 +40,10 @@ const getAllReports = async () => {
     .populate("reporterId", "fullName email phone avatar")
     .populate({
       path: "postId",
-      populate: [{ path: "creator", select: "name email phone" }, { path: "dealId" }],
+      populate: [
+        { path: "creator", select: "name email phone" },
+        { path: "dealId" },
+      ],
     })
     .populate({
       path: "driverPostId",
@@ -57,7 +60,10 @@ const getAllPostIds = async () => {
     .populate("reporterId", "fullName email phone avatar")
     .populate({
       path: "postId",
-      populate: [{ path: "creator", select: "name email phone" }, { path: "dealId" }],
+      populate: [
+        { path: "creator", select: "name email phone" },
+        { path: "dealId" },
+      ],
     });
 };
 
