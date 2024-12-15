@@ -2,6 +2,7 @@ const Deal = require("../model/dealPriceModel");
 const Post = require("../model/postModel");
 const User = require("../model/userModel");
 const Driver = require("../model/driverModel");
+const Notification = require("../model/notificationModel");
 const mongoose = require("mongoose");
 
 const createDeal = async (req, res) => {
