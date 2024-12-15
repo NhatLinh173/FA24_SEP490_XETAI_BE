@@ -120,6 +120,8 @@ const updateDealStatus = async (req, res) => {
       return res.status(404).json({ message: "Deal not found" });
     }
 
+    const creatorPost = await Post.findById(postId);
+    const creatorId = creatorPost.creator;
     const updatePostData = {
       dealId,
       status,
@@ -129,23 +131,20 @@ const updateDealStatus = async (req, res) => {
       updatePostData.price = updatedDeal.dealPrice;
 
       const notification = new Notification({
-        userId: updatedDeal.driverId.userId,
-        title: "Đơn hàng",
-        message: `Bạn đã được nhận đơn hàng với ID: ${postId}`,
+        userId: creatorId,
+        title: "Đơn hàng được tài xế thương lượng",
+        message: `Đơn hàng của bạn có tài xế thương lượng: ${postId} . Vui lòng kiểm tra và xác nhận tài xế`,
         data: { postId, status: "approve" },
       });
 
       await notification.save();
 
-      req.io
-        .to(updatedDeal.driverId.userId.toString())
-        .emit("receiveNotification", {
-          title: "Đơn hàng",
-          message: `Bạn đã được nhận đơn hàng với ID: ${postId}`,
-          data: { postId, status: "approve" },
-          timestamp: new Date(),
-        });
-
+      req.io.to(creatorId.toString()).emit("receiveNotification", {
+        title: "Đơn hàng được tài xế thương lượng",
+        message: `Đơn hàng của bạn có tài xế thương lượng: ${postId} . Vui lòng kiểm tra và xác nhận tài xế`,
+        data: { postId, status: "approve" },
+        timestamp: new Date(),
+      });
     }
 
     const updatePost = await Post.findByIdAndUpdate(postId, updatePostData, {

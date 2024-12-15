@@ -355,7 +355,7 @@ const processWithdrawRequest = async (req, res) => {
 
     const notification = new Notification({
       userId: withdrawRequest.userId,
-      title: "Yêu cầu rút tiền đã hoàn thành",
+      title: "Rút tiền thành công",
       message: `Số tiền ${withdrawRequest.amount} đã được chuyển thành công.`,
       data: {
         withdrawRequestId: withdrawRequest._id,
@@ -365,7 +365,7 @@ const processWithdrawRequest = async (req, res) => {
     await notification.save();
 
     req.io.to(withdrawRequest.userId.toString()).emit("receiveNotification", {
-      title: "Yêu cầu rút tiền đã hoàn thành",
+      title: "Rút tiền thành công",
       message: `Số tiền ${withdrawRequest.amount} đã được chuyển thành công.`,
       data: {
         withdrawRequestId: withdrawRequest._id,
