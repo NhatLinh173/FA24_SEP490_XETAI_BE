@@ -162,8 +162,8 @@ const googleAuthCallback = async (req, res, next) => {
         maxAge: refreshTokenExpiration * 1000,
       });
       const role = req.query.state;
-
-      res.redirect(`https://xehang.online/?token=${token}`);
+      res.redirect(`http://localhost:3000/?token=${token}&role=${role}`);
+      // res.redirect(`https://xehang.online/?token=${token}`);
     });
   })(req, res, next);
 };

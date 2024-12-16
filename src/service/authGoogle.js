@@ -26,14 +26,6 @@ passport.use(
         let user = await User.findOne({ email: profile.emails[0].value });
 
         if (!user) {
-          console.log("Creating user with data:", {
-            googleId: profile.id,
-            fullName: profile._json.name,
-            email: profile.emails[0].value,
-            role: roleUser,
-            avatar: avatarUrl,
-          });
-
           user = await User.create({
             googleId: profile.id,
             fullName: profile._json.name,
@@ -51,9 +43,15 @@ passport.use(
 
         const refreshToken = generateToken(user._id, "7d", user.role);
         user.refreshToken = refreshToken;
+        const accessToken = generateToken(user._id, "1h", user.role);
+        user.accessToken = accessToken;
         await user.save();
 
-        return done(null, user);
+        return done(null, {
+          ...user.toObject(),
+          role: user.role,
+          accessToken: accessToken,
+        });
       } catch (error) {
         return done(error, null);
       }
