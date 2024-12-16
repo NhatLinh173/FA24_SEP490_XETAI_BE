@@ -47,11 +47,7 @@ passport.use(
         user.accessToken = accessToken;
         await user.save();
 
-        return done(null, {
-          ...user.toObject(),
-          role: user.role,
-          accessToken: accessToken,
-        });
+      return done(null, user);
       } catch (error) {
         return done(error, null);
       }
