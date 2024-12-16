@@ -833,7 +833,7 @@ class PostController {
         });
         await driverTransaction.save();
 
-        await driverController.updateDriverStatisticsController(driverId, {
+        await driverController.updateDriverStatistics(driverId, {
           earnings: driverAmount,
           trips: 1,
         });
@@ -874,7 +874,7 @@ class PostController {
         });
         await driverTransaction.save();
 
-        await driverController.updateDriverStatisticsController(driverId, {
+        await driverController.updateDriverStatistics(driverId, {
           earnings: driverAmount,
           trips: 1,
         });

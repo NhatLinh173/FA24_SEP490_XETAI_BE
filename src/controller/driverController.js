@@ -80,8 +80,19 @@ const updateDriverStatisticsController = async (req, res) => {
   }
 };
 
+const updateDriverStatistics = async (driverId, { earnings, trips }) => {
+  try {
+    await driverService.updateDriverStatistics(driverId, { earnings, trips });
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating driver statistics:", error.message);
+    throw error;
+  }
+};
+
 module.exports = {
   getDriverById,
   getDriverStatistics,
   updateDriverStatisticsController,
+  updateDriverStatistics,
 };
