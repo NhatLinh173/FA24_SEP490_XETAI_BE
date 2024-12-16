@@ -118,8 +118,8 @@ const updateDealStatus = async (req, res) => {
       return res.status(404).json({ message: "Deal not found" });
     }
 
-    const creatorPost = await Post.findById(postId);
-
+    const userId = updatedDeal.driverId.userId._id;
+    console.log(userId);
     const updatePostData = {
       dealId,
       status,
@@ -128,7 +128,7 @@ const updateDealStatus = async (req, res) => {
     if (status === "approve") {
       updatePostData.price = updatedDeal.dealPrice;
       const notification = new Notification({
-        userId: dealId,
+        userId: userId,
         title: "Thương lượng đơn hàng thành công",
         message: `Bạn đã thương lượng thành công đơn hàng: ${postId}. Vui lòng chờ xác nhận từ người đặt`,
         data: { postId, status: "approve" },
@@ -136,7 +136,7 @@ const updateDealStatus = async (req, res) => {
 
       await notification.save();
 
-      req.io.to(dealId.toString()).emit("receiveNotification", {
+      req.io.to(userId.toString()).emit("receiveNotification", {
         title: "Thương lượng đơn hàng thành công",
         message: `Bạn đã thương lượng thành công đơn hàng: ${postId}. Vui lòng chờ xác nhận từ người đặt`,
         data: { postId, status: "approve" },
