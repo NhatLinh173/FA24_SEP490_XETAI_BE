@@ -69,19 +69,18 @@ const createDriverPost = async (req, res) => {
       destinationCity,
       description,
       images: imageUrls,
-      status: "PENDING", // Add default status if needed
+      status: "PENDING",
     });
 
     // Save the post
     const savedDriverPost = await newDriverPost.save();
 
-    // Deduct balance and save user
-    creator.balance -= postFee;
-    await creator.save();
+    user.balance -= postFee;
+    await user.save();
 
     // Create transaction record
     const newTransaction = new Transaction({
-      userId: creatorId,
+      userId: userId,
       postId: savedDriverPost._id,
       amount: postFee,
       type: "POST_PAYMENT",
