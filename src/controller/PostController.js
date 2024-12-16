@@ -706,6 +706,7 @@ class PostController {
 
       const postCreator = updatedPost.creator;
       let notificationMessage = "";
+      let titleMessage = "";
       if (status === "approve") {
         notificationMessage = `Tài xế đã chấp nhận đơn hàng của bạn: ${postId}`;
         titleMessage = "Đơn hàng được tài xế chấp nhận";
