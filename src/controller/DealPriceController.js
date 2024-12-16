@@ -127,22 +127,23 @@ const updateDealStatus = async (req, res) => {
 
     if (status === "approve") {
       updatePostData.price = updatedDeal.dealPrice;
-
       const notification = new Notification({
-        userId: creatorId,
-        title: "Đơn hàng được tài xế thương lượng",
-        message: `Đơn hàng của bạn có tài xế thương lượng: ${postId} . Vui lòng kiểm tra và xác nhận tài xế`,
+        userId: updatedDeal.driverId.userId._id, // ID của tài xế
+        title: "Thương lượng đơn hàng thành công",
+        message: `Bạn đã thương lượng thành công đơn hàng: ${postId}. Vui lòng chờ xác nhận từ người đặt`,
         data: { postId, status: "approve" },
       });
 
       await notification.save();
 
-      req.io.to(creatorId.toString()).emit("receiveNotification", {
-        title: "Đơn hàng được tài xế thương lượng",
-        message: `Đơn hàng của bạn có tài xế thương lượng: ${postId} . Vui lòng kiểm tra và xác nhận tài xế`,
-        data: { postId, status: "approve" },
-        timestamp: new Date(),
-      });
+      req.io
+        .to(updatedDeal.driverId.userId._id.toString())
+        .emit("receiveNotification", {
+          title: "Thương lượng đơn hàng thành công",
+          message: `Bạn đã thương lượng thành công đơn hàng: ${postId}. Vui lòng chờ xác nhận từ người đặt`,
+          data: { postId, status: "approve" },
+          timestamp: new Date(),
+        });
     }
 
     const updatePost = await Post.findByIdAndUpdate(postId, updatePostData, {

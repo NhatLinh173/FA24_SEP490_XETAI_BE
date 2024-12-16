@@ -10,6 +10,7 @@ const dealPriceModel = require("../model/dealPriceModel");
 const Driver = require("../model/driverModel");
 const Notification = require("../model/notificationModel");
 const { sendEmail } = require("../service/emailService");
+const driverController = require("./driverController");
 const ObjectId = mongoose.Types.ObjectId;
 const deleteOldPosts = require("../config/cronDeleteOldPosts");
 class PostController {
@@ -707,12 +708,14 @@ class PostController {
       let notificationMessage = "";
       if (status === "approve") {
         notificationMessage = `Tài xế đã chấp nhận đơn hàng của bạn: ${postId}`;
+        titleMessage = "Đơn hàng được tài xế chấp nhận";
       } else if (status === "wait") {
         notificationMessage = `Bạn đang có tài xế thương lượng giá cho đơn hàng ${postId}. Vui lòng kiểm tra đơn hàng để xác nhận tài xế`;
+        titleMessage = "Đơn hàng được tài xế thương lượng";
       }
       const notification = new Notification({
         userId: postCreator._id,
-        title: "Đơn hàng",
+        title: titleMessage,
         message: notificationMessage,
         data: { postId, driverId, dealPrice, deliveryTime },
       });
@@ -720,7 +723,7 @@ class PostController {
       await notification.save();
 
       req.io.to(postCreator._id.toString()).emit("receiveNotification", {
-        title: "Đơn hàng",
+        title: titleMessage,
         message: notificationMessage,
         data: { postId, driverId, dealPrice, deliveryTime },
         timestamp: new Date(),
@@ -828,6 +831,11 @@ class PostController {
           orderCode: orderCode,
         });
         await driverTransaction.save();
+
+        await driverController.updateDriverStatisticsController(driverId, {
+          earnings: driverAmount,
+          trips: 1,
+        });
       } else if (post.paymentMethod === "cash") {
         const transportFee = parseFloat(post.price.replace(/,/g, ""));
 
@@ -864,6 +872,11 @@ class PostController {
           orderCode: generateOrderCode(),
         });
         await driverTransaction.save();
+
+        await driverController.updateDriverStatisticsController(driverId, {
+          earnings: driverAmount,
+          trips: 1,
+        });
 
         if (customer && customer.email) {
           await sendEmail(
@@ -917,6 +930,7 @@ class PostController {
       });
     }
   }
+
   async updatePostStatus(req, res) {
     try {
       const id = req.params.idPost;
