@@ -4,6 +4,7 @@ const User = require("../model/userModel");
 
 module.exports = (io) => {
   const driverIntervals = new Map();
+  const driverOrders = new Map();
 
   io.on("connection", async (socket) => {
     socket.on("authenticate", async ({ userId }) => {
@@ -20,7 +21,7 @@ module.exports = (io) => {
 
           const interval = setInterval(() => {
             socket.emit("requestLocation");
-          }, 900000);
+          }, 900000); // 15 phút
 
           driverIntervals.set(socket.userId, interval);
         }
@@ -36,6 +37,7 @@ module.exports = (io) => {
           throw new Error("User not authenticated");
         }
 
+        // Cập nhật vị trí trong database
         await DriverLocation.findOneAndUpdate(
           { driverId: socket.userId },
           {
@@ -54,6 +56,21 @@ module.exports = (io) => {
       } catch (error) {
         console.error("Error updating location:", error);
         socket.emit("locationError", { message: "Failed to update location" });
+      }
+    });
+
+    socket.on("stopTracking", async ({ orderId }) => {
+      if (socket.userId) {
+        if (driverIntervals.has(socket.userId)) {
+          clearInterval(driverIntervals.get(socket.userId));
+          driverIntervals.delete(socket.userId);
+        }
+
+        // Cập nhật trạng thái không khả dụng trong database
+        await DriverLocation.findOneAndUpdate(
+          { driverId: socket.userId },
+          { isAvailable: false }
+        );
       }
     });
 
