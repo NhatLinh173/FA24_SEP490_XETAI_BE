@@ -130,7 +130,7 @@ const updateDealStatus = async (req, res) => {
       const notification = new Notification({
         userId: userId,
         title: "Thương lượng đơn hàng thành công",
-        message: `Bạn đã thương lượng thành công đơn hàng: ${postId}. Vui lòng chờ xác nhận từ người đặt`,
+        message: `Bạn đã thương lượng thành công đơn hàng: ${postId}. Vui lòng kiểm tra đơn hàng`,
         data: { postId, status: "approve" },
       });
 
@@ -138,7 +138,7 @@ const updateDealStatus = async (req, res) => {
 
       req.io.to(userId.toString()).emit("receiveNotification", {
         title: "Thương lượng đơn hàng thành công",
-        message: `Bạn đã thương lượng thành công đơn hàng: ${postId}. Vui lòng chờ xác nhận từ người đặt`,
+        message: `Bạn đã thương lượng thành công đơn hàng: ${postId}. Vui lòng kiểm tra đơn hàng`,
         data: { postId, status: "approve" },
         timestamp: new Date(),
       });
