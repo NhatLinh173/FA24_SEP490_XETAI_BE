@@ -137,7 +137,7 @@ const getDriverStatistics = async (driverId, range) => {
         statistics.lastMonth = await getStatisticsForLastMonth(driverData);
         break;
       case "thisYear":
-        statistics.year = await getStatisticsForThisYear(driverData);
+        statistics.thisYear = await getStatisticsForThisYear(driverData);
         break;
       case "lastYear":
         statistics.lastYear = await getStatisticsForLastYear(driverData);
