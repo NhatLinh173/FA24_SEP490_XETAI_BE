@@ -2,6 +2,7 @@ const CarRegistration = require("../model/carRegistrationModel");
 const cloudinary = require("../config/cloudinaryConfig");
 const Tesseract = require("tesseract.js");
 const Driver = require("../model/driverModel");
+const Notification = require("../model/notificationModel");
 const createCarRegistration = async (req, res) => {
   const {
     nameCar,
@@ -298,6 +299,14 @@ const updateCarRegistrationStatus = async (req, res) => {
       return res.status(404).json({ message: "Car registration not found" });
     }
 
+    const driver = await Driver.findById(
+      updatedCarRegistration.driverId
+    ).populate("userId");
+
+    if (!driver || !driver.userId) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
     let notificationMessage = "";
     if (status === "approve") {
       notificationMessage = `Đăng ký xe ${updatedCarRegistration.nameCar} của bạn đã được phê duyệt`;
@@ -308,7 +317,7 @@ const updateCarRegistrationStatus = async (req, res) => {
     }
 
     const notification = new Notification({
-      userId: updatedCarRegistration.driverId.userId, 
+      userId: driver.userId._id,
       title: "Đăng ký xe",
       message: notificationMessage,
       data: {
@@ -318,23 +327,22 @@ const updateCarRegistrationStatus = async (req, res) => {
       },
     });
 
-    req.io
-      .to(updatedCarRegistration.driverId.userId.toString())
-      .emit("receiveNotification", {
-        title: "Đăng ký xe",
-        message: notificationMessage,
-        data: {
-          carRegistrationId: id,
-          status: status,
-          carName: updatedCarRegistration.nameCar,
-        },
-        timestamp: new Date(),
-      });
+    req.io.to(driver.userId._id.toString()).emit("receiveNotification", {
+      title: "Đăng ký xe",
+      message: notificationMessage,
+      data: {
+        carRegistrationId: id,
+        status: status,
+        carName: updatedCarRegistration.nameCar,
+      },
+      timestamp: new Date(),
+    });
 
     await notification.save();
 
     res.status(200).json(updatedCarRegistration);
   } catch (error) {
+    console.error("Error updating car registration:", error);
     res
       .status(400)
       .json({ message: "Unable to update car registration status", error });
