@@ -186,8 +186,11 @@ class PostController {
         });
       } else if (bodyData.status === "cancel") {
         const user = await User.findById(updatePost.creator);
-        const driverId = await Driver.findById(updatePost.dealId.driverId);
-        const driver = await User.findById(driverId);
+        const dealId = updatePost.dealId;
+        const dealData = await Deal.findById(dealId);
+        const driverId = dealData.driverId;
+        const driver = await Driver.findById(driverId);
+        const userDriver = await User.findById(driver.userId);
         const price = parseFloat(
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
@@ -222,7 +225,7 @@ class PostController {
                     .json({ message: "Tài xế không tìm thấy" });
                 }
 
-                driver.balance += cancellationFee;
+                userDriver.balance += cancellationFee;
 
                 const customerTransaction = new Transaction({
                   userId: bodyData.creator,
@@ -234,7 +237,7 @@ class PostController {
                 });
 
                 const driverTransaction = new Transaction({
-                  userId: driverId,
+                  userId: userDriver,
                   postId: updatePost._id,
                   orderCode: generateOrderCode(),
                   amount: cancellationFee,
@@ -269,7 +272,7 @@ class PostController {
                   .status(402)
                   .json({ message: "Không đủ số dư để hủy đơn hàng" });
               } else {
-                driver.balance -= cancellationFee;
+                userDriver.balance -= cancellationFee;
 
                 const customer = await User.findById(updatePost.creator);
                 if (!customer) {
@@ -281,7 +284,7 @@ class PostController {
                 customer.balance += cancellationFee;
 
                 const driverTransaction = new Transaction({
-                  userId: bodyData.creator,
+                  userId: userDriver,
                   postId: updatePost._id,
                   orderCode: generateOrderCode(),
                   amount: cancellationFee,
