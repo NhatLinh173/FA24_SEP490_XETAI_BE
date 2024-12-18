@@ -168,7 +168,6 @@ const getStats = async (req, res) => {
   try {
     const totalVisits = await Visit.countDocuments();
 
-    // Tính lượt truy cập theo URL
     const visitsByUrl = await Visit.aggregate([
       { $group: { _id: "$url", count: { $sum: 1 } } },
     ]);
@@ -178,12 +177,12 @@ const getStats = async (req, res) => {
       {
         $group: {
           _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }, // Chuyển createdAt thành ngày (YYYY-MM-DD)
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
           },
-          count: { $sum: 1 }, // Đếm số lượng lượt truy cập
+          count: { $sum: 1 },
         },
       },
-      { $sort: { _id: 1 } }, // Sắp xếp theo ngày tăng dần
+      { $sort: { _id: 1 } },
     ]);
 
     res.json({ totalVisits, visitsByUrl, visitsByDay });
@@ -214,7 +213,6 @@ const getCustomerAnalysis = async (req, res) => {
       }
     }
 
-    h;
     res.json({
       newCustomers,
       returningCustomers,

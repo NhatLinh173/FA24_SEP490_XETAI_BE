@@ -172,7 +172,7 @@ class PostController {
 
         const notification = new Notification({
           userId: updatePost.creator,
-          title: "Đơn hàng",
+          title: "Đơn hàng hoàn tất",
           message: `Đơn hàng của bạn đã được giao thành công: ${id}`,
           data: { postId: id, status: "finish" },
         });
@@ -871,8 +871,10 @@ class PostController {
             .json({ message: "Người dùng tài xế không tồn tại." });
         }
 
-        const driverAmount = transportFee * 0.05;
-        driverUser.balance -= driverAmount;
+        const serviceFee = transportFee * 0.05;
+        const driverEarnings = transportFee * 0.95;
+
+        driverUser.balance -= serviceFee;
         await driverUser.save();
 
         const generateOrderCode = () => {
@@ -882,15 +884,24 @@ class PostController {
         const driverTransaction = new Transaction({
           userId: driverUser._id,
           postId: post._id,
-          amount: driverAmount,
+          amount: driverEarnings,
+          type: "PAY_SYSTEM_FEE",
+          status: "PAID",
+          orderCode: generateOrderCode(),
+        });
+
+        const driverFeeTransaction = new Transaction({
+          userId: driverUser._id,
+          postId: post._id,
+          amount: serviceFee,
           type: "PAY_SYSTEM_FEE",
           status: "PAID",
           orderCode: generateOrderCode(),
         });
         await driverTransaction.save();
-
+        await driverFeeTransaction.save();
         await driverController.updateDriverStatistics(driverId, {
-          earnings: Number(driverAmount) || 0,
+          earnings: Number(driverEarnings) || 0,
           trips: 1,
         });
 
@@ -947,42 +958,59 @@ class PostController {
     }
   }
 
-  async updatePostStatus(req, res) {
-    try {
-      const id = req.params.idPost;
-      const status = req.body;
+  // async updatePostStatus(req, res) {
+  //   try {
+  //     const id = req.params.idPost;
+  //     const status = req.body;
 
-      const post = await Post.findById(id);
+  //     const post = await Post.findById(id);
 
-      if (!status) {
-        const response = { status: 400, message: "Status is required" };
-        if (res) return res.status(400).json(response);
-        return response;
-      }
+  //     if (!status) {
+  //       const response = { status: 400, message: "Status is required" };
+  //       if (res) return res.status(400).json(response);
+  //       return response;
+  //     }
 
-      if (!post) {
-        const response = { status: 404, message: "Post not found" };
-        if (res) return res.status(404).json(response);
-        return response;
-      }
+  //     if (!post) {
+  //       const response = { status: 404, message: "Post not found" };
+  //       if (res) return res.status(404).json(response);
+  //       return response;
+  //     }
 
-      post.status = status;
+  //     post.status = status;
 
-      const currentTime = new Date();
-      if (status === "inprogress") {
-        post.startTime = currentTime;
-      } else if (status === "finish") {
-        post.endTime = currentTime;
-      }
+  //     const currentTime = new Date();
+  //     if (status === "inprogress") {
+  //       post.startTime = currentTime;
+  //     } else if (status === "finish") {
+  //       post.endTime = currentTime;
+  //       const postId = id;
+  //       const customer = await User.findById(post.creator);
+  //       const driverNotification = new Notification({
+  //         userId: customer,
+  //         title: "Đơn hàng hoàn tất",
+  //         message: `Đơn hàng  ${postId} của bạn đã được hoàn thành. Vui lòng kiểm tra và xác nhận nhận hàng`,
+  //         data: { postId: postId, status: "complete" },
+  //       });
 
-      const updatedPost = await post.save();
-      return res.status(200).json(updatedPost);
-    } catch (error) {
-      return res
-        .status(500)
-        .json({ message: "Server error", error: error.message });
-    }
-  }
+  //       await driverNotification.save();
+
+  //       req.io.to(customer.toString()).emit("receiveNotification", {
+  //         title: "Đơn hàng hoàn tất",
+  //         message: `Đơn hàng  ${postId} của bạn đã được hoàn thành. Vui lòng kiểm tra và xác nhận nhận hàng`,
+  //         data: { postId: postId, status: "complete" },
+  //         timestamp: new Date(),
+  //       });
+  //     }
+
+  //     const updatedPost = await post.save();
+  //     return res.status(200).json(updatedPost);
+  //   } catch (error) {
+  //     return res
+  //       .status(500)
+  //       .json({ message: "Server error", error: error.message });
+  //   }
+  // }
 
   async getPostByOderCode(req, res) {
     try {
