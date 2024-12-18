@@ -299,6 +299,10 @@ const updateDriverStatistics = async (driverId, tripData) => {
       });
     }
 
+    if (!driver.tripsCompleted) {
+      driver.tripsCompleted = 0;
+    }
+    driver.tripsCompleted += trips;
     await driver.save();
 
     return { success: true, message: "Statistics updated successfully!" };
