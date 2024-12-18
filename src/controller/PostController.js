@@ -201,14 +201,6 @@ class PostController {
           if (user) {
             const userRole = user.role;
 
-            const deal = await Deal.findOne({ postId: updatePost._id });
-            if (!deal) {
-              return res
-                .status(404)
-                .json({ message: "Không tìm thấy giao dịch liên quan" });
-            }
-            const driverId = deal.driverId;
-
             if (userRole === "customer") {
               if (user.balance < cancellationFee) {
                 return res
@@ -240,7 +232,7 @@ class PostController {
               await customerTransaction.save();
               await driverTransaction.save();
               await user.save();
-              await driver.save();
+              await userDriver.save();
 
               const driverNotification = new Notification({
                 userId: driverId,
@@ -288,7 +280,7 @@ class PostController {
                 await driverTransaction.save();
                 await customerTransaction.save();
                 await user.save();
-                await customer.save();
+                await userDriver.save();
 
                 const customerNotification = new Notification({
                   userId: updatePost.creator,
