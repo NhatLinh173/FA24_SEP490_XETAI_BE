@@ -678,6 +678,21 @@ class PostController {
           .json({ message: "Driver must have a car registration" });
       }
 
+      const userId = await User.findById(driver.userId);
+      const user = await User.findById(userId);
+      const feeService = dealPrice * 0.05;
+
+      if (post.paymentMethod === "cash") {
+        if (user.balance < feeService) {
+          return res.status(422).json({
+            message:
+              "Số dư không đủ để nhận đơn hàng này. Vui lòng nạp thêm tiền.",
+            requiredBalance: feeService,
+            currentBalance: user.balance,
+          });
+        }
+      }
+
       const newDeal = new dealPriceModel({
         postId: postId,
         status: status,

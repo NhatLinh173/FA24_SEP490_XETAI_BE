@@ -106,7 +106,9 @@ class SearchController {
     const limitPage = 8; // Số lượng bài post mỗi trang
 
     // Tạo object chứa điều kiện tìm kiếm
-    const filters = {};
+    const filters = {
+      status: "wait",
+    };
 
     if (startPointCity) {
       filters.startPointCity = { $regex: new RegExp(startPointCity, "i") };

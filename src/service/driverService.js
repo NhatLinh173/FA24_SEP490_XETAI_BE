@@ -145,7 +145,7 @@ const getDriverStatistics = async (driverId, range) => {
       default:
         throw new Error("Khoảng thời gian không hợp lệ");
     }
-
+    console.log("Statistics being returned:", statistics);
     return statistics;
   } catch (error) {
     console.error("Error in getDriverStatistics:", error);
