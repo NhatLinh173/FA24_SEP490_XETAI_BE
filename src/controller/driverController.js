@@ -1,5 +1,5 @@
 const driverService = require("../service/driverService");
-
+const Driver = require("../model/driverModel");
 const getDriverById = async (req, res) => {
   const { driverId } = req.params;
   try {
