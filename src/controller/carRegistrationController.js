@@ -265,11 +265,17 @@ const deleteCarRegistration = async (req, res) => {
   }
 
   try {
-    const deletedCarRegistration = await CarRegistration.findByIdAndDelete(id);
+    const deletedCarRegistration = await CarRegistration.findById(id);
 
     if (!deletedCarRegistration) {
       return res.status(404).json({ message: "Car registration not found" });
     }
+
+    await Driver.findByIdAndUpdate(deletedCarRegistration.driverId, {
+      $pull: { carRegistrations: id },
+    });
+
+    await CarRegistration.findByIdAndDelete(id);
 
     res.status(200).json({ message: "Car registration deleted successfully" });
   } catch (error) {
