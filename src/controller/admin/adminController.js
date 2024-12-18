@@ -36,8 +36,8 @@ const getSummaryData = async (req, res) => {
             $sum: {
               $cond: {
                 if: { $eq: ["$type", "RECEIVING_PAYMENT_FROM_ORDER"] },
-                then: { $multiply: ["$amount", 0.1] }, // 10% của RECEIVING_PAYMENT_FROM_ORDER
-                else: "$amount", // Cộng bình thường cho các giao dịch khác
+                then: { $multiply: ["$amount", 0.1] },
+                else: "$amount",
               },
             },
           },
@@ -98,13 +98,13 @@ const getSummaryData = async (req, res) => {
     }, 0);
 
     const monthlyFinalAmount = monthlyTotalAmount - monthlyWithdrawAmount;
-
+    const totalOrders = await Post.find({});
     const completedOrders = await Post.find({ status: "complete" });
-    console.log(completedOrders);
-    // Nếu không có đơn hàng hoàn thành, vẫn trả về kết quả với thông tin mặc định
-    const totalOrders = completedOrders.length;
+
+    const totalOrdersInSystem = totalOrders.length;
+    const totalOrdersCompleted = completedOrders.length;
     const totalPrice = completedOrders.reduce((total, order) => {
-      return total + parseFloat(order.price.replace(/[^0-9.-]+/g, "")); // Giả sử price là chuỗi có ký tự không phải số
+      return total + parseFloat(order.price.replace(/[^0-9.-]+/g, ""));
     }, 0);
 
     // Trả về kết quả kết hợp
@@ -114,9 +114,10 @@ const getSummaryData = async (req, res) => {
       breakdown: summary,
       monthlyAmount: monthlyFinalAmount,
       monthlyBreakdown: monthlySummary,
-      totalOrders, // Số lượng đơn hàng hoàn thành
-      totalPrice, // Tổng giá trị của đơn hàng hoàn thành
-      completedOrders, // Dữ liệu các đơn hàng hoàn thành
+      totalOrdersInSystem,
+      totalOrdersCompleted,
+      totalPrice,
+      completedOrders,
       message:
         totalOrders === 0
           ? "No completed orders found"
@@ -193,7 +194,9 @@ const getStats = async (req, res) => {
 
 const getCustomerAnalysis = async (req, res) => {
   try {
-    const allUsers = await User.find({});
+    const allUsers = await User.find({
+      role: { $in: ["customer", "personal"] },
+    });
 
     let newCustomers = 0;
     let returningCustomers = 0;
