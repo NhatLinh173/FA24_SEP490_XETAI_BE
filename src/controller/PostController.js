@@ -677,7 +677,7 @@ class PostController {
           .status(422)
           .json({ message: "Driver must have a car registration" });
       }
-
+      const post = await Post.findById(postId);
       const userId = await User.findById(driver.userId);
       const user = await User.findById(userId);
       const feeService = dealPrice * 0.05;
