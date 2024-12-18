@@ -202,14 +202,12 @@ class PostController {
             const userRole = user.role;
 
             if (userRole === "customer") {
-              console.log(user.balance);
               if (user.balance < cancellationFee) {
                 return res
                   .status(402)
                   .json({ message: "Không đủ số dư để hủy đơn hàng" });
               }
               user.balance -= cancellationFee;
-
               userDriver.balance += cancellationFee;
 
               const customerTransaction = new Transaction({
@@ -217,7 +215,7 @@ class PostController {
                 postId: updatePost._id,
                 orderCode: generateOrderCode(),
                 amount: cancellationFee,
-                type: "RECEIVE_CANCELLATION_FEE",
+                type: "CANCEL_ORDER",
                 status: "PAID",
               });
 
@@ -226,7 +224,7 @@ class PostController {
                 postId: updatePost._id,
                 orderCode: generateOrderCode(),
                 amount: cancellationFee,
-                type: "CANCEL_ORDER",
+                type: "RECEIVE_CANCELLATION_FEE",
                 status: "PAID",
               });
 
@@ -251,7 +249,6 @@ class PostController {
                 timestamp: currentTime,
               });
             } else if (userRole === "personal") {
-              console.log(userDriver.balance);
               if (userDriver.balance < cancellationFee) {
                 return res
                   .status(402)
