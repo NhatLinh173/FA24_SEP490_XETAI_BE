@@ -849,7 +849,7 @@ class PostController {
         await driverTransaction.save();
 
         await driverController.updateDriverStatistics(driverId, {
-          earnings: parseFloat(driverAmount) || 0,
+          earnings: Number(driverAmount) || 0,
           trips: 1,
         });
       } else if (post.paymentMethod === "cash") {
@@ -890,7 +890,7 @@ class PostController {
         await driverTransaction.save();
 
         await driverController.updateDriverStatistics(driverId, {
-          earnings: parseFloat(driverAmount) || 0,
+          earnings: Number(driverAmount) || 0,
           trips: 1,
         });
 
