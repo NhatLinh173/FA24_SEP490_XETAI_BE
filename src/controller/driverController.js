@@ -82,34 +82,18 @@ const updateDriverStatisticsController = async (req, res) => {
 
 const updateDriverStatistics = async (driverId, { earnings, trips }) => {
   try {
-    const driver = await Driver.findById(driverId);
-    if (!driver) {
-      throw new Error("Driver not found");
+    const numericEarnings = Number(earnings);
+    const numericTrips = Number(trips);
+
+    if (isNaN(numericEarnings) || isNaN(numericTrips)) {
+      throw new Error("Trips and earnings must be valid numbers");
     }
 
-    const updateData = {
-      $inc: {
-        totalEarnings: earnings,
-        tripsCompleted: trips,
-      },
-    };
+    await driverService.updateDriverStatistics(driverId, {
+      earnings: numericEarnings,
+      trips: numericTrips,
+    });
 
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    if (now >= startOfWeek) {
-      updateData.$inc.tripsThisWeek = trips;
-    }
-
-    if (now >= startOfMonth) {
-      updateData.$inc.tripsThisMonth = trips;
-    }
-
-    await driverService.updateDriverStatistics(driverId, updateData);
     return { success: true };
   } catch (error) {
     console.error("Error updating driver statistics:", error.message);
