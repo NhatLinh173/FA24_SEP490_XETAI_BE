@@ -202,6 +202,7 @@ class PostController {
             const userRole = user.role;
 
             if (userRole === "customer") {
+              console.log(user.balance);
               if (user.balance < cancellationFee) {
                 return res
                   .status(402)
@@ -235,7 +236,7 @@ class PostController {
               await userDriver.save();
 
               const driverNotification = new Notification({
-                userId: driverId,
+                userId: userDriver._id,
                 title: "Đơn hàng",
                 message: `Đơn hàng  ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
                 data: { postId: id, status: "cancel" },
@@ -243,13 +244,14 @@ class PostController {
 
               await driverNotification.save();
 
-              req.io.to(driverId.toString()).emit("receiveNotification", {
+              req.io.to(userDriver._id.toString()).emit("receiveNotification", {
                 title: "Đơn hàng",
                 message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
                 data: { postId: id, status: "cancel" },
                 timestamp: currentTime,
               });
             } else if (userRole === "personal") {
+              console.log(userDriver.balance);
               if (userDriver.balance < cancellationFee) {
                 return res
                   .status(402)
@@ -264,7 +266,7 @@ class PostController {
                   postId: updatePost._id,
                   orderCode: generateOrderCode(),
                   amount: cancellationFee,
-                  type: "CANCEL_ORDER",
+                  type: "RECEIVE_CANCELLATION_FEE",
                   status: "PAID",
                 });
 
@@ -283,7 +285,7 @@ class PostController {
                 await userDriver.save();
 
                 const customerNotification = new Notification({
-                  userId: updatePost.creator,
+                  userId: user._id,
                   title: "Đơn hàng",
                   message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn `,
                   data: { postId: id, status: "cancel" },
@@ -291,14 +293,12 @@ class PostController {
 
                 await customerNotification.save();
 
-                req.io
-                  .to(updatePost.creator.toString())
-                  .emit("receiveNotification", {
-                    title: "Đơn hàng bị hủy",
-                    message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
-                    data: { postId: id, status: "cancel" },
-                    timestamp: currentTime,
-                  });
+                req.io.to(user._id.toString()).emit("receiveNotification", {
+                  title: "Đơn hàng bị hủy",
+                  message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
+                  data: { postId: id, status: "cancel" },
+                  timestamp: currentTime,
+                });
               }
             }
           }
