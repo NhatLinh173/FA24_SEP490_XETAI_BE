@@ -186,6 +186,8 @@ class PostController {
         });
       } else if (bodyData.status === "cancel") {
         const user = await User.findById(updatePost.creator);
+        const driverId = await Driver.findById(updatePost.dealId.driverId);
+        const driver = await User.findById(driverId);
         const price = parseFloat(
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
@@ -262,12 +264,12 @@ class PostController {
                 });
               }
             } else if (userRole === "personal") {
-              if (user.balance < cancellationFee) {
+              if (driver.balance < cancellationFee) {
                 return res
                   .status(402)
                   .json({ message: "Không đủ số dư để hủy đơn hàng" });
               } else {
-                user.balance -= cancellationFee;
+                driver.balance -= cancellationFee;
 
                 const customer = await User.findById(updatePost.creator);
                 if (!customer) {

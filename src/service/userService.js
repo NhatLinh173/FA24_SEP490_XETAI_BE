@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../model/userModel");
 const Driver = require("../model/driverModel");
 const Post = require("../model/postModel");
+const DriverPost = require("../model/driverPost");
 const Transaction = require("../model/transactionModel");
 const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
