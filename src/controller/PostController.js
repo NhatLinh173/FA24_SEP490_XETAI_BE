@@ -101,6 +101,7 @@ class PostController {
       if (!updatePost) {
         return res.status(404).json({ message: "Post not found" });
       }
+      console.log(updatePost)
       const currentStatus = updatePost.status;
       let imageUrls = Array.isArray(oldImages) ? [...oldImages] : [oldImages];
       if (typeof oldImages === "string") {
