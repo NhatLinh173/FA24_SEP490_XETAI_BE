@@ -97,12 +97,15 @@ class PostController {
       const newImages = req.files;
       const oldImages = bodyData.oldImages || [];
 
-      const updatePost = await Post.findOne({ _id: id });
+      const updatePost = await Post.findOne({ _id: id }).session(session);
       if (!updatePost) {
+        await session.abortTransaction();
         return res.status(404).json({ message: "Post not found" });
       }
+
       const currentStatus = updatePost.status;
       console.log("Current status before update:", currentStatus);
+      console.log("New status to be set:", bodyData.status);
       let imageUrls = Array.isArray(oldImages) ? [...oldImages] : [oldImages];
       if (typeof oldImages === "string") {
         imageUrls = oldImages.split(",").map((url) => url.trim());
@@ -788,7 +791,9 @@ class PostController {
       post.userConfirmed = true;
 
       if (post.paymentMethod === "bank_transfer") {
-        const transportFee = parseFloat(post.price.replace(/,/g, ""));
+        const transportFee = parseFloat(
+          post.price.replace(/,/g, "").replace(/\./g, "")
+        );
         const driver = await Driver.findById(driverId).populate("userId");
         if (!driver) {
           return res.status(404).json({ message: "Tài xế không tồn tại." });
