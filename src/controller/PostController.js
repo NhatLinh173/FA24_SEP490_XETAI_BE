@@ -244,7 +244,7 @@ class PostController {
             await driverTransaction.save();
 
             const driverNotification = new Notification({
-              userId: driver.userId,
+              userId: userDriver._id,
               title: "Đơn hàng bị hủy",
               message: `Đơn hàng ${updatePost._id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
               data: { postId: updatePost._id, status: "cancel" },
