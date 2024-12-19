@@ -185,13 +185,8 @@ class PostController {
           timestamp: currentTime,
         });
       } else if (bodyData.status === "cancel") {
-        const userId = req.user._id;
-        const userRole = req.user.role; // Lấy role từ req.user
-        const user = await User.findById(userId);
-        if (!user) {
-          return res.status(404).json({ message: "Người dùng không tồn tại" });
-        }
-
+        const userRole = req.body.role;
+        const user = await User.findById(updatePost.creator);
         const dealId = updatePost.dealId;
         const dealData = await Deal.findById(dealId);
         const driverId = dealData.driverId;
@@ -204,14 +199,12 @@ class PostController {
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
 
-
           if (userRole === "customer") {
-           if (user.balance < cancellationFee) {
+            if (user.balance < cancellationFee) {
               return res
                 .status(400)
                 .json({ message: "Bạn không đủ số dư để hủy đơn" });
             }
-
 
             user.balance -= cancellationFee;
             userDriver.balance += cancellationFee;
@@ -308,6 +301,7 @@ class PostController {
           }
         }
       }
+
       const savedPost = await updatePost.save();
       return res.json(savedPost);
     } catch (error) {
