@@ -189,7 +189,8 @@ class PostController {
 
         const deal = await Deal.findById(updatePost.dealId);
         const driverId = await deal.driverId;
-        const driver = await User.findById(driverId);
+        const driverUser = await Driver.findById(driverId);
+        const driverDetails = await Driver.findOne({ userId: driverUser._id });
         const customer = await User.findById(updatePost.creator);
 
         if (currentStatus === "approve") {
@@ -201,7 +202,7 @@ class PostController {
               });
             }
             customer.balance -= cancellationFee;
-            driver.balance += cancellationFee;
+            driverDetails.balance += cancellationFee;
 
             const customerTransaction = new Transaction({
               userId: customer._id,
@@ -214,7 +215,7 @@ class PostController {
             await customerTransaction.save();
 
             const driverTransaction = new Transaction({
-              userId: driver._id,
+              userId: driverDetails._id,
               postId: updatePost._id,
               amount: cancellationFee,
               type: "RECEIVE_CANCELLATION_FEE",
@@ -224,7 +225,7 @@ class PostController {
             await driverTransaction.save();
 
             const notification = new Notification({
-              userId: driver._id,
+              userId: driverDetails._id,
               title: "Đơn hàng bị hủy",
               message: `Khách hàng đã hủy đơn hàng: ${updatePost._id}. Bạn đã nhận ${cancellationFee} VND phí hủy.`,
               data: { postId: updatePost._id, status: "cancel" },
@@ -242,11 +243,11 @@ class PostController {
                 message: "Số dư của tài xế không đủ để hủy đơn hàng.",
               });
             }
-            driver.balance -= cancellationFee;
+            driverDetails.balance -= cancellationFee;
             customer.balance += cancellationFee;
 
             const driverTransaction = new Transaction({
-              userId: driver._id,
+              userId: driverDetails._id,
               postId: updatePost._id,
               amount: cancellationFee,
               type: "CANCEL_ORDER",
@@ -280,7 +281,7 @@ class PostController {
           });
 
           await customer.save();
-          await driver.save();
+          await driverDetails.save();
         }
       }
 
