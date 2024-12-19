@@ -188,10 +188,11 @@ class PostController {
         const cancellationFee = updatePost.price * 0.8;
 
         const deal = await Deal.findById(updatePost.dealId);
-        const driverId = await deal.driverId;
-        const driverUser = await Driver.findById(driverId);
-        const driverDetails = await Driver.findOne({ userId: driverUser._id });
+        const driverId = deal?.driverId;
+        const driverUser = driverId ? await Driver.findById(driverId) : null;
         const customer = await User.findById(updatePost.creator);
+
+        const driverDetails = await Driver.findOne({ userId: driverUser._id });
 
         if (currentStatus === "approve") {
           if (customer.role === "customer") {
@@ -232,13 +233,15 @@ class PostController {
             });
             await notification.save();
 
-            req.io.to(driver._id.toString()).emit("receiveNotification", {
-              title: "Đơn hàng bị hủy",
-              message: `Khách hàng đã hủy đơn hàng: ${updatePost._id}. Bạn đã nhận ${cancellationFee} VND phí hủy.`,
-              data: { postId: updatePost._id, status: "cancel" },
-            });
+            req.io
+              .to(driverDetails._id.toString())
+              .emit("receiveNotification", {
+                title: "Đơn hàng bị hủy",
+                message: `Khách hàng đã hủy đơn hàng: ${updatePost._id}. Bạn đã nhận ${cancellationFee} VND phí hủy.`,
+                data: { postId: updatePost._id, status: "cancel" },
+              });
           } else if (customer.role === "personal") {
-            if (driver.balance < cancellationFee) {
+            if (driverDetails.balance < cancellationFee) {
               return res.status(400).json({
                 message: "Số dư của tài xế không đủ để hủy đơn hàng.",
               });
@@ -266,6 +269,7 @@ class PostController {
             });
             await customerTransaction.save();
           }
+
           const notification = new Notification({
             userId: customer._id,
             title: "Đơn hàng bị hủy",
