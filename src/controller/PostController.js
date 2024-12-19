@@ -186,6 +186,7 @@ class PostController {
         });
       } else if (bodyData.status === "cancel") {
         const userRole = req.body.role;
+        const statusCustomer = req.body.statusCustomer;
         console.log("User role:", userRole); // Thêm log để kiểm tra giá trị userRole
         console.log("Request body:", req.body); // Thêm log để kiểm tra toàn bộ request body
 
@@ -206,13 +207,10 @@ class PostController {
         );
 
         console.log("Current status before update:", currentStatus);
-        if (currentStatus === "approve") {
+        if (statusCustomer === "approve" || currentStatus === "approve") {
           const cancellationFee = price * 0.8;
 
           if (userRole === "customer") {
-            console.log("User balance before:", user.balance);
-            console.log("Cancellation fee:", cancellationFee);
-
             if (user.balance < cancellationFee) {
               console.log("Insufficient balance");
               return res
@@ -222,9 +220,6 @@ class PostController {
 
             user.balance -= cancellationFee;
             userDriver.balance += cancellationFee;
-
-            console.log("User balance after:", user.balance);
-            console.log("UserDriver balance after:", userDriver.balance);
 
             await user.save();
             await userDriver.save();
