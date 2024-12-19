@@ -210,21 +210,18 @@ class PostController {
             const driverId = deal.driverId;
 
             if (userRole === "customer") {
-              if (user.balance < cancellationFee) {
-                return res
-                  .status(402)
-                  .json({ message: "Không đủ số dư để hủy đơn hàng" });
-              }
               user.balance -= cancellationFee;
-
               userDriver.balance += cancellationFee;
+
+              await user.save();
+              await userDriver.save();
 
               const customerTransaction = new Transaction({
                 userId: user._id,
                 postId: updatePost._id,
                 orderCode: generateOrderCode(),
                 amount: cancellationFee,
-                type: "RECEIVE_CANCELLATION_FEE",
+                type: "CANCEL_ORDER",
                 status: "PAID",
               });
 
@@ -233,29 +230,27 @@ class PostController {
                 postId: updatePost._id,
                 orderCode: generateOrderCode(),
                 amount: cancellationFee,
-                type: "CANCEL_ORDER",
+                type: "RECEIVE_CANCELLATION_FEE",
                 status: "PAID",
               });
 
               await customerTransaction.save();
               await driverTransaction.save();
-              await user.save();
-              await driver.save();
 
               const driverNotification = new Notification({
                 userId: driverId,
-                title: "Đơn hàng",
-                message: `Đơn hàng  ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
-                data: { postId: id, status: "cancel" },
+                title: "Đơn hàng bị hủy",
+                message: `Đơn hàng ${updatePost._id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
+                data: { postId: updatePost._id, status: "cancel" },
               });
 
               await driverNotification.save();
 
               req.io.to(driverId.toString()).emit("receiveNotification", {
-                title: "Đơn hàng",
-                message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
-                data: { postId: id, status: "cancel" },
-                timestamp: currentTime,
+                title: "Đơn hàng bị hủy",
+                message: `Đơn hàng ${updatePost._id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
+                data: { postId: updatePost._id, status: "cancel" },
+                timestamp: new Date(),
               });
             } else if (userRole === "personal") {
               if (userDriver.balance < cancellationFee) {
@@ -264,7 +259,6 @@ class PostController {
                   .json({ message: "Không đủ số dư để hủy đơn hàng" });
               } else {
                 userDriver.balance -= cancellationFee;
-
                 user.balance += cancellationFee;
 
                 const driverTransaction = new Transaction({
@@ -291,7 +285,7 @@ class PostController {
                 await customer.save();
 
                 const customerNotification = new Notification({
-                  userId: updatePost.creator,
+                  userId: updatePost.creator._id,
                   title: "Đơn hàng",
                   message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn `,
                   data: { postId: id, status: "cancel" },
@@ -300,7 +294,7 @@ class PostController {
                 await customerNotification.save();
 
                 req.io
-                  .to(updatePost.creator.toString())
+                  .to(updatePost.creator._id.toString())
                   .emit("receiveNotification", {
                     title: "Đơn hàng bị hủy",
                     message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
