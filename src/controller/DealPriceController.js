@@ -25,6 +25,11 @@ const updateDealPrice = async (req, res) => {
   const { dealPrice, dealId } = req.body;
 
   try {
+
+    if (!mongoose.Types.ObjectId.isValid(dealId)) {
+      return res.status(400).json({ message: "Invalid dealId format" });
+    }
+    
     const updatedDeal = await Deal.findByIdAndUpdate(
       dealId,
       { dealPrice },
@@ -102,7 +107,7 @@ const updateDealStatus = async (req, res) => {
   const { dealId, status } = req.body;
 
   try {
-    // Kiểm tra các tham số đầu vào
+
     if (!postId || !dealId || !status) {
       return res.status(400).json({
         message: "Missing required parameters",
@@ -121,7 +126,7 @@ const updateDealStatus = async (req, res) => {
       });
     }
 
-    // Cập nhật deal
+
     const updatedDeal = await Deal.findByIdAndUpdate(
       dealId,
       { status },
