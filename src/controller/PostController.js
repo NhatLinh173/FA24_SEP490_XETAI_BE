@@ -103,6 +103,7 @@ class PostController {
       }
       console.log(updatePost)
       const currentStatus = updatePost.status;
+      console.log("Current status before update:", currentStatus);
       let imageUrls = Array.isArray(oldImages) ? [...oldImages] : [oldImages];
       if (typeof oldImages === "string") {
         imageUrls = oldImages.split(",").map((url) => url.trim());
@@ -205,8 +206,7 @@ class PostController {
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
 
-  const currentStatus = updatePost.status;
-  console.log("Current status before update:", currentStatus);
+        console.log("Current status before update:", currentStatus);
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
 
