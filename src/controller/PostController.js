@@ -275,7 +275,7 @@ class PostController {
                   postId: updatePost._id,
                   orderCode: generateOrderCode(),
                   amount: cancellationFee,
-                  type: "CANCEL_ORDER",
+                  type: "RECEIVE_CANCELLATION_FEE",
                   status: "PAID",
                 });
 
