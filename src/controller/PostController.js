@@ -194,7 +194,7 @@ class PostController {
         const driverUser = await Driver.findById(driverId);
         const customer = await User.findById(updatePost.creator);
         const driverDetails = await User.findById(driverUser.userId);
-
+        console.log(customer.role)
         if (currentStatus === "approve") {
           if (customer.role === "customer") {
             if (customer.balance < cancellationFee) {
