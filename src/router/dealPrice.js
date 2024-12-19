@@ -28,7 +28,7 @@ router.patch("/price", updateDealPrice);
 router.patch("/status/:postId", updateDealStatus);
 
 // Route để xoá Deal
-router.delete("/", deleteDeal);
+router.delete("/:dealId", deleteDeal);
 
 // Route để lấy trạng thái wait và cancel của Deal
 router.get("/driver/:driverId", getDealsByDriverId);
