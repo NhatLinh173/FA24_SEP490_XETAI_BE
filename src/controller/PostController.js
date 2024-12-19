@@ -200,7 +200,7 @@ class PostController {
 
           if (user) {
             const userRole = user.role;
-
+            console.log(user.role)
             const deal = await Deal.findOne({ postId: updatePost._id });
             if (!deal) {
               return res
