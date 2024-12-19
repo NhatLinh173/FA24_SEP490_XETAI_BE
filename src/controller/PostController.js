@@ -97,15 +97,12 @@ class PostController {
       const newImages = req.files;
       const oldImages = bodyData.oldImages || [];
 
-      const updatePost = await Post.findOne({ _id: id }).session(session);
+      const updatePost = await Post.findOne({ _id: id });
       if (!updatePost) {
-        await session.abortTransaction();
         return res.status(404).json({ message: "Post not found" });
       }
-
       const currentStatus = updatePost.status;
       console.log("Current status before update:", currentStatus);
-      console.log("New status to be set:", bodyData.status);
       let imageUrls = Array.isArray(oldImages) ? [...oldImages] : [oldImages];
       if (typeof oldImages === "string") {
         imageUrls = oldImages.split(",").map((url) => url.trim());
@@ -208,7 +205,8 @@ class PostController {
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
 
-        if (updatePost.status === "approve") {
+        console.log("Current status before update:", currentStatus);
+        if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
 
           if (userRole === "customer") {
