@@ -206,93 +206,60 @@ class PostController {
           const cancellationFee = price * 0.8;
 
           if (userRole === "customer") {
-            try {
-              let price;
-              try {
-                price = parseFloat(updatePost.price.replace(/[,.]/g, ""));
-                if (isNaN(price)) {
-                  throw new Error("Invalid price format");
-                }
-              } catch (error) {
-                console.error("Error parsing price:", error);
-                return res
-                  .status(400)
-                  .json({ message: "Invalid price format" });
-              }
+            console.log("User balance before:", user.balance);
+            console.log("Cancellation fee:", cancellationFee);
 
-              const cancellationFee = price * 0.8;
-
-              if (user.balance < cancellationFee) {
-                return res.status(400).json({
-                  message: "Bạn không đủ số dư để hủy đơn",
-                  required: cancellationFee,
-                  current: user.balance,
-                });
-              }
-
-              const newUserBalance = user.balance - cancellationFee;
-              const newDriverBalance = userDriver.balance + cancellationFee;
-
-              // Cập nhật trực tiếp vào database
-              const [updatedUser, updatedDriver] = await Promise.all([
-                User.findByIdAndUpdate(
-                  user._id,
-                  { $set: { balance: newUserBalance } },
-                  { new: true }
-                ),
-                User.findByIdAndUpdate(
-                  userDriver._id,
-                  { $set: { balance: newDriverBalance } },
-                  { new: true }
-                ),
-              ]);
-
-              await Promise.all([
-                Transaction.create({
-                  userId: user._id,
-                  postId: updatePost._id,
-                  orderCode: generateOrderCode(),
-                  amount: cancellationFee,
-                  type: "CANCEL_ORDER",
-                  status: "PAID",
-                }),
-                Transaction.create({
-                  userId: userDriver._id,
-                  postId: updatePost._id,
-                  orderCode: generateOrderCode(),
-                  amount: cancellationFee,
-                  type: "RECEIVE_CANCELLATION_FEE",
-                  status: "PAID",
-                }),
-              ]);
-
-              const notification = await Notification.create({
-                userId: driver.userId,
-                title: "Đơn hàng bị hủy",
-                message: `Đơn hàng ${
-                  updatePost._id
-                } của bạn đã bị hủy và phí hủy ${cancellationFee.toLocaleString(
-                  "vi-VN"
-                )} VND đã được cộng vào tài khoản của bạn`,
-                data: { postId: updatePost._id, status: "cancel" },
-              });
-              await notification.save();
-              req.io.to(driver.userId.toString()).emit("receiveNotification", {
-                title: "Đơn hàng bị hủy",
-                message: `Đơn hàng ${
-                  updatePost._id
-                } của bạn đã bị hủy và phí hủy ${cancellationFee.toLocaleString(
-                  "vi-VN"
-                )} VND đã được cộng vào tài khoản của bạn`,
-                data: { postId: updatePost._id, status: "cancel" },
-                timestamp: new Date(),
-              });
-
-              return true;
-            } catch (error) {
-              console.error("Error in customer cancellation:", error);
-              throw error;
+            if (user.balance < cancellationFee) {
+              return res
+                .status(400)
+                .json({ message: "Bạn không đủ số dư để hủy đơn" });
             }
+
+            user.balance -= cancellationFee;
+            userDriver.balance += cancellationFee;
+
+            console.log("User balance after:", user.balance);
+            console.log("UserDriver balance after:", userDriver.balance);
+
+            await user.save();
+            await userDriver.save();
+
+            const customerTransaction = new Transaction({
+              userId: user._id,
+              postId: updatePost._id,
+              orderCode: generateOrderCode(),
+              amount: cancellationFee,
+              type: "CANCEL_ORDER",
+              status: "PAID",
+            });
+
+            const driverTransaction = new Transaction({
+              userId: userDriver._id,
+              postId: updatePost._id,
+              orderCode: generateOrderCode(),
+              amount: cancellationFee,
+              type: "RECEIVE_CANCELLATION_FEE",
+              status: "PAID",
+            });
+
+            await customerTransaction.save();
+            await driverTransaction.save();
+
+            const driverNotification = new Notification({
+              userId: driver.userId,
+              title: "Đơn hàng bị hủy",
+              message: `Đơn hàng ${updatePost._id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
+              data: { postId: updatePost._id, status: "cancel" },
+            });
+
+            await driverNotification.save();
+
+            req.io.to(driver.userId.toString()).emit("receiveNotification", {
+              title: "Đơn hàng bị hủy",
+              message: `Đơn hàng ${updatePost._id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
+              data: { postId: updatePost._id, status: "cancel" },
+              timestamp: new Date(),
+            });
           } else if (userRole === "personal") {
             if (userDriver.balance < cancellationFee) {
               return res
