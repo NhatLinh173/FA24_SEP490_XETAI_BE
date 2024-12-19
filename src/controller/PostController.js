@@ -186,11 +186,13 @@ class PostController {
         });
       } else if (bodyData.status === "cancel") {
         const userRole = req.body.role;
+
         if (!userRole) {
           return res.status(400).json({ message: "Role is required" });
         }
 
         console.log(userRole);
+
         const user = await User.findById(updatePost.creator);
         const dealId = updatePost.dealId;
         const dealData = await Deal.findById(dealId);
