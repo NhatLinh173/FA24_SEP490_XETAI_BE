@@ -185,103 +185,140 @@ class PostController {
           timestamp: currentTime,
         });
       } else if (bodyData.status === "cancel") {
-        const cancellationFee = updatePost.price * 0.8;
-        const deal = await Deal.findById(updatePost.dealId);
-        const driverId = deal.driverId;
-        const driverUser = await Driver.findById(driverId);
-        const customer = await User.findById(updatePost.creator);
-        const driverDetails = await User.findById(driverUser.userId);
+        const user = await User.findById(updatePost.creator);
+        const price = parseFloat(
+          bodyData.price.replace(/,/g, "").replace(/\./g, "")
+        );
 
         if (currentStatus === "approve") {
-          if (customer.role === "customer") {
-            if (customer.balance < cancellationFee) {
-              return res.status(402).json({
-                message:
-                  "Số dư không đủ để hủy đơn hàng. Vui lòng nạp thêm tiền.",
-              });
+          const cancellationFee = price * 0.8;
+
+          if (user) {
+            const userRole = user.role;
+
+            const deal = await Deal.findOne({ postId: updatePost._id });
+            if (!deal) {
+              return res
+                .status(404)
+                .json({ message: "Không tìm thấy giao dịch liên quan" });
             }
+            const driverId = deal.driverId;
+            if (userRole === "customer") {
+              if (user.balance < cancellationFee) {
+                return res
+                  .status(402)
+                  .json({ message: "Không đủ số dư để hủy đơn hàng" });
+              } else {
+                user.balance -= cancellationFee;
 
+                const driver = await Driver.findById(driverId);
 
-            customer.balance -= cancellationFee;
-            driverDetails.balance += cancellationFee;
+                if (!driver) {
+                  return res
+                    .status(404)
+                    .json({ message: "Tài xế không tìm thấy" });
+                }
 
-            await customer.save();
-            await driverDetails.save();
+                driver.balance += cancellationFee;
 
-            await Transaction.create({
-              userId: customer._id,
-              postId: updatePost._id,
-              amount: cancellationFee,
-              type: "CANCEL_ORDER",
-              status: "COMPLETED",
-              orderCode: generateOrderCode(),
-            });
+                const customerTransaction = new Transaction({
+                  userId: bodyData.creator,
+                  postId: updatePost._id,
+                  orderCode: generateOrderCode(),
+                  amount: cancellationFee,
+                  type: "RECEIVE_CANCELLATION_FEE",
+                  status: "PAID",
+                });
 
-            await Transaction.create({
-              userId: driverDetails._id,
-              postId: updatePost._id,
-              amount: cancellationFee,
-              type: "RECEIVE_CANCELLATION_FEE",
-              status: "COMPLETED",
-              orderCode: generateOrderCode(),
-            });
+                const driverTransaction = new Transaction({
+                  userId: driverId,
+                  postId: updatePost._id,
+                  orderCode: generateOrderCode(),
+                  amount: cancellationFee,
+                  type: "CANCEL_ORDER",
+                  status: "PAID",
+                });
 
-            await Notification.create({
-              userId: driverDetails._id,
-              title: "Đơn hàng bị hủy",
-              message: `Khách hàng đã hủy đơn hàng: ${updatePost._id}. Bạn đã nhận ${cancellationFee} VND phí hủy.`,
-              data: { postId: updatePost._id, status: "cancel" },
-            });
+                await customerTransaction.save();
+                await driverTransaction.save();
+                await user.save();
+                await driver.save();
 
-            req.io
-              .to(driverDetails._id.toString())
-              .emit("receiveNotification", {
-                title: "Đơn hàng bị hủy",
-                message: `Khách hàng đã hủy đơn hàng: ${updatePost._id}. Bạn đã nhận ${cancellationFee} VND phí hủy.`,
-                data: { postId: updatePost._id, status: "cancel" },
-              });
-          } else if (customer.role === "personal") {
-            if (driverDetails.balance < cancellationFee) {
-              return res.status(400).json({
-                message: "Số dư của tài xế không đủ để hủy đơn hàng.",
-              });
+                const driverNotification = new Notification({
+                  userId: driverId,
+                  title: "Đơn hàng",
+                  message: `Đơn hàng  ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
+                  data: { postId: id, status: "cancel" },
+                });
+
+                await driverNotification.save();
+
+                req.io.to(driverId.toString()).emit("receiveNotification", {
+                  title: "Đơn hàng",
+                  message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
+                  data: { postId: id, status: "cancel" },
+                  timestamp: currentTime,
+                });
+              }
+            } else if (userRole === "personal") {
+              if (user.balance < cancellationFee) {
+                return res
+                  .status(402)
+                  .json({ message: "Không đủ số dư để hủy đơn hàng" });
+              } else {
+                user.balance -= cancellationFee;
+
+                const customer = await User.findById(updatePost.creator);
+                if (!customer) {
+                  return res
+                    .status(404)
+                    .json({ message: "Người đăng bài không tìm thấy" });
+                }
+
+                customer.balance += cancellationFee;
+
+                const driverTransaction = new Transaction({
+                  userId: bodyData.creator,
+                  postId: updatePost._id,
+                  orderCode: generateOrderCode(),
+                  amount: cancellationFee,
+                  type: "CANCEL_ORDER",
+                  status: "PAID",
+                });
+
+                const customerTransaction = new Transaction({
+                  userId: updatePost.creator,
+                  postId: updatePost._id,
+                  orderCode: generateOrderCode(),
+                  amount: cancellationFee,
+                  type: "CANCEL_ORDER",
+                  status: "PAID",
+                });
+
+                await driverTransaction.save();
+                await customerTransaction.save();
+                await user.save();
+                await customer.save();
+
+                const customerNotification = new Notification({
+                  userId: updatePost.creator,
+                  title: "Đơn hàng",
+                  message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn `,
+                  data: { postId: id, status: "cancel" },
+                });
+
+                await customerNotification.save();
+
+                req.io
+                  .to(updatePost.creator.toString())
+                  .emit("receiveNotification", {
+                    title: "Đơn hàng bị hủy",
+                    message: `Đơn hàng ${id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
+                    data: { postId: id, status: "cancel" },
+                    timestamp: currentTime,
+                  });
+              }
             }
-
-            driverDetails.balance -= cancellationFee;
-            customer.balance += cancellationFee;
-
-            await customer.save();
-            await driverDetails.save();
-            await Transaction.create({
-              userId: driverDetails._id,
-              postId: updatePost._id,
-              amount: cancellationFee,
-              type: "CANCEL_ORDER",
-              status: "COMPLETED",
-              orderCode: generateOrderCode(),
-            });
-
-            await Transaction.create({
-              userId: customer._id,
-              postId: updatePost._id,
-              amount: cancellationFee,
-              type: "RECEIVE_CANCELLATION_FEE",
-              status: "COMPLETED",
-              orderCode: generateOrderCode(),
-            });
-
-            await Notification.create({
-              userId: customer._id,
-              title: "Đơn hàng bị hủy",
-              message: `Tài xế đã hủy đơn hàng: ${updatePost._id}. Bạn đã nhận lại ${cancellationFee} VND phí hủy.`,
-              data: { postId: updatePost._id, status: "cancel" },
-            });
-
-            req.io.to(customer._id.toString()).emit("receiveNotification", {
-              title: "Đơn hàng bị hủy",
-              message: `Tài xế đã hủy đơn hàng: ${updatePost._id}. Bạn đã nhận lại ${cancellationFee} VND phí hủy.`,
-              data: { postId: updatePost._id, status: "cancel" },
-            });
           }
         }
       }
