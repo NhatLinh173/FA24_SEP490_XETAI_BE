@@ -113,9 +113,6 @@ const updateDealStatus = async (req, res) => {
       });
     }
 
-    console.log("Updating deal:", { postId, dealId, status });
-
-    // Kiểm tra deal tồn tại
     const deal = await Deal.findById(dealId);
     if (!deal) {
       return res.status(404).json({
@@ -155,7 +152,6 @@ const updateDealStatus = async (req, res) => {
 
     if (status === "approve") {
       updatePostData.price = updatedDeal.dealPrice;
-
 
       try {
         const notification = await Notification.create({

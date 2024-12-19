@@ -202,13 +202,11 @@ class PostController {
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
 
-        const currentStatus = updatePost.status;
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
 
-          if (userRole !== "personal") {
+          if (userRole === "customer") {
             try {
-              console.log("alooo");
               let price;
               try {
                 price = parseFloat(updatePost.price.replace(/[,.]/g, ""));
@@ -224,14 +222,6 @@ class PostController {
 
               const cancellationFee = price * 0.8;
 
-              console.log("Debug info:", {
-                price,
-                cancellationFee,
-                userBalanceBefore: user.balance,
-                driverBalanceBefore: userDriver.balance,
-              });
-
-              // Kiểm tra số dư
               if (user.balance < cancellationFee) {
                 return res.status(400).json({
                   message: "Bạn không đủ số dư để hủy đơn",
@@ -240,7 +230,6 @@ class PostController {
                 });
               }
 
-              // Cập nhật số dư
               const newUserBalance = user.balance - cancellationFee;
               const newDriverBalance = userDriver.balance + cancellationFee;
 
@@ -258,12 +247,6 @@ class PostController {
                 ),
               ]);
 
-              console.log("After update:", {
-                userBalanceAfter: updatedUser.balance,
-                driverBalanceAfter: updatedDriver.balance,
-              });
-
-              // Tạo và lưu transactions
               await Promise.all([
                 Transaction.create({
                   userId: user._id,
@@ -283,7 +266,6 @@ class PostController {
                 }),
               ]);
 
-              // Tạo và lưu notification
               const notification = await Notification.create({
                 userId: driver.userId,
                 title: "Đơn hàng bị hủy",
@@ -294,8 +276,7 @@ class PostController {
                 )} VND đã được cộng vào tài khoản của bạn`,
                 data: { postId: updatePost._id, status: "cancel" },
               });
-
-              // Gửi notification realtime
+              await notification.save();
               req.io.to(driver.userId.toString()).emit("receiveNotification", {
                 title: "Đơn hàng bị hủy",
                 message: `Đơn hàng ${
@@ -307,10 +288,10 @@ class PostController {
                 timestamp: new Date(),
               });
 
-              return true; // Để tiếp tục xử lý updatePost.save()
+              return true;
             } catch (error) {
               console.error("Error in customer cancellation:", error);
-              throw error; // Throw error để được bắt ở catch block bên ngoài
+              throw error;
             }
           } else if (userRole === "personal") {
             if (userDriver.balance < cancellationFee) {
