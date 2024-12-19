@@ -187,8 +187,6 @@ class PostController {
       } else if (bodyData.status === "cancel") {
         const userRole = req.body.role;
         const statusCustomer = req.body.statusCustomer;
-        console.log("User role:", userRole); // Thêm log để kiểm tra giá trị userRole
-        console.log("Request body:", req.body); // Thêm log để kiểm tra toàn bộ request body
 
         if (!userRole) {
           return res
@@ -198,10 +196,10 @@ class PostController {
 
         const user = await User.findById(updatePost.creator);
         const dealId = updatePost.dealId;
-        const dealData = await Deal.findById(dealId);
-        const driverId = dealData.driverId;
-        const driver = await Driver.findById(driverId);
-        const userDriver = await User.findById(driver.userId);
+        const dealData = dealId ? await Deal.findById(dealId) : null;
+        const driverId = dealData ? dealData.driverId : null;
+        const driver = driverId ? await Driver.findById(driverId) : null;
+        const userDriver = driver ? await User.findById(driver.userId) : null;
         const price = parseFloat(
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
