@@ -185,16 +185,12 @@ class PostController {
           timestamp: currentTime,
         });
       } else if (bodyData.status === "cancel") {
-        console.log("Payload received:", req.body);
-
         const userRole = req.body.role;
         if (!userRole) {
           return res
             .status(400)
             .json({ message: "Role is required in payload" });
         }
-
-        console.log("User role:", userRole);
 
         const user = await User.findById(updatePost.creator);
         const dealId = updatePost.dealId;
@@ -211,21 +207,29 @@ class PostController {
           const cancellationFee = price * 0.8;
 
           if (userRole === "customer") {
-            // Kiểm tra số dư của customer
+            console.log("User balance before:", user.balance);
+            console.log("Cancellation fee:", cancellationFee);
+
             if (user.balance < cancellationFee) {
               return res
                 .status(400)
                 .json({ message: "Bạn không đủ số dư để hủy đơn" });
             }
 
-            // Cập nhật số dư của customer và tài xế
             user.balance -= cancellationFee;
             userDriver.balance += cancellationFee;
 
-            await user.save();
-            await userDriver.save();
+            console.log("User balance after:", user.balance);
+            console.log("UserDriver balance after:", userDriver.balance);
 
-            // Lưu transaction cho customer
+            try {
+              await user.save();
+              await userDriver.save();
+            } catch (error) {
+              console.error("Error saving user or userDriver:", error);
+              return res.status(500).json({ message: "Internal server error" });
+            }
+
             const customerTransaction = new Transaction({
               userId: user._id,
               postId: updatePost._id,
@@ -235,7 +239,6 @@ class PostController {
               status: "PAID",
             });
 
-            // Lưu transaction cho driver
             const driverTransaction = new Transaction({
               userId: userDriver._id,
               postId: updatePost._id,
@@ -245,10 +248,14 @@ class PostController {
               status: "PAID",
             });
 
-            await customerTransaction.save();
-            await driverTransaction.save();
+            try {
+              await customerTransaction.save();
+              await driverTransaction.save();
+            } catch (error) {
+              console.error("Error saving transactions:", error);
+              return res.status(500).json({ message: "Internal server error" });
+            }
 
-            // Thông báo cho driver
             const driverNotification = new Notification({
               userId: driver.userId,
               title: "Đơn hàng bị hủy",
@@ -256,9 +263,13 @@ class PostController {
               data: { postId: updatePost._id, status: "cancel" },
             });
 
-            await driverNotification.save();
+            try {
+              await driverNotification.save();
+            } catch (error) {
+              console.error("Error saving notification:", error);
+              return res.status(500).json({ message: "Internal server error" });
+            }
 
-            // Gửi notification tới driver qua socket.io
             req.io.to(driver.userId.toString()).emit("receiveNotification", {
               title: "Đơn hàng bị hủy",
               message: `Đơn hàng ${updatePost._id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
@@ -266,21 +277,18 @@ class PostController {
               timestamp: new Date(),
             });
           } else if (userRole === "personal") {
-            // Kiểm tra số dư của driver
             if (userDriver.balance < cancellationFee) {
               return res
                 .status(402)
                 .json({ message: "Không đủ số dư để hủy đơn hàng" });
             }
 
-            // Cập nhật số dư của driver và customer
             userDriver.balance -= cancellationFee;
             user.balance += cancellationFee;
 
             await user.save();
             await userDriver.save();
 
-            // Lưu transaction cho driver
             const driverTransaction = new Transaction({
               userId: userDriver._id,
               postId: updatePost._id,
@@ -290,7 +298,6 @@ class PostController {
               status: "PAID",
             });
 
-            // Lưu transaction cho customer
             const customerTransaction = new Transaction({
               userId: user._id,
               postId: updatePost._id,
@@ -303,7 +310,6 @@ class PostController {
             await driverTransaction.save();
             await customerTransaction.save();
 
-            // Thông báo cho customer
             const customerNotification = new Notification({
               userId: updatePost.creator._id,
               title: "Đơn hàng",
@@ -313,7 +319,6 @@ class PostController {
 
             await customerNotification.save();
 
-            // Gửi notification tới customer qua socket.io
             req.io
               .to(updatePost.creator._id.toString())
               .emit("receiveNotification", {
