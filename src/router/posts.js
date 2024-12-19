@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const upload = require("../utils/multer");
 const postController = require("../controller/PostController");
+const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/", upload.array("images", 10), postController.createPost);
 router.get("/", postController.showPost);
@@ -9,6 +10,7 @@ router.get("/:idUser/users", postController.showPostByUserId);
 router.get("/:driverId/driver", postController.showPostByDriverId);
 router.patch(
   "/:idPost",
+  authMiddleware,
   upload.array("newImages", 10),
   postController.updatePost
 );
