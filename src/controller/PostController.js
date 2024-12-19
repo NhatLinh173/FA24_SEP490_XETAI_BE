@@ -191,8 +191,6 @@ class PostController {
         const driverUser = await Driver.findById(driverId);
         const customer = await User.findById(updatePost.creator);
         const driverDetails = await User.findById(driverUser.userId);
-        console.log(driverDetails);
-        console.log(driverDetails._id);
 
         if (currentStatus === "approve") {
           if (customer.role === "customer") {
@@ -205,27 +203,28 @@ class PostController {
 
             customer.balance = customer.balance - cancellationFee;
             driverDetails.balance = driverDetails.balance + cancellationFee;
-            console.log("Customer balance after:", customer.balance);
-            console.log("Driver balance after:", driverDetails.balance);
-            await Promise.all([customer.save(), driverDetails.save()]);
-            await Promise.all([
-              Transaction.create({
-                userId: customer._id,
-                postId: updatePost._id,
-                amount: cancellationFee,
-                type: "CANCEL_ORDER",
-                status: "COMPLETED",
-                orderCode: generateOrderCode(),
-              }),
-              Transaction.create({
-                userId: driverDetails._id,
-                postId: updatePost._id,
-                amount: cancellationFee,
-                type: "RECEIVE_CANCELLATION_FEE",
-                status: "COMPLETED",
-                orderCode: generateOrderCode(),
-              }),
-            ]);
+
+            await customer.save();
+            await driverDetails.save();
+
+            await Transaction.create({
+              userId: customer._id,
+              postId: updatePost._id,
+              amount: cancellationFee,
+              type: "CANCEL_ORDER",
+              status: "COMPLETED",
+              orderCode: generateOrderCode(),
+            });
+
+            await Transaction.create({
+              userId: driverDetails._id,
+              postId: updatePost._id,
+              amount: cancellationFee,
+              type: "RECEIVE_CANCELLATION_FEE",
+              status: "COMPLETED",
+              orderCode: generateOrderCode(),
+            });
+
             await Notification.create({
               userId: driverDetails._id,
               title: "Đơn hàng bị hủy",
