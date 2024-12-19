@@ -713,6 +713,28 @@ class PostController {
           postId: postId,
           _id: { $ne: newDeal._id },
         });
+
+        const deletedDealDrivers = await dealPriceModel
+          .find({ postId: postId, _id: { $ne: newDeal._id } })
+          .populate("driverId");
+        for (const deal of deletedDealDrivers) {
+          const driverUser = await User.findById(deal.driverId.userId);
+          const notification = new Notification({
+            userId: driverUser._id,
+            title: "Đơn hàng bị hủy",
+            message: `Đơn hàng ${postId} của bạn đã bị hủy do tài xế khác đã chấp nhận đơn hàng.`,
+            data: { postId, status: "cancel" },
+          });
+
+          await notification.save();
+
+          req.io.to(driverUser._id.toString()).emit("receiveNotification", {
+            title: "Đơn hàng bị hủy",
+            message: `Đơn hàng ${postId} của bạn đã bị hủy do tài xế khác đã chấp nhận đơn hàng.`,
+            data: { postId, status: "cancel" },
+            timestamp: new Date(),
+          });
+        }
       }
 
       const postCreator = updatedPost.creator;
