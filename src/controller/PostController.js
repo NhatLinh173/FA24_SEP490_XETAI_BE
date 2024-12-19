@@ -207,7 +207,6 @@ class PostController {
         }
         if (currentStatus === "approve") {
           if (customer.role === "customer") {
-            console.log("alooo");
             if (customer.balance < cancellationFee) {
               return res.status(402).json({
                 message:
@@ -259,8 +258,8 @@ class PostController {
                 message: "Số dư của tài xế không đủ để hủy đơn hàng.",
               });
             }
-            driverDetails.balance -= cancellationFee;
-            customer.balance += cancellationFee;
+            driverDetails.balance = driverDetails.balance - cancellationFee;
+            customer.balance = customer.balance + cancellationFee;
 
             await customer.save();
             await driverDetails.save();
