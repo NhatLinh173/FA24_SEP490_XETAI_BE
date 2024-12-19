@@ -204,12 +204,14 @@ class PostController {
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
 
+
           if (userRole === "customer") {
-            if (user.balance < cancellationFee) {
+           if (user.balance < cancellationFee) {
               return res
                 .status(400)
                 .json({ message: "Bạn không đủ số dư để hủy đơn" });
             }
+
 
             user.balance -= cancellationFee;
             userDriver.balance += cancellationFee;
