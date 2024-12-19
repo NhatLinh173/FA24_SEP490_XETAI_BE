@@ -708,6 +708,13 @@ class PostController {
         return res.status(404).json({ message: "Post not found" });
       }
 
+      if (status === "approve") {
+        await dealPriceModel.deleteMany({
+          postId: postId,
+          _id: { $ne: newDeal._id },
+        });
+      }
+
       const postCreator = updatedPost.creator;
       let notificationMessage = "";
       let titleMessage = "";
