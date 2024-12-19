@@ -149,7 +149,6 @@ class PostController {
       updatePost.destinationCity = bodyData.destinationCity;
       updatePost.paymentMethod = bodyData.paymentMethod;
       updatePost.orderCode = bodyData.orderCode;
-
       const currentTime = new Date();
       if (bodyData.status === "inprogress") {
         updatePost.startTime = currentTime;
@@ -186,6 +185,9 @@ class PostController {
         });
       } else if (bodyData.status === "cancel") {
         const userRole = req.body.role;
+        console.log("User role:", userRole); // Thêm log để kiểm tra giá trị userRole
+        console.log("Request body:", req.body); // Thêm log để kiểm tra toàn bộ request body
+
         if (!userRole) {
           return res
             .status(400)
@@ -202,6 +204,7 @@ class PostController {
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
 
+        const currentStatus = updatePost.status;
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
 
@@ -210,6 +213,7 @@ class PostController {
             console.log("Cancellation fee:", cancellationFee);
 
             if (user.balance < cancellationFee) {
+              console.log("Insufficient balance");
               return res
                 .status(400)
                 .json({ message: "Bạn không đủ số dư để hủy đơn" });
