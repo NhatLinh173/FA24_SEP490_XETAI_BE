@@ -248,7 +248,7 @@ class PostController {
               data: { postId: updatePost._id, status: "cancel" },
               timestamp: currentTime,
             });
-          } else if (userRole === "customer") {
+          } else {
             if (user.balance < cancellationFee) {
               return res
                 .status(402)
