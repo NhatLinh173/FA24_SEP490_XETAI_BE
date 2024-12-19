@@ -207,12 +207,25 @@ class PostController {
                 .status(404)
                 .json({ message: "Không tìm thấy giao dịch liên quan" });
             }
-            const driverId = deal.driverId;
 
             if (userRole === "customer") {
+              if (user.balance < cancellationFee) {
+                return res
+                  .status(400)
+                  .json({ message: "Bạn không đủ số dư để hủy đơn" });
+              }
+              console.log(
+                "Trước khi trừ tiền:",
+                user.balance,
+                userDriver.balance
+              );
               user.balance -= cancellationFee;
               userDriver.balance += cancellationFee;
-
+              console.log(
+                "Sau khi trừ tiền:",
+                user.balance,
+                userDriver.balance
+              );
               await user.save();
               await userDriver.save();
 
@@ -238,7 +251,7 @@ class PostController {
               await driverTransaction.save();
 
               const driverNotification = new Notification({
-                userId: driverId,
+                userId: driver.userId,
                 title: "Đơn hàng bị hủy",
                 message: `Đơn hàng ${updatePost._id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
                 data: { postId: updatePost._id, status: "cancel" },
@@ -246,7 +259,7 @@ class PostController {
 
               await driverNotification.save();
 
-              req.io.to(driverId.toString()).emit("receiveNotification", {
+              req.io.to(driver.userId.toString()).emit("receiveNotification", {
                 title: "Đơn hàng bị hủy",
                 message: `Đơn hàng ${updatePost._id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
                 data: { postId: updatePost._id, status: "cancel" },
@@ -262,7 +275,7 @@ class PostController {
                 user.balance += cancellationFee;
 
                 const driverTransaction = new Transaction({
-                  userId: user._id,
+                  userId: userDriver._id,
                   postId: updatePost._id,
                   orderCode: generateOrderCode(),
                   amount: cancellationFee,
@@ -271,7 +284,7 @@ class PostController {
                 });
 
                 const customerTransaction = new Transaction({
-                  userId: userDriver._id,
+                  userId: user._id,
                   postId: updatePost._id,
                   orderCode: generateOrderCode(),
                   amount: cancellationFee,
