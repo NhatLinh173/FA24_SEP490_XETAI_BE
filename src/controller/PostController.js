@@ -186,6 +186,7 @@ class PostController {
         });
       } else if (bodyData.status === "cancel") {
         const user = await User.findById(updatePost.creator);
+        const userId = user._id;
         const dealId = updatePost.dealId;
         const dealData = await Deal.findById(dealId);
         const driverId = dealData.driverId;
@@ -211,7 +212,7 @@ class PostController {
             userDriver.balance += cancellationFee;
 
             const customerTransaction = new Transaction({
-              userId: user._id,
+              userId: userId,
               postId: updatePost._id,
               orderCode: generateOrderCode(),
               amount: cancellationFee,
@@ -233,7 +234,6 @@ class PostController {
             await user.save();
             await userDriver.save();
 
-            // Thông báo cho tài xế
             const driverNotification = new Notification({
               userId: userDriver._id,
               title: "Đơn hàng bị hủy",
