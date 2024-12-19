@@ -25,11 +25,10 @@ const updateDealPrice = async (req, res) => {
   const { dealPrice, dealId } = req.body;
 
   try {
-
     if (!mongoose.Types.ObjectId.isValid(dealId)) {
       return res.status(400).json({ message: "Invalid dealId format" });
     }
-    
+
     const updatedDeal = await Deal.findByIdAndUpdate(
       dealId,
       { dealPrice },
@@ -107,7 +106,6 @@ const updateDealStatus = async (req, res) => {
   const { dealId, status } = req.body;
 
   try {
-
     if (!postId || !dealId || !status) {
       return res.status(400).json({
         message: "Missing required parameters",
@@ -125,7 +123,6 @@ const updateDealStatus = async (req, res) => {
         dealId,
       });
     }
-
 
     const updatedDeal = await Deal.findByIdAndUpdate(
       dealId,
@@ -159,7 +156,7 @@ const updateDealStatus = async (req, res) => {
     if (status === "approve") {
       updatePostData.price = updatedDeal.dealPrice;
 
-      // Tạo notification
+
       try {
         const notification = await Notification.create({
           userId: userId,
@@ -168,7 +165,6 @@ const updateDealStatus = async (req, res) => {
           data: { postId, status: "approve" },
         });
 
-        // Gửi notification realtime
         req.io.to(userId.toString()).emit("receiveNotification", {
           title: "Thương lượng đơn hàng thành công",
           message: `Bạn đã thương lượng thành công đơn hàng: ${postId}. Vui lòng kiểm tra đơn hàng`,
@@ -177,11 +173,9 @@ const updateDealStatus = async (req, res) => {
         });
       } catch (notifError) {
         console.error("Error creating notification:", notifError);
-        // Không return ở đây để tiếp tục xử lý
       }
     }
 
-    // Cập nhật post
     const updatePost = await Post.findByIdAndUpdate(postId, updatePostData, {
       new: true,
       runValidators: true,
