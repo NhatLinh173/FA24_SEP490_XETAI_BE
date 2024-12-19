@@ -25,6 +25,11 @@ const updateDealPrice = async (req, res) => {
   const { dealPrice, dealId } = req.body;
 
   try {
+
+    if (!mongoose.Types.ObjectId.isValid(dealId)) {
+      return res.status(400).json({ message: "Invalid dealId format" });
+    }
+    
     const updatedDeal = await Deal.findByIdAndUpdate(
       dealId,
       { dealPrice },
