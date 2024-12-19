@@ -204,7 +204,8 @@ class PostController {
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
 
-      console.log("Current status:", currentStatus);
+  const currentStatus = updatePost.status;
+  console.log("Current status before update:", currentStatus);
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
 
