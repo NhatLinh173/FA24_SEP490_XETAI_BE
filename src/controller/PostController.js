@@ -101,7 +101,6 @@ class PostController {
       if (!updatePost) {
         return res.status(404).json({ message: "Post not found" });
       }
-      console.log(updatePost)
       const currentStatus = updatePost.status;
       console.log("Current status before update:", currentStatus);
       let imageUrls = Array.isArray(oldImages) ? [...oldImages] : [oldImages];
@@ -206,7 +205,6 @@ class PostController {
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
 
-        console.log("Current status before update:", currentStatus);
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
 
