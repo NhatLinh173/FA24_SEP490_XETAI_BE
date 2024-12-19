@@ -201,6 +201,7 @@ class PostController {
               });
             }
 
+
             customer.balance -= cancellationFee;
             driverDetails.balance += cancellationFee;
 
