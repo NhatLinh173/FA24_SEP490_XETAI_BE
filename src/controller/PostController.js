@@ -201,6 +201,14 @@ class PostController {
               });
             }
 
+             if (typeof customer.balance !== "number" || isNaN(customer.balance)) {
+    return res.status(400).json({ message: "Invalid balance for customer." });
+  }
+
+  if (typeof driverDetails.balance !== "number" || isNaN(driverDetails.balance)) {
+    return res.status(400).json({ message: "Invalid balance for driver." });
+  }
+
             customer.balance = customer.balance - cancellationFee;
             driverDetails.balance = driverDetails.balance + cancellationFee;
 
