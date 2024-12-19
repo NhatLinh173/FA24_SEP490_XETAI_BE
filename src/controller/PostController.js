@@ -278,7 +278,7 @@ class PostController {
               await driverTransaction.save();
               await customerTransaction.save();
               await user.save();
-              await customer.save();
+              await userDriver.save();
 
               const customerNotification = new Notification({
                 userId: updatePost.creator._id,
