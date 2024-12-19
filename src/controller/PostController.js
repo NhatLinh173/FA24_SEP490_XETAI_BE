@@ -188,11 +188,12 @@ class PostController {
         const cancellationFee = updatePost.price * 0.8;
 
         const deal = await Deal.findById(updatePost.dealId);
-        const driverId = deal?.driverId;
-        const driverUser = driverId ? await Driver.findById(driverId) : null;
-        const customer = await User.findById(updatePost.creator);
 
-        const driverDetails = await Driver.findOne({ userId: driverUser._id });
+        const driverId = deal.driverId;
+
+        const driverUser = await Driver.findById(driverId);
+        const customer = await User.findById(updatePost.creator);
+        const driverDetails = await User.findById(driverUser.userId);
 
         if (currentStatus === "approve") {
           if (customer.role === "customer") {
