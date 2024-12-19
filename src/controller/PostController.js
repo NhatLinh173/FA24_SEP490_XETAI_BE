@@ -206,7 +206,6 @@ class PostController {
 
             customer.balance -= cancellationFee;
             driverDetails.balance += cancellationFee;
-
             await customer.save();
             await driverDetails.save();
 
@@ -271,16 +270,15 @@ class PostController {
               status: "COMPLETED",
               orderCode: generateOrderCode(),
             });
-
             await Notification.create({
-              userId: updatePost.creator,
+              userId: updatePost.creator._id,
               title: "Đơn hàng bị hủy",
               message: `Tài xế đã hủy đơn hàng: ${updatePost._id}. Bạn đã nhận lại ${cancellationFee} VND phí hủy.`,
               data: { postId: updatePost._id, status: "cancel" },
             });
 
             req.io
-              .to(updatePost.creator.toString())
+              .to(updatePost.creator._id.toString())
               .emit("receiveNotification", {
                 title: "Đơn hàng bị hủy",
                 message: `Tài xế đã hủy đơn hàng: ${updatePost._id}. Bạn đã nhận lại ${cancellationFee} VND phí hủy.`,
