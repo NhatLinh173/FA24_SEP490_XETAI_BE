@@ -206,9 +206,9 @@ class PostController {
         if (currentStatus === "approve") {
           const cancellationFee = price * 0.8;
 
-          if (userRole === "customer") {
+          if (userRole !== "personal") {
             try {
-              // Parse price một cách an toàn
+              console.log("alooo");
               let price;
               try {
                 price = parseFloat(updatePost.price.replace(/[,.]/g, ""));
