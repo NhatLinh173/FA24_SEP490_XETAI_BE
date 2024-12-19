@@ -262,7 +262,7 @@ class PostController {
                 user.balance += cancellationFee;
 
                 const driverTransaction = new Transaction({
-                  userId: userDriver._id,
+                  userId: user._id,
                   postId: updatePost._id,
                   orderCode: generateOrderCode(),
                   amount: cancellationFee,
@@ -271,7 +271,7 @@ class PostController {
                 });
 
                 const customerTransaction = new Transaction({
-                  userId: user._id,
+                  userId: userDriver._id,
                   postId: updatePost._id,
                   orderCode: generateOrderCode(),
                   amount: cancellationFee,
