@@ -149,7 +149,7 @@ class PostController {
       updatePost.destinationCity = bodyData.destinationCity;
       updatePost.paymentMethod = bodyData.paymentMethod;
       updatePost.orderCode = bodyData.orderCode;
-
+      console.log(userRole);
       const currentTime = new Date();
       if (bodyData.status === "inprogress") {
         updatePost.startTime = currentTime;
@@ -160,7 +160,7 @@ class PostController {
           data: { postId: id, status: "inprogress" },
         });
         await notification.save();
-
+  
         req.io.to(updatePost.creator.toString()).emit("receiveNotification", {
           title: "Đơn hàng",
           message: `Tài xế đã bắt đầu vận chuyển đơn hàng của bạn: ${id}`,
