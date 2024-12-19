@@ -10,7 +10,6 @@ router.get("/:idUser/users", postController.showPostByUserId);
 router.get("/:driverId/driver", postController.showPostByDriverId);
 router.patch(
   "/:idPost",
-  authMiddleware,
   upload.array("newImages", 10),
   postController.updatePost
 );
