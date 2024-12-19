@@ -191,7 +191,7 @@ class PostController {
         const driverUser = await Driver.findById(driverId);
         const customer = await User.findById(updatePost.creator);
         const driverDetails = await User.findById(driverUser.userId);
-       
+
         if (currentStatus === "approve") {
           if (customer.role === "customer") {
             if (customer.balance < cancellationFee) {
@@ -201,8 +201,8 @@ class PostController {
               });
             }
 
-            customer.balance = customer.balance - cancellationFee;
-            driverDetails.balance = driverDetails.balance + cancellationFee;
+            customer.balance -= cancellationFee;
+            driverDetails.balance += cancellationFee;
 
             await customer.save();
             await driverDetails.save();
@@ -245,8 +245,9 @@ class PostController {
                 message: "Số dư của tài xế không đủ để hủy đơn hàng.",
               });
             }
-            driverDetails.balance = driverDetails.balance - cancellationFee;
-            customer.balance = customer.balance + cancellationFee;
+
+            driverDetails.balance -= cancellationFee;
+            customer.balance += cancellationFee;
 
             await customer.save();
             await driverDetails.save();
