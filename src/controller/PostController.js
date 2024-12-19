@@ -191,9 +191,23 @@ class PostController {
         const driverUser = await Driver.findById(driverId);
         const customer = await User.findById(updatePost.creator);
         const driverDetails = await User.findById(driverUser.userId);
+        if (typeof customer.balance !== "number" || isNaN(customer.balance)) {
+          return res
+            .status(400)
+            .json({ message: "Invalid balance for customer." });
+        }
 
+        if (
+          typeof driverDetails.balance !== "number" ||
+          isNaN(driverDetails.balance)
+        ) {
+          return res
+            .status(400)
+            .json({ message: "Invalid balance for driver." });
+        }
         if (currentStatus === "approve") {
           if (customer.role === "customer") {
+            console.log("alooo");
             if (customer.balance < cancellationFee) {
               return res.status(402).json({
                 message:
