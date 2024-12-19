@@ -46,7 +46,7 @@ const updateDealPrice = async (req, res) => {
 };
 
 const deleteDeal = async (req, res) => {
-  const { dealId } = req.body;
+  const { dealId } = req.params;
 
   try {
     const deletedDeal = await Deal.findByIdAndDelete(dealId);
