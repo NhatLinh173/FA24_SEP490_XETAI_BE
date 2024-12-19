@@ -207,7 +207,7 @@ class PostController {
         );
 
         console.log("Current status before update:", currentStatus);
-        if (statusCustomer === "approve" || currentStatus === "approve") {
+        if (statusCustomer === "approve") {
           const cancellationFee = price * 0.8;
 
           if (userRole === "customer") {
