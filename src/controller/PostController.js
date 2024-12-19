@@ -101,11 +101,8 @@ class PostController {
       if (!updatePost) {
         return res.status(404).json({ message: "Post not found" });
       }
-
-      // Lưu trạng thái hiện tại của bài đăng trước khi cập nhật
       const currentStatus = updatePost.status;
       console.log("Current status before update:", currentStatus);
-
       let imageUrls = Array.isArray(oldImages) ? [...oldImages] : [oldImages];
       if (typeof oldImages === "string") {
         imageUrls = oldImages.split(",").map((url) => url.trim());
@@ -133,28 +130,26 @@ class PostController {
         const newImageUrls = await Promise.all(uploadImagePromises);
         imageUrls = [...imageUrls, ...newImageUrls];
       }
-
       const generateOrderCode = () => {
         return Math.floor(100000 + Math.random() * 900000).toString();
       };
-
-      // Cập nhật các trường của bài đăng ngoại trừ trạng thái
       updatePost.title = bodyData.title;
       updatePost.detail = bodyData.detail;
       updatePost.images = imageUrls;
       updatePost.load = bodyData.load;
       updatePost.fullname = bodyData.fullname;
+      //updatePost.email = bodyData.email;
       updatePost.phone = bodyData.phone;
       updatePost.startPoint = bodyData.startPoint;
       updatePost.destination = bodyData.destination;
       updatePost.category = bodyData.category;
       updatePost.price = bodyData.price;
+      updatePost.status = bodyData.status;
       updatePost.deliveryTime = bodyData.deliveryTime;
       updatePost.startPointCity = bodyData.startPointCity;
       updatePost.destinationCity = bodyData.destinationCity;
       updatePost.paymentMethod = bodyData.paymentMethod;
       updatePost.orderCode = bodyData.orderCode;
-
       const currentTime = new Date();
       if (bodyData.status === "inprogress") {
         updatePost.startTime = currentTime;
@@ -210,8 +205,7 @@ class PostController {
           bodyData.price.replace(/,/g, "").replace(/\./g, "")
         );
 
-        console.log("Current status before update:", currentStatus);
-        if (currentStatus === "approve") {
+        if (updatePost.status === "approve") {
           const cancellationFee = price * 0.8;
 
           if (userRole === "customer") {
@@ -324,9 +318,6 @@ class PostController {
           }
         }
       }
-
-      // Cập nhật trạng thái của bài đăng sau khi kiểm tra và xử lý các điều kiện
-      updatePost.status = bodyData.status;
 
       const savedPost = await updatePost.save();
       return res.json(savedPost);
