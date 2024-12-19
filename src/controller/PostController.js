@@ -189,7 +189,6 @@ class PostController {
         if (!userRole) {
           return res.status(400).json({ message: "Role is required" });
         }
-
         console.log(userRole);
         const user = await User.findById(updatePost.creator);
         const dealId = updatePost.dealId;
@@ -216,7 +215,6 @@ class PostController {
 
             await user.save();
             await userDriver.save();
-
             const customerTransaction = new Transaction({
               userId: user._id,
               postId: updatePost._id,
@@ -226,6 +224,7 @@ class PostController {
               status: "PAID",
             });
 
+            // Lưu transaction cho driver
             const driverTransaction = new Transaction({
               userId: userDriver._id,
               postId: updatePost._id,
@@ -238,6 +237,7 @@ class PostController {
             await customerTransaction.save();
             await driverTransaction.save();
 
+            // Thông báo cho driver
             const driverNotification = new Notification({
               userId: driver.userId,
               title: "Đơn hàng bị hủy",
@@ -247,6 +247,7 @@ class PostController {
 
             await driverNotification.save();
 
+            // Gửi notification tới driver qua socket.io
             req.io.to(driver.userId.toString()).emit("receiveNotification", {
               title: "Đơn hàng bị hủy",
               message: `Đơn hàng ${updatePost._id} của bạn đã bị hủy và phí hủy đã được cộng vào tài khoản của bạn`,
