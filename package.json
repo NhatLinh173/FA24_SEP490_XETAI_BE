@@ -26,6 +26,7 @@
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
     "libphonenumber-js": "^1.11.15",
+    "moment-timezone": "^0.5.46",
     "mongodb": "^6.8.0",
     "mongoose": "^8.5.3",
     "mongoose-slug-updater": "^3.3.0",
