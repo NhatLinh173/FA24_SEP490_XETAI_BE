@@ -1,7 +1,7 @@
 const Driver = require("../model/driverModel");
 const User = require("../model/userModel");
 const cron = require("node-cron");
-
+const moment = require("moment-timezone");
 cron.schedule("0 0 * * *", async () => {
   try {
     const drivers = await Driver.find();
@@ -211,16 +211,12 @@ const updateDriverStatistics = async (driverId, tripData) => {
       throw new Error("Trips and earnings must be valid numbers");
     }
 
-    const currentDate = new Date();
-    const currentHour = `${currentDate.getHours()}:00`;
-    const currentDay = currentDate.toISOString().slice(0, 10);
-    const currentWeekDay = currentDate.toLocaleDateString("en-US", {
-      weekday: "long",
-    });
-    const currentMonth = `${currentDate.getFullYear()}-${String(
-      currentDate.getMonth() + 1
-    ).padStart(2, "0")}`;
-    const currentYear = currentDate.getFullYear().toString();
+    const currentDate = moment().tz("Asia/Ho_Chi_Minh");
+    const currentHour = `${currentDate.hours()}:00`;
+    const currentDay = currentDate.format("YYYY-MM-DD");
+    const currentWeekDay = currentDate.format("dddd");
+    const currentMonth = currentDate.format("YYYY-MM");
+    const currentYear = currentDate.format("YYYY");
 
     const driver = await Driver.findById(driverId);
     if (!driver) {
@@ -239,66 +235,22 @@ const updateDriverStatistics = async (driverId, tripData) => {
       };
     }
 
-    const todayStats = driver.statistics.today.find(
-      (item) => item.hour === currentHour
-    );
-    if (todayStats) {
-      todayStats.trips += trips;
-      todayStats.earnings += earnings;
-    } else {
-      driver.statistics.today.push({
-        hour: currentHour,
-        trips,
-        earnings,
-        timestamp: currentDate,
-      });
-    }
+    const updateStats = (statsArray, key, value) => {
+      const stats = statsArray.find((item) => item[key] === value);
+      if (stats) {
+        stats.trips += trips;
+        stats.earnings += earnings;
+      } else {
+        const newStats = { trips, earnings, timestamp: currentDate.toDate() };
+        newStats[key] = value;
+        statsArray.push(newStats);
+      }
+    };
 
-    const weekStats = driver.statistics.thisWeek.find(
-      (item) => item.day === currentWeekDay
-    );
-    if (weekStats) {
-      weekStats.trips += trips;
-      weekStats.earnings += earnings;
-    } else {
-      driver.statistics.thisWeek.push({
-        day: currentWeekDay,
-        trips,
-        earnings,
-        timestamp: currentDate,
-      });
-    }
-
-    const monthStats = driver.statistics.thisMonth.find(
-      (item) => item.date === currentDay
-    );
-    if (monthStats) {
-      monthStats.trips += trips;
-      monthStats.earnings += earnings;
-    } else {
-      driver.statistics.thisMonth.push({
-        date: currentDay,
-        trips,
-        earnings,
-        timestamp: currentDate,
-      });
-    }
-
-    const yearStats = driver.statistics.thisYear.find(
-      (item) => item.month === currentMonth
-    );
-    if (yearStats) {
-      yearStats.trips += trips;
-      yearStats.earnings += earnings;
-    } else {
-      driver.statistics.thisYear.push({
-        month: currentMonth,
-        trips,
-        earnings,
-        year: currentYear,
-        timestamp: currentDate,
-      });
-    }
+    updateStats(driver.statistics.today, "hour", currentHour);
+    updateStats(driver.statistics.thisWeek, "day", currentWeekDay);
+    updateStats(driver.statistics.thisMonth, "date", currentDay);
+    updateStats(driver.statistics.thisYear, "month", currentMonth);
 
     if (!driver.tripsCompleted) {
       driver.tripsCompleted = 0;
