@@ -3,6 +3,7 @@ const cloudinary = require("../config/cloudinaryConfig");
 const Tesseract = require("tesseract.js");
 const Driver = require("../model/driverModel");
 const Notification = require("../model/notificationModel");
+
 const createCarRegistration = async (req, res) => {
   const {
     nameCar,
@@ -28,6 +29,9 @@ const createCarRegistration = async (req, res) => {
   }
 
   try {
+
+
+    
     let imageCarUrls = [];
     let imageRegistrationUrls = [];
 
