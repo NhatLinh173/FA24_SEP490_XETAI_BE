@@ -893,7 +893,6 @@ class PostController {
         }
 
         const serviceFee = transportFee * 0.05;
-        const driverEarnings = transportFee * 0.95;
 
         driverUser.balance -= serviceFee;
         await driverUser.save();
@@ -905,24 +904,15 @@ class PostController {
         const driverTransaction = new Transaction({
           userId: driverUser._id,
           postId: post._id,
-          amount: driverEarnings,
-          type: "PAY_SYSTEM_FEE",
-          status: "PAID",
-          orderCode: generateOrderCode(),
-        });
-
-        const driverFeeTransaction = new Transaction({
-          userId: driverUser._id,
-          postId: post._id,
           amount: serviceFee,
           type: "PAY_SYSTEM_FEE",
           status: "PAID",
           orderCode: generateOrderCode(),
         });
+
         await driverTransaction.save();
-        await driverFeeTransaction.save();
         await driverController.updateDriverStatistics(driverId, {
-          earnings: Number(driverEarnings) || 0,
+          earnings: Number(serviceFee) || 0,
           trips: 1,
           year: new Date().getFullYear(),
         });
