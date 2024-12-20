@@ -871,6 +871,7 @@ class PostController {
         await driverController.updateDriverStatistics(driverId, {
           earnings: Number(driverAmount) || 0,
           trips: 1,
+          year: new Date().getFullYear(),
         });
       } else if (post.paymentMethod === "cash") {
         const transportFee = parseFloat(post.price.replace(/,/g, ""));
@@ -923,6 +924,7 @@ class PostController {
         await driverController.updateDriverStatistics(driverId, {
           earnings: Number(driverEarnings) || 0,
           trips: 1,
+          year: new Date().getFullYear(),
         });
 
         if (customer && customer.email) {
