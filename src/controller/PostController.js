@@ -911,16 +911,7 @@ class PostController {
           orderCode: generateOrderCode(),
         });
 
-        const driverFeeTransaction = new Transaction({
-          userId: driverUser._id,
-          postId: post._id,
-          amount: serviceFee,
-          type: "PAY_SYSTEM_FEE",
-          status: "PAID",
-          orderCode: generateOrderCode(),
-        });
         await driverTransaction.save();
-        await driverFeeTransaction.save();
         await driverController.updateDriverStatistics(driverId, {
           earnings: Number(driverEarnings) || 0,
           trips: 1,
