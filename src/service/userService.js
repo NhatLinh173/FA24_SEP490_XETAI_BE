@@ -162,7 +162,7 @@ const loginUser = async (identifier, password) => {
     role: user.role,
   };
 
-  if (user.role === "personal" || user.role === "business") {
+  if (user.role === "personal") {
     const driver = await Driver.findOne({ userId: user._id });
     if (driver) {
       response.driverId = driver._id;

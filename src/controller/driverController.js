@@ -84,6 +84,7 @@ const updateDriverStatistics = async (driverId, { earnings, trips }) => {
   try {
     const numericEarnings = Number(earnings);
     const numericTrips = Number(trips);
+    const currentYear = year || new Date().getFullYear();
 
     if (isNaN(numericEarnings) || isNaN(numericTrips)) {
       throw new Error("Trips and earnings must be valid numbers");
@@ -92,6 +93,7 @@ const updateDriverStatistics = async (driverId, { earnings, trips }) => {
     await driverService.updateDriverStatistics(driverId, {
       earnings: numericEarnings,
       trips: numericTrips,
+      year: currentYear,
     });
 
     return { success: true };
