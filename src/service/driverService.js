@@ -295,6 +295,7 @@ const updateDriverStatistics = async (driverId, tripData) => {
         month: currentMonth,
         trips,
         earnings,
+        year: currentYear,
         timestamp: currentDate,
       });
     }
