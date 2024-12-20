@@ -80,7 +80,7 @@ const updateDriverStatisticsController = async (req, res) => {
   }
 };
 
-const updateDriverStatistics = async (driverId, { earnings, trips }) => {
+const updateDriverStatistics = async (driverId, { earnings, trips, year }) => {
   try {
     const numericEarnings = Number(earnings);
     const numericTrips = Number(trips);
